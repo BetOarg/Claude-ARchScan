@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
+import '../services/scan_draft_service.dart';
 
 class ProjectProvider with ChangeNotifier {
   final LocalDatabaseService _dbService = LocalDatabaseService();
@@ -69,6 +70,7 @@ class ProjectProvider with ChangeNotifier {
     _setLoading(true);
     try {
       await _dbService.deleteProject(uuid);
+      await const ScanDraftService().clear(uuid);
       if (_currentProject?.uuid == uuid) {
         _currentProject = null;
       }
@@ -90,6 +92,8 @@ class ProjectProvider with ChangeNotifier {
       for (final projectId in projectIds) {
         await _dbService.deleteProject(projectId);
       }
+
+      await const ScanDraftService().clearAll();
 
       _projects = [];
       _currentProject = null;
