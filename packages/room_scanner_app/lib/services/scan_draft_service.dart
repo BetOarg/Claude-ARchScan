@@ -108,10 +108,11 @@ class ScanDraftService {
       continuationReference: continuationReference,
       basicHistory: basicHistory,
     );
-    await preferences.setString(
+    final saved = await preferences.setString(
       _key(projectUuid),
       jsonEncode(draft.toJson()),
     );
+    if (!saved) throw StateError('Scan draft could not be saved.');
   }
 
   Future<ScanDraft?> load(String projectUuid) async {

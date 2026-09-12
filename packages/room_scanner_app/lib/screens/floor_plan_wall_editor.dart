@@ -792,7 +792,10 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
         _planError(PlanEditError.stale);
         return;
       }
-      await provider.removeRoom(room.id);
+      if (!await provider.removeRoom(room.id)) {
+        if (mounted) _planError(PlanEditError.invalid);
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _clearPlanSelection();

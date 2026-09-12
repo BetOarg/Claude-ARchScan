@@ -138,9 +138,12 @@ class FloorPlanProvider extends ChangeNotifier {
     }
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms..clear()..addAll(proposal.after);
-    _recordTransform(before);
     notifyListeners();
-    await _persist();
+    if (!await _persistRoomChange(before)) return false;
+    if (_sameRoomSnapshot(proposal.after, _completedRooms)) {
+      _recordTransform(before);
+      notifyListeners();
+    }
     return true;
   }
 
@@ -287,35 +290,43 @@ class FloorPlanProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> _persist() async {
+  Future<bool> _saveQueue = Future<bool>.value(true);
+
+  Future<bool> _persist() {
     final uuid = _projectUuid;
+    final save = persister;
+    final name = _projectName;
+    final rooms = List<RoomModel>.unmodifiable(_completedRooms);
 
     if (uuid == null ||
-        persister == null) {
-      return true;
+        save == null) {
+      return Future<bool>.value(true);
     }
 
-    try {
-      await persister!(
-        uuid: uuid,
-        name: _projectName,
-        rooms: List<RoomModel>.unmodifiable(_completedRooms),
-      );
-      return true;
-    } catch (e) {
-      debugPrint(
-        'No se pudo guardar el proyecto '
-        '"$_projectName": $e',
-      );
-      return false;
-    }
+    // Capture identity and data now; execute writes in request order.
+    final operation = _saveQueue.then((_) async {
+      try {
+        await save(uuid: uuid, name: name, rooms: rooms);
+        return true;
+      } catch (e) {
+        debugPrint('No se pudo guardar el proyecto "$name": $e');
+        return false;
+      }
+    });
+    _saveQueue = operation;
+    return operation;
   }
 
   /// A failed scan save must not leave an apparently completed room in memory.
   Future<bool> _persistRoomChange(List<RoomModel> before) async {
+    final uuid = _projectUuid;
+    final attempted = List<RoomModel>.from(_completedRooms);
     if (await _persist()) return true;
-    _completedRooms..clear()..addAll(before);
-    notifyListeners();
+    // Never erase a later edit or a different project after an older failure.
+    if (_projectUuid == uuid && _sameRoomSnapshot(attempted, _completedRooms)) {
+      _completedRooms..clear()..addAll(before);
+      notifyListeners();
+    }
     return false;
   }
 
@@ -323,6 +334,18 @@ class FloorPlanProvider extends ChangeNotifier {
     (existing) => existing.id != room.id &&
         PlanEditGeometry.overlaps(room, existing),
   );
+
+  Future<bool> _saveTransform(List<RoomModel> before) async {
+    final uuid = _projectUuid;
+    final after = List<RoomModel>.from(_completedRooms);
+    notifyListeners();
+    if (!await _persistRoomChange(before)) return false;
+    if (_projectUuid == uuid && _sameRoomSnapshot(after, _completedRooms)) {
+      _recordTransform(before);
+      notifyListeners();
+    }
+    return true;
+  }
 
   Future<void> setProjectName(
     String name,
@@ -677,10 +700,13 @@ class FloorPlanProvider extends ChangeNotifier {
     );
   }
 
-  Future<void> loadExistingRooms(
+  Future<bool> loadExistingRooms(
     List<RoomModel> rooms,
     String projectName,
   ) async {
+    final uuid = _projectUuid;
+    final previousName = _projectName;
+    final before = List<RoomModel>.from(_completedRooms);
     final normalized =
         _normalizeRoomIds(
       rooms,
@@ -696,10 +722,24 @@ class FloorPlanProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    await _persist();
+    final imported = List<RoomModel>.from(_completedRooms);
+    if (!await _persist()) {
+      if (_projectUuid == uuid && _projectName == projectName &&
+          _sameRoomSnapshot(imported, _completedRooms)) {
+        _completedRooms..clear()..addAll(before);
+        _projectName = previousName;
+        notifyListeners();
+      }
+      return false;
+    }
+    if (_projectUuid == uuid && _sameRoomSnapshot(imported, _completedRooms)) {
+      _clearTransformHistory();
+      notifyListeners();
+    }
+    return true;
   }
 
-  Future<void> removeRoom(
+  Future<bool> removeRoom(
     String roomId,
   ) async {
     final before = List<RoomModel>.from(_completedRooms);
@@ -711,9 +751,7 @@ class FloorPlanProvider extends ChangeNotifier {
         return WallFeature.fromJson(f.toJson()..remove('connectedRoomId')..remove('connectionSide'));
       }).toList());
     }
-    _recordTransform(before);
-    notifyListeners();
-    await _persist();
+    return _saveTransform(before);
   }
 
   /// Deletes both copies of a shared opening without deleting room geometry.
@@ -728,10 +766,7 @@ class FloorPlanProvider extends ChangeNotifier {
       _completedRooms[i] = room.copyWith(features: room.features.where((f) =>
         !(f.id == featureId && (room.id == roomId || f.connectedRoomId == roomId))).toList());
     }
-    _recordTransform(before);
-    notifyListeners();
-    await _persist();
-    return true;
+    return _saveTransform(before);
   }
 
 
@@ -1392,15 +1427,10 @@ class FloorPlanProvider extends ChangeNotifier {
         ..addAll(lastValid ?? before);
       notifyListeners();
       if (_sameRoomSnapshot(before, _completedRooms)) return false;
-      _recordTransform(before);
-      await _persist();
-      return true;
+      return _saveTransform(before);
     }
 
-    _recordTransform(before);
-    notifyListeners();
-    await _persist();
-    return true;
+    return _saveTransform(before);
   }
 
   void cancelTouchRoomTransform() {
@@ -2047,14 +2077,20 @@ class FloorPlanProvider extends ChangeNotifier {
       return false;
     }
 
-    final entry = _transformUndoHistory.removeLast();
+    final uuid = _projectUuid;
+    final entry = _transformUndoHistory.last;
+    final before = List<RoomModel>.from(_completedRooms);
     _completedRooms
       ..clear()
       ..addAll(entry.before);
-    _transformRedoHistory.add(entry);
-
     notifyListeners();
-    await _persist();
+    if (!await _persistRoomChange(before)) return false;
+    if (_projectUuid == uuid && _sameRoomSnapshot(entry.before, _completedRooms) &&
+        _transformUndoHistory.isNotEmpty && identical(_transformUndoHistory.last, entry)) {
+      _transformUndoHistory.removeLast();
+      _transformRedoHistory.add(entry);
+      notifyListeners();
+    }
     return true;
   }
 
@@ -2064,14 +2100,20 @@ class FloorPlanProvider extends ChangeNotifier {
       return false;
     }
 
-    final entry = _transformRedoHistory.removeLast();
+    final uuid = _projectUuid;
+    final entry = _transformRedoHistory.last;
+    final before = List<RoomModel>.from(_completedRooms);
     _completedRooms
       ..clear()
       ..addAll(entry.after);
-    _transformUndoHistory.add(entry);
-
     notifyListeners();
-    await _persist();
+    if (!await _persistRoomChange(before)) return false;
+    if (_projectUuid == uuid && _sameRoomSnapshot(entry.after, _completedRooms) &&
+        _transformRedoHistory.isNotEmpty && identical(_transformRedoHistory.last, entry)) {
+      _transformRedoHistory.removeLast();
+      _transformUndoHistory.add(entry);
+      notifyListeners();
+    }
     return true;
   }
 

@@ -240,7 +240,9 @@ class ImportExportService {
       if (!await confirmReplacement()) {
         return JsonImportResult.cancelled;
       }
-      await provider.loadExistingRooms(parsed.rooms, parsed.projectName);
+      if (!await provider.loadExistingRooms(parsed.rooms, parsed.projectName)) {
+        return JsonImportResult.invalid;
+      }
       return JsonImportResult.imported;
     } catch (_) {
       return JsonImportResult.invalid;

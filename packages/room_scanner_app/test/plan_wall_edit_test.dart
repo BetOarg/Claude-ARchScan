@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:room_scanner_ar/providers/floor_plan_provider.dart';
@@ -16,6 +18,108 @@ FloorPlanProvider provider(List<RoomModel> rooms) =>
     FloorPlanProvider()..loadProject(uuid: 'p', name: 'Plan', rooms: rooms);
 
 void main() {
+  test('failed room deletion preserves room and history', () async {
+    final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      throw StateError('Save failed');
+    };
+    expect(await plan.removeRoom(source.id), isFalse);
+    expect(plan.completedRooms, [source]);
+    expect(plan.canUndoTransform, isFalse);
+  });
+
+  test('failed undo and redo retain geometry and retryable history', () async {
+    final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    expect(await plan.removeRoom(source.id), isTrue);
+    Future<void> fail({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      throw StateError('Save failed');
+    }
+    plan.persister = fail;
+    expect(await plan.undoTransform(), isFalse);
+    expect(plan.completedRooms, isEmpty);
+    expect(plan.canUndoTransform, isTrue);
+    plan.persister = null;
+    expect(await plan.undoTransform(), isTrue);
+    plan.persister = fail;
+    expect(await plan.redoTransform(), isFalse);
+    expect(plan.completedRooms, [source]);
+    expect(plan.canRedoTransform, isTrue);
+  });
+  test('queued saves preserve snapshots and continue after a failure', () async {
+    final plan = provider([]);
+    addTearDown(plan.dispose);
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    final snapshots = <List<String>>[];
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      snapshots.add(rooms.map((r) => r.id).toList());
+      if (snapshots.length == 1) {
+        entered.complete();
+        await release.future;
+        throw StateError('First save failed');
+      }
+    };
+    final a = room('a', [p(0, 0), p(1, 0), p(1, 1), p(0, 1)]);
+    final b = room('b', [p(0, 0), p(1, 0), p(1, 1), p(0, 1)]);
+    final first = plan.addCompletedRoom(a);
+    await entered.future;
+    final second = plan.addCompletedRoom(b);
+    expect(snapshots, [['a']]);
+    release.complete();
+    expect(await first, isFalse);
+    expect(await second, isTrue);
+    expect(snapshots, [['a'], ['a', 'b']]);
+    expect(plan.completedRooms.map((r) => r.id), ['a', 'b']);
+  });
+
+  test('failed save does not restore a previous project into the current one', () async {
+    final plan = provider([]);
+    addTearDown(plan.dispose);
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      entered.complete();
+      await release.future;
+      throw StateError('Save failed');
+    };
+    final save = plan.addCompletedRoom(room('a', [p(0, 0), p(1, 0), p(1, 1)]));
+    await entered.future;
+    final other = room('other', [p(3, 0), p(4, 0), p(4, 1)]);
+    plan.loadProject(uuid: 'other-project', name: 'Other', rooms: [other]);
+    release.complete();
+    expect(await save, isFalse);
+    expect(plan.projectUuid, 'other-project');
+    expect(plan.completedRooms, [other]);
+  });
+
+  test('failed import restores rooms and name', () async {
+    final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      throw StateError('Save failed');
+    };
+    expect(await plan.loadExistingRooms([], 'Imported'), isFalse);
+    expect(plan.projectName, 'Plan');
+    expect(plan.completedRooms, [source]);
+  });
+
+  test('failed plan edit restores geometry without adding undo history', () async {
+    final source = room('source', [p(0, 0), p(1, 0), p(1, 1), p(0, 1)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      throw StateError('Save failed');
+    };
+    final proposal = plan.previewGeometry(source, [p(0, 0), p(2, 0), p(2, 1), p(0, 1)]);
+    expect(await plan.applyPlanEdit(proposal), isFalse);
+    expect(plan.completedRooms, [source]);
+    expect(plan.canUndoTransform, isFalse);
+  });
   test(
       'delete complete room preserves neighbour and restores connections with undo',
       () async {

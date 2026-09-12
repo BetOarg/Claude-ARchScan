@@ -628,7 +628,10 @@ class _FloorPlanViewerScreenState
         ],
       ));
       if (!mounted || confirmed != true) return;
-      await context.read<FloorPlanProvider>().removeOpening(selection.roomId, feature.id);
+      if (!await context.read<FloorPlanProvider>().removeOpening(selection.roomId, feature.id)) {
+        if (mounted) _planError(PlanEditError.invalid);
+        return;
+      }
       if (mounted) setState(() { _selectedFeatureId = null; });
       return;
     }

@@ -256,14 +256,18 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     });
     if (fingerprint == _lastDraftFingerprint) return;
 
-    _lastDraftFingerprint = fingerprint;
     _draftSaveTimer?.cancel();
     _draftSaveTimer = Timer(const Duration(milliseconds: 250), () {
       _scanDraftService.save(
         projectUuid: widget.projectUuid,
         room: room,
         continuationReference: _activeContinuationReference,
-      );
+      ).then((_) {
+        _lastDraftFingerprint = fingerprint;
+      }).catchError((Object error) {
+        _lastDraftFingerprint = null;
+        debugPrint('No se pudo guardar el borrador: $error');
+      });
     });
   }
 
