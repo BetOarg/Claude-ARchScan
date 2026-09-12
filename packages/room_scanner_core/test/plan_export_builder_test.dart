@@ -4,6 +4,57 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('import resource limits', () {
+    test('rejects oversized JSON and SVG before decoding', () {
+      final oversized = List.filled(PlanExportBuilder.maxImportBytes + 1, ' ').join();
+      expect(PlanExportBuilder.parseProjectJson(oversized), isNull);
+      expect(PlanExportBuilder.parseProjectSvg(oversized), isNull);
+    });
+    test('rejects excess room count', () {
+      final source = jsonEncode({
+        'rooms': List.generate(PlanExportBuilder.maxImportRooms + 1,
+            (_) => {'points': [], 'features': []}),
+      });
+      expect(PlanExportBuilder.parseProjectJson(source), isNull);
+    });
+    test('rejects excess point count', () {
+      final source = jsonEncode({
+        'rooms': List.generate(21, (_) => {
+          'points': List.filled(500, {'x': 0, 'y': 0, 'z': 0}),
+          'features': [],
+        }),
+      });
+      expect(PlanExportBuilder.parseProjectJson(source), isNull);
+    });
+    test('rejects excess points in a single room', () {
+      final source = jsonEncode({
+        'rooms': [{'points': List.filled(
+            PlanExportBuilder.maxImportPointsPerRoom + 1,
+            {'x': 0, 'y': 0, 'z': 0}), 'features': []}],
+      });
+      expect(PlanExportBuilder.parseProjectJson(source), isNull);
+    });
+    test('accepts an ordinary historical project', () {
+      final room = RoomModel(id: 'legacy', name: 'Legacy',
+          type: RoomType.other, points: [
+            ARPoint(x: 0, y: 0, z: 0),
+            ARPoint(x: 1, y: 0, z: 0),
+            ARPoint(x: 1, y: 0, z: 1),
+          ], isClosed: true);
+      final parsed = PlanExportBuilder.parseProjectJson(
+          jsonEncode({'rooms': [room.toJson()]}));
+      expect(parsed, isNotNull);
+      expect(parsed!.rooms.single.id, 'legacy');
+    });
+    test('rejects excess feature count', () {
+      final source = jsonEncode({
+        'rooms': [{'points': [], 'features': List.filled(
+            PlanExportBuilder.maxImportFeatures + 1, {})}],
+      });
+      expect(PlanExportBuilder.parseProjectJson(source), isNull);
+    });
+  });
+
   test('JSON exporta versión, unidad y medidas verticales', () {
     final room = RoomModel(
       id: 'room-1',

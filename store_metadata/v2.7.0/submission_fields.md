@@ -38,8 +38,11 @@ Future Pro functionality must not be advertised as available in this release.
 - ARchScan does not operate an application backend.
 - Camera and sensors are used while measuring.
 - Photographs, video, raw sensor readings, geographic location, advertising identifiers, and project files are not transmitted by ARchScan.
-- JSON, PDF, and DXF files leave the private app storage only when the user exports or shares them.
+- JSON, SVG, PDF, DXF, PNG, and JPG files leave the private app storage only when the user exports or shares them.
 - Tracking is not performed.
+- Import supports JSON and ARchScan-generated SVG containing project metadata.
+- PNG/JPG are rendered plan drawings, not camera photographs.
+- Sharing may leave temporary local cache copies; deleting projects does not delete external exports or guarantee immediate cache removal.
 - Final console answers must be checked against the signed AAB/IPA and every included third-party SDK.
 
 ## Review access

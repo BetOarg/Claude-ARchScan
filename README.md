@@ -77,7 +77,7 @@ Las conexiones se protegen: no se desplaza silenciosamente una abertura conectad
 
 ## Privacidad y proyectos históricos
 
-ARchScan no requiere cuenta ni sincronización propia en la nube. Guarda los proyectos localmente con Isar. JSON, SVG, PDF y DXF pueden guardarse fuera de la app o compartirse; su ubicación queda bajo control del usuario.
+ARchScan no requiere cuenta ni sincronización propia en la nube. Guarda los proyectos localmente con Isar. JSON, SVG, PDF, DXF, PNG y JPG pueden guardarse fuera de la app o compartirse; su ubicación queda bajo control del usuario.
 
 No incorpora SDK publicitario ni compras integradas en sus dependencias directas actuales. Antes de publicar debe auditarse también el artefacto final y sus dependencias transitivas.
 
@@ -166,3 +166,11 @@ No se publican teléfono ni domicilio en estos documentos. Play Console puede re
 Preservá proyectos históricos, no publiques secretos y agregá pruebas para los cambios de geometría, persistencia y unidades. Los textos de interfaz deben utilizar gen-l10n en español e inglés.
 
 Código distribuido bajo [licencia MIT](LICENSE). La preparación freemium no cambia la licencia del repositorio.
+
+## Launch candidate / Candidato de lanzamiento — 2026-09-12
+
+Exports: JSON, SVG with project metadata, PDF, DXF 2D, PNG and JPG. Imports: JSON and ARchScan-generated SVG; external SVG without project metadata is unsupported. Files can be saved outside the app or shared. Import limits: 10 MiB, 1000 rooms, 10000 points and 10000 openings. JSON/SVG preserve project data; PDF/DXF/PNG/JPG are deliverables, not complete backups. Sharing can leave temporary cache copies; deleting projects does not delete external exports.
+
+Exportaciones: JSON, SVG con metadatos del proyecto, PDF, DXF 2D, PNG y JPG. Importación: JSON y SVG generado por ARchScan; SVG externo sin metadatos no compatible. Guardar en Archivos y Compartir disponibles. Límites de importación: 10 MiB, 1000 ambientes, 10000 puntos y 10000 aberturas. JSON/SVG recuperan el proyecto; PDF/DXF/PNG/JPG son entregables, no copias completas. Borrar proyectos no borra archivos externos ni garantiza limpiar inmediatamente la caché de archivos compartidos.
+
+Do not submit until final CI, production signatures, native-library compatibility, public policy/support URLs and physical tests are verified. No enviar hasta verificar CI final, firmas de producción, bibliotecas nativas, URLs públicas y pruebas físicas. See [release checklist](docs/RELEASE_READINESS_CHECKLIST.md).

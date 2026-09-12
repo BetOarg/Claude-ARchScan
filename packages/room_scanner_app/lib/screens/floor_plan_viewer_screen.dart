@@ -2770,7 +2770,7 @@ class _FloorPlanViewerScreenState
         ],
       ),
     );
-    if (destination == null) return;
+    if (destination == null || !mounted) return;
     switch (format) {
       case _ExportFormat.json:
         await _saveJson(destination);
@@ -2793,6 +2793,15 @@ class _FloorPlanViewerScreenState
     }
   }
 
+  Rect _shareOrigin() {
+    final box = context.findRenderObject();
+    if (box is RenderBox && box.hasSize) {
+      return box.localToGlobal(Offset.zero) & box.size;
+    }
+    final size = MediaQuery.sizeOf(context);
+    return Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1);
+  }
+
   Future<void> _saveJson(ExportDestination destination) async {
     final localizations = AppLocalizations.of(context)!;
     final provider =
@@ -2805,6 +2814,7 @@ class _FloorPlanViewerScreenState
         provider.completedRooms,
         provider.projectName,
         destination: destination,
+        sharePositionOrigin: _shareOrigin(),
       );
     } catch (_) {
       if (mounted) {
@@ -2825,6 +2835,7 @@ class _FloorPlanViewerScreenState
         provider.completedRooms, provider.projectName,
         languageCode: Localizations.localeOf(context).languageCode,
         destination: destination,
+        sharePositionOrigin: _shareOrigin(),
       );
     } catch (_) {
       if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
@@ -2845,7 +2856,9 @@ class _FloorPlanViewerScreenState
         provider.completedRooms,
         provider.projectName,
         context.read<MeasurementSettingsProvider>().system,
+        languageCode: Localizations.localeOf(context).languageCode,
         destination: destination,
+        sharePositionOrigin: _shareOrigin(),
       );
     } catch (_) {
       if (mounted) {
@@ -2864,6 +2877,7 @@ class _FloorPlanViewerScreenState
         context.read<MeasurementSettingsProvider>().system,
         languageCode: Localizations.localeOf(context).languageCode,
         destination: destination,
+        sharePositionOrigin: _shareOrigin(),
       );
     } catch (_) {
       if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
@@ -2884,6 +2898,7 @@ class _FloorPlanViewerScreenState
         languageCode: Localizations.localeOf(context).languageCode,
         jpeg: jpeg,
         destination: destination,
+        sharePositionOrigin: _shareOrigin(),
       );
     } catch (_) {
       if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
