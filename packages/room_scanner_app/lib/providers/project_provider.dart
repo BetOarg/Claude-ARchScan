@@ -9,6 +9,14 @@ class ProjectProvider with ChangeNotifier {
   List<IsarProject> _projects = [];
   IsarProject? _currentProject;
   bool _isLoading = false;
+  Future<void> _mutations = Future<void>.value();
+  final Set<String> _deletedIds = <String>{};
+
+  Future<void> _serialize(Future<void> Function() action) {
+    final result = _mutations.then((_) => action());
+    _mutations = result.then<void>((_) {}, onError: (Object error, StackTrace stack) {});
+    return result;
+  }
 
   List<IsarProject> get projects => _projects;
   IsarProject? get currentProject => _currentProject;
@@ -42,9 +50,11 @@ class ProjectProvider with ChangeNotifier {
     required String name,
     required List<RoomModel> rooms,
   }) async {
+    return _serialize(() async {
     _setLoading(true);
 
     try {
+      if (_deletedIds.contains(uuid)) throw StateError('Project was deleted.');
       await _dbService.saveProject(
         uuid: uuid,
         name: name,
@@ -55,6 +65,8 @@ class ProjectProvider with ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+
+    });
   }
 
   /// Carga un proyecto para trabajar en él
@@ -67,10 +79,12 @@ class ProjectProvider with ChangeNotifier {
 
   /// Elimina un proyecto por su UUID
   Future<void> deleteProject(String uuid) async {
+    _deletedIds.add(uuid);
+    return _serialize(() async {
     _setLoading(true);
     try {
       await _dbService.deleteProject(uuid);
-      await const ScanDraftService().clear(uuid);
+      await const ScanDraftService().clear(uuid, permanentlyDeleted: true);
       if (_currentProject?.uuid == uuid) {
         _currentProject = null;
       }
@@ -78,10 +92,14 @@ class ProjectProvider with ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+
+    });
   }
 
   /// Elimina del dispositivo todos los proyectos locales.
   Future<void> deleteAllLocalProjects() async {
+    _deletedIds.addAll(_projects.map((project) => project.uuid));
+    return _serialize(() async {
     _setLoading(true);
 
     try {
@@ -93,6 +111,9 @@ class ProjectProvider with ChangeNotifier {
         await _dbService.deleteProject(projectId);
       }
 
+      for (final projectId in projectIds) {
+        await const ScanDraftService().clear(projectId, permanentlyDeleted: true);
+      }
       await const ScanDraftService().clearAll();
 
       _projects = [];
@@ -100,6 +121,8 @@ class ProjectProvider with ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+
+    });
   }
 
   void _setLoading(bool value) {
