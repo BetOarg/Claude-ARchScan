@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../providers/project_provider.dart';
+import '../providers/floor_plan_provider.dart';
+import '../providers/scanner_provider.dart';
 
 class PrivacyAccountScreen extends StatefulWidget {
   const PrivacyAccountScreen({super.key});
@@ -42,13 +44,23 @@ class _PrivacyAccountScreenState extends State<PrivacyAccountScreen> {
     if (confirmed != true || !mounted) return;
 
     setState(() => _isDeleting = true);
-    await context.read<ProjectProvider>().deleteAllLocalProjects();
-    if (!mounted) return;
-
-    setState(() => _isDeleting = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(localizations.localDataDeleted)),
-    );
+    try {
+      await context.read<ProjectProvider>().deleteAllLocalProjects();
+      if (!mounted) return;
+      context.read<FloorPlanProvider>().clearProject();
+      context.read<ScannerProvider>().loadRooms(const []);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(localizations.localDataDeleted)),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.fileSaveFailed)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
   }
 
   @override

@@ -135,6 +135,18 @@ class ScanDraftService {
 
   Future<void> clear(String projectUuid) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.remove(_key(projectUuid));
+    if (!await preferences.remove(_key(projectUuid))) {
+      throw StateError('Scan draft could not be deleted.');
+    }
+  }
+
+  Future<void> clearAll() async {
+    final preferences = await SharedPreferences.getInstance();
+    final keys = preferences.getKeys().where((key) => key.startsWith(_keyPrefix)).toList();
+    for (final key in keys) {
+      if (!await preferences.remove(key)) {
+        throw StateError('Scan draft could not be deleted.');
+      }
+    }
   }
 }
