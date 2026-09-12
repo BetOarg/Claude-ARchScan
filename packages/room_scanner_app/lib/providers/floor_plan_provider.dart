@@ -282,32 +282,47 @@ class FloorPlanProvider extends ChangeNotifier {
 
     if (normalized.changed) {
       Future<void>.microtask(
-        _persist,
+        () async { await _persist(); },
       );
     }
   }
 
-  Future<void> _persist() async {
+  Future<bool> _persist() async {
     final uuid = _projectUuid;
 
     if (uuid == null ||
         persister == null) {
-      return;
+      return true;
     }
 
     try {
       await persister!(
         uuid: uuid,
         name: _projectName,
-        rooms: _completedRooms,
+        rooms: List<RoomModel>.unmodifiable(_completedRooms),
       );
+      return true;
     } catch (e) {
       debugPrint(
         'No se pudo guardar el proyecto '
         '"$_projectName": $e',
       );
+      return false;
     }
   }
+
+  /// A failed scan save must not leave an apparently completed room in memory.
+  Future<bool> _persistRoomChange(List<RoomModel> before) async {
+    if (await _persist()) return true;
+    _completedRooms..clear()..addAll(before);
+    notifyListeners();
+    return false;
+  }
+
+  bool canPlaceScannedRoom(RoomModel room) => !_completedRooms.any(
+    (existing) => existing.id != room.id &&
+        PlanEditGeometry.overlaps(room, existing),
+  );
 
   Future<void> setProjectName(
     String name,
@@ -349,7 +364,7 @@ class FloorPlanProvider extends ChangeNotifier {
   /// - superficie;
   /// - perímetro;
   /// - forma del ambiente.
-  Future<void> addCompletedRoom(
+  Future<bool> addCompletedRoom(
     RoomModel room,
     {bool preservePlacement = false}
   ) async {
@@ -378,13 +393,15 @@ class FloorPlanProvider extends ChangeNotifier {
       );
     }
 
+    if (preservePlacement && !canPlaceScannedRoom(roomToAdd)) return false;
+    final before = List<RoomModel>.from(_completedRooms);
     _completedRooms.add(
       roomToAdd,
     );
 
     notifyListeners();
 
-    await _persist();
+    return _persistRoomChange(before);
   }
 
   /// Prepara un contorno para continuar desde una esquina válida.
@@ -421,11 +438,27 @@ class FloorPlanProvider extends ChangeNotifier {
         if (index == vertexIndex) break;
         index = (index + 1) % room.points.length;
       }
+      final reversePoints = <ARPoint>[];
+      index = closingIndex;
+      while (true) {
+        reversePoints.add(room.points[index]);
+        if (index == vertexIndex) break;
+        index = (index - 1 + room.points.length) % room.points.length;
+      }
+      double pathLength(List<ARPoint> points) {
+        var length = 0.0;
+        for (var i = 1; i < points.length; i++) {
+          length += GeometryService.calculateDistance(points[i - 1], points[i]);
+        }
+        return length;
+      }
+      final sharedPoints = pathLength(reversePoints) < pathLength(continuationPoints)
+          ? reversePoints : continuationPoints;
       return RoomModel(
         id: _nextUniqueId(),
         name: room.name,
         type: room.type,
-        points: continuationPoints,
+        points: sharedPoints,
         features: const [],
         isClosed: false,
       );
@@ -459,14 +492,16 @@ class FloorPlanProvider extends ChangeNotifier {
       return false;
     }
 
+    if (!canPlaceScannedRoom(room)) return false;
+    final before = List<RoomModel>.from(_completedRooms);
     _completedRooms[index] = room;
     notifyListeners();
-    await _persist();
-    return true;
+    return _persistRoomChange(before);
   }
 
   bool _matchesContinuationSource(RoomModel current, RoomModel prepared) {
-    if (current.id != prepared.id ||
+    if (current.isClosed || current.points.length != prepared.points.length ||
+        current.id != prepared.id ||
         current.name != prepared.name ||
         current.type != prepared.type ||
         jsonEncode(current.features.map((f) => f.toJson()).toList()) !=
@@ -578,15 +613,15 @@ class FloorPlanProvider extends ChangeNotifier {
       features: newFeatures,
     );
 
+    if (!canPlaceScannedRoom(roomToAdd)) return false;
+    final before = List<RoomModel>.from(_completedRooms);
     _completedRooms[sourceRoomIndex] = sourceRoom.copyWith(
       features: sourceFeatures,
     );
     _completedRooms.add(roomToAdd);
 
     notifyListeners();
-    await _persist();
-
-    return true;
+    return _persistRoomChange(before);
   }
 
   RoomModel _alignRoomToContinuation(

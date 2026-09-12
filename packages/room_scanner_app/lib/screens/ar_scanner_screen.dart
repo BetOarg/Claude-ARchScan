@@ -1671,26 +1671,21 @@ class _ARScannerScreenState extends State<ARScannerScreen>
             expectedOpenRoom: resumeRoom,
           )
         : continuation == null
-            ? true
+            ? await floorPlanProvider.addCompletedRoom(
+                closedRoom, preservePlacement: resumeRoom != null)
             : await floorPlanProvider.addCompletedRoomFromContinuation(
             room: closedRoom,
             reference: continuation,
           );
 
-    if (!resumesExistingRoom && continuation == null) {
-      await floorPlanProvider.addCompletedRoom(
-        closedRoom,
-        preservePlacement: resumeRoom != null,
-      );
-    }
-
     if (!saved) {
+      provider.restoreCurrentRoom(closedRoom.copyWith(isClosed: false));
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            l10n.connectOpeningFailed,
+            l10n.closeRoomFailed,
           ),
           backgroundColor: Colors.redAccent,
         ),
