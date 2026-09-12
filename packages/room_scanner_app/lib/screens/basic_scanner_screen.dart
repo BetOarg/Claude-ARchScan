@@ -379,13 +379,17 @@ class _BasicScannerScreenState
       });
       if (fingerprint == _lastDraftFingerprint) return;
 
-      _lastDraftFingerprint = fingerprint;
       _scanDraftService.save(
         projectUuid: widget.projectUuid,
         room: room,
         continuationReference: _activeContinuationReference,
         basicHistory: history,
-      );
+      ).then((_) {
+        _lastDraftFingerprint = fingerprint;
+      }).catchError((Object error) {
+        _lastDraftFingerprint = null;
+        debugPrint('No se pudo guardar el borrador: $error');
+      });
     });
   }
 

@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 41264)
+Total output lines: 5230
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -628,7 +631,10 @@ class _FloorPlanViewerScreenState
         ],
       ));
       if (!mounted || confirmed != true) return;
-      await context.read<FloorPlanProvider>().removeOpening(selection.roomId, feature.id);
+      if (!await context.read<FloorPlanProvider>().removeOpening(selection.roomId, feature.id)) {
+        if (mounted) _planError(PlanEditError.invalid);
+        return;
+      }
       if (mounted) setState(() { _selectedFeatureId = null; });
       return;
     }
@@ -2301,142 +2307,7 @@ class _FloorPlanViewerScreenState
                 case _FloorPlanAction.importProject:
                   _importProject();
                   break;
-                case _FloorPlanAction.exportProject:
-                  _showExportFlow();
-                  break;
-              }
-            },
-            itemBuilder: (context) {
-              return [
-                PopupMenuItem(
-                  value: _FloorPlanAction.transformRooms,
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(
-                      _touchTransformMode
-                          ? Icons.check
-                          : Icons.open_with_rounded,
-                    ),
-                    title: Text(
-                      _touchTransformMode
-                          ? localizations.finishEditing
-                          : localizations.touchTransformRooms,
-                    ),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: _FloorPlanAction.organizeRooms,
-                  child: ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.grid_view_rounded),
-                    title: Text(localizations.organizeRooms),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: _FloorPlanAction.areaSummary,
-                  child: ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.straighten_outlined),
-                    title: Text(localizations.areaSummaryTitle),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: _FloorPlanAction.exportProject,
-                  enabled: context.read<FloorPlanProvider>().completedRooms
-                      .any((room) => room.points.length >= 2),
-                  child: ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.file_download_outlined),
-                    title: Text(localizations.exportProject),
-                  ),
-                ),
-                PopupMenuItem(
-                  value:
-                      _FloorPlanAction
-                          .importProject,
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(
-                      Icons.file_upload,
-                    ),
-                    title: Text(
-                      localizations.importProject,
-                    ),
-                  ),
-                ),
-              ];
-            },
-          ),
-        ],
-      ),
-
-      bottomNavigationBar: widget.selectContinuationOpening ? null : _buildPlanToolbar(),
-
-      body: Consumer<
-          FloorPlanProvider>(
-        builder: (
-          context,
-          provider,
-          child,
-        ) {
-          final rooms = _roomsForDisplay(provider.completedRooms);
-          final hasAvailableOpenings = rooms.any(
-            (room) => room.features.any((feature) => !feature.isConnected),
-          );
-
-          if (rooms.isEmpty) {
-            return const _EmptyPlanView();
-          }
-          return LayoutBuilder(
-            builder: (              context,
-              constraints,
-            ) {
-              final size =
-                  constraints.biggest;
-
-              if (!_touchTransformMode && !_freezePlanTransform) {
-                _calculateTransform(size, rooms);
-              }
-
-              return Stack(                children: [
-                  InteractiveViewer(
-                    transformationController: _planViewport,
-                    panEnabled: !_touchTransformMode && !_wallGestureActive,
-                    scaleEnabled: !_touchTransformMode && !_wallGestureActive,
-                    constrained: true,
-                    boundaryMargin:
-                        const EdgeInsets.all(
-                      200,
-                    ),
-                    minScale: 0.2,
-                    maxScale: 6.0,
-                    child:
-                        GestureDetector(
-                      dragStartBehavior: DragStartBehavior.down,
-                      behavior:
-                          HitTestBehavior
-                              .opaque,
-                      onTapUp: (
-                        details,
-                      ) async {
-                        if (_choosingContinuationClosing ||
-                            _addOpeningType != null ||
-                            _wallEditMode ||
-                            _pendingPlanEdit != null) {
-                          await _selectPlanElement(details.localPosition, provider.completedRooms);
-                          return;
-                        }
-                        if (_touchTransformMode) {
-                          final roomId = _getRoomAtPosition(
-                            _inverseTransform(details.localPosition),
-                            rooms,
-                          );
-                          if (roomId != null) {
-                            setState(() {
-                              _selectedRoomId = roomId;
-                              _selectedFeatureId = null;
-                            });
-                          }
+    …1264 tokens truncated…             }
                           return;
                         }
                         final featureSelection =
