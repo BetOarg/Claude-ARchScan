@@ -138,9 +138,12 @@ class FloorPlanProvider extends ChangeNotifier {
     }
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms..clear()..addAll(proposal.after);
-    _recordTransform(before);
     notifyListeners();
-    await _persist();
+    if (!await _persistRoomChange(before)) return false;
+    if (_sameRoomSnapshot(proposal.after, _completedRooms)) {
+      _recordTransform(before);
+      notifyListeners();
+    }
     return true;
   }
 
@@ -287,35 +290,43 @@ class FloorPlanProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> _persist() async {
+  Future<bool> _saveQueue = Future<bool>.value(true);
+
+  Future<bool> _persist() {
     final uuid = _projectUuid;
+    final save = persister;
+    final name = _projectName;
+    final rooms = List<RoomModel>.unmodifiable(_completedRooms);
 
     if (uuid == null ||
-        persister == null) {
-      return true;
+        save == null) {
+      return Future<bool>.value(true);
     }
 
-    try {
-      await persister!(
-        uuid: uuid,
-        name: _projectName,
-        rooms: List<RoomModel>.unmodifiable(_completedRooms),
-      );
-      return true;
-    } catch (e) {
-      debugPrint(
-        'No se pudo guardar el proyecto '
-        '"$_projectName": $e',
-      );
-      return false;
-    }
+    // Capture identity and data now; execute writes in request order.
+    final operation = _saveQueue.then((_) async {
+      try {
+        await save(uuid: uuid, name: name, rooms: rooms);
+        return true;
+      } catch (e) {
+        debugPrint('No se pudo guardar el proyecto "$name": $e');
+        return false;
+      }
+    });
+    _saveQueue = operation;
+    return operation;
   }
 
   /// A failed scan save must not leave an apparently completed room in memory.
   Future<bool> _persistRoomChange(List<RoomModel> before) async {
+    final uuid = _projectUuid;
+    final attempted = List<RoomModel>.from(_completedRooms);
     if (await _persist()) return true;
-    _completedRooms..clear()..addAll(before);
-    notifyListeners();
+    // Never erase a later edit or a different project after an older failure.
+    if (_projectUuid == uuid && _sameRoomSnapshot(attempted, _completedRooms)) {
+      _completedRooms..clear()..addAll(before);
+      notifyListeners();
+    }
     return false;
   }
 
@@ -677,10 +688,13 @@ class FloorPlanProvider extends ChangeNotifier {
     );
   }
 
-  Future<void> loadExistingRooms(
+  Future<bool> loadExistingRooms(
     List<RoomModel> rooms,
     String projectName,
   ) async {
+    final uuid = _projectUuid;
+    final previousName = _projectName;
+    final before = List<RoomModel>.from(_completedRooms);
     final normalized =
         _normalizeRoomIds(
       rooms,
@@ -696,7 +710,21 @@ class FloorPlanProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    await _persist();
+    final imported = List<RoomModel>.from(_completedRooms);
+    if (!await _persist()) {
+      if (_projectUuid == uuid && _projectName == projectName &&
+          _sameRoomSnapshot(imported, _completedRooms)) {
+        _completedRooms..clear()..addAll(before);
+        _projectName = previousName;
+        notifyListeners();
+      }
+      return false;
+    }
+    if (_projectUuid == uuid && _sameRoomSnapshot(imported, _completedRooms)) {
+      _clearTransformHistory();
+      notifyListeners();
+    }
+    return true;
   }
 
   Future<void> removeRoom(
