@@ -237,11 +237,11 @@ void main() {
     final prepared = plan.prepareOpenRoomContinuation(
       roomId: 'closed-save',
       vertexIndex: 2,
-      closingVertexIndex: 0,
+      closingVertexIndex: 1,
     )!;
-    expect(prepared.points, hasLength(3));
+    expect(prepared.points, hasLength(2));
     final extended = prepared.copyWith(
-      points: [...prepared.points, p(4, 3)],
+      points: [...prepared.points, p(4, 2), p(4, 0)],
       isClosed: true,
     );
 
@@ -249,11 +249,45 @@ void main() {
     expect(plan.completedRooms, hasLength(2));
     expect(plan.completedRooms.first, same(closed));
     expect(plan.completedRooms.first.points, closed.points);
-    expect(plan.completedRooms.last.points.first, closed.points.first);
+    expect(plan.completedRooms.last.points.first, closed.points[1]);
     expect(
       plan.completedRooms.last.points[prepared.points.length - 1],
       closed.points[2],
     );
+  });
+
+  test('adjacent corner continuation uses the short shared wall in both directions', () {
+    final source = room('source', [p(0, 0), p(3, 0), p(3, 3), p(0, 3)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    for (final pair in [[0, 1], [1, 0]]) {
+      final prepared = plan.prepareOpenRoomContinuation(
+        roomId: source.id, vertexIndex: pair[0], closingVertexIndex: pair[1])!;
+      expect(prepared.points, [source.points[pair[1]], source.points[pair[0]]]);
+    }
+  });
+
+  test('preserved-placement scan rejects source overlap without changing plan', () async {
+    final source = room('source', [p(0, 0), p(3, 0), p(3, 3), p(0, 3)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    final overlapping = room('new', [p(3, 0), p(3, 3), p(0, 3), p(0, 0), p(0, -2), p(3, -2)]);
+    expect(await plan.addCompletedRoom(overlapping, preservePlacement: true), isFalse);
+    expect(plan.completedRooms, [source]);
+  });
+
+  test('failed scan persistence rolls back and allows retry', () async {
+    final plan = provider([]);
+    addTearDown(plan.dispose);
+    final scanned = room('new', [p(0, 0), p(3, 0), p(3, 3), p(0, 3)]);
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      throw StateError('Disk unavailable');
+    };
+    expect(await plan.addCompletedRoom(scanned), isFalse);
+    expect(plan.completedRooms, isEmpty);
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {};
+    expect(await plan.addCompletedRoom(scanned), isTrue);
+    expect(plan.completedRooms, [scanned]);
   });
 
 }

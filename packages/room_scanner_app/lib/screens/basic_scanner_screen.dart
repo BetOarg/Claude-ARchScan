@@ -2792,22 +2792,17 @@ class _BasicScannerScreenState
             expectedOpenRoom: resumeRoom,
           )
         : continuation == null
-            ? true
+            ? await floorPlanProvider.addCompletedRoom(
+                room, preservePlacement: resumeRoom != null)
             : await floorPlanProvider.addCompletedRoomFromContinuation(
             room: room,
             reference: continuation,
           );
 
-    if (!resumesExistingRoom && continuation == null) {
-      await floorPlanProvider.addCompletedRoom(
-        room,
-        preservePlacement: resumeRoom != null,
-      );
-    }
-
     if (!saved) {
+      provider.restoreCurrentRoom(room.copyWith(isClosed: false));
       _showValidationError(
-        'No se pudo conectar el ambiente con la abertura seleccionada.',
+        'No se pudo guardar el ambiente. Revisá los solapamientos y volvé a intentar.',
       );
       return;
     }

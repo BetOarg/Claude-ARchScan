@@ -31,7 +31,9 @@ class RoomPlanCaptureCoordinator {
       roomType: roomType,
     );
     if (room == null) return null;
-    await floorPlanProvider.addCompletedRoom(room);
+    if (!await floorPlanProvider.addCompletedRoom(room)) {
+      throw StateError('RoomPlan project could not be saved.');
+    }
     return room;
   }
 

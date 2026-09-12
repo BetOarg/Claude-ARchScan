@@ -20,10 +20,13 @@ class ProjectProvider with ChangeNotifier {
   /// `LocalDatabaseService.init`.
   Future<void> init() async {
     _setLoading(true);
-    final dir = await getApplicationDocumentsDirectory();
-    await _dbService.init(directoryPath: dir.path);
-    await loadProjects();
-    _setLoading(false);
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      await _dbService.init(directoryPath: dir.path);
+      await loadProjects();
+    } finally {
+      _setLoading(false);
+    }
   }
 
   /// Carga la lista de proyectos desde Isar
@@ -40,32 +43,39 @@ class ProjectProvider with ChangeNotifier {
   }) async {
     _setLoading(true);
 
-    await _dbService.saveProject(
-      uuid: uuid,
-      name: name,
-      rooms: rooms,
-    );
+    try {
+      await _dbService.saveProject(
+        uuid: uuid,
+        name: name,
+        rooms: rooms,
+      );
 
-    await loadProjects();
-    _setLoading(false);
+      await loadProjects();
+    } finally {
+      _setLoading(false);
+    }
   }
 
   /// Carga un proyecto para trabajar en él
   Future<List<RoomModel>> selectProject(IsarProject project) async {
+    final rooms = await _dbService.getRoomsForProject(project.uuid);
     _currentProject = project;
     notifyListeners();
-    return await _dbService.getRoomsForProject(project.uuid);
+    return rooms;
   }
 
   /// Elimina un proyecto por su UUID
   Future<void> deleteProject(String uuid) async {
     _setLoading(true);
-    await _dbService.deleteProject(uuid);
-    if (_currentProject?.uuid == uuid) {
-      _currentProject = null;
+    try {
+      await _dbService.deleteProject(uuid);
+      if (_currentProject?.uuid == uuid) {
+        _currentProject = null;
+      }
+      await loadProjects();
+    } finally {
+      _setLoading(false);
     }
-    await loadProjects();
-    _setLoading(false);
   }
 
   /// Elimina del dispositivo todos los proyectos locales.
