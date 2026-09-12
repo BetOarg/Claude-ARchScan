@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show compute;
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image/image.dart' as image_codec;
@@ -30,6 +32,7 @@ class ImportExportService {
     List<RoomModel> rooms,
     String projectName, {
     ExportDestination destination = ExportDestination.saveToFiles,
+    ui.Rect? sharePositionOrigin,
   }) async {
     final data = PlanExportBuilder.buildJsonData(rooms, projectName);
     final jsonString = const JsonEncoder.withIndent('  ').convert(data);
@@ -40,6 +43,7 @@ class ImportExportService {
       allowedExtension: 'json',
       mimeType: 'application/json',
       destination: destination,
+      sharePositionOrigin: sharePositionOrigin,
     );
   }
 
@@ -49,6 +53,7 @@ class ImportExportService {
     String projectName, {
     required String languageCode,
     ExportDestination destination = ExportDestination.saveToFiles,
+    ui.Rect? sharePositionOrigin,
   }) async {
     final drawing = DxfExportBuilder.build(rooms, languageCode: languageCode);
     final jsonName = PlanExportBuilder.buildJsonFileName(projectName);
@@ -59,6 +64,7 @@ class ImportExportService {
       allowedExtension: 'dxf',
       mimeType: 'image/vnd.dxf',
       destination: destination,
+      sharePositionOrigin: sharePositionOrigin,
     );
   }
 
@@ -68,6 +74,7 @@ class ImportExportService {
     MeasurementSystem measurementSystem, {
     required String languageCode,
     ExportDestination destination = ExportDestination.saveToFiles,
+    ui.Rect? sharePositionOrigin,
   }) {
     final fileName = PlanExportBuilder.buildSvgFileName(projectName);
     final svg = PlanExportBuilder.buildFloorPlanSvg(
@@ -82,6 +89,7 @@ class ImportExportService {
       allowedExtension: 'svg',
       mimeType: 'image/svg+xml',
       destination: destination,
+      sharePositionOrigin: sharePositionOrigin,
     );
   }
 
@@ -94,6 +102,7 @@ class ImportExportService {
     required String languageCode,
     required bool jpeg,
     ExportDestination destination = ExportDestination.saveToFiles,
+    ui.Rect? sharePositionOrigin,
   }) async {
     final svg = PlanExportBuilder.buildFloorPlanSvg(
       rooms,
@@ -148,6 +157,7 @@ class ImportExportService {
         allowedExtension: extension,
         mimeType: jpeg ? 'image/jpeg' : 'image/png',
         destination: destination,
+        sharePositionOrigin: sharePositionOrigin,
       );
     } finally {
       rendered.dispose();
@@ -216,7 +226,7 @@ class ImportExportService {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json', 'svg'],
-        withData: true,
+        withData: false,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -224,6 +234,9 @@ class ImportExportService {
       }
 
       final selected = result.files.single;
+      if (selected.size > PlanExportBuilder.maxImportBytes) {
+        return JsonImportResult.invalid;
+      }
       final fileContent = await _readSelectedText(selected);
       if (fileContent == null) {
         return JsonImportResult.invalid;
@@ -231,8 +244,8 @@ class ImportExportService {
 
       final extension = selected.extension?.toLowerCase();
       final parsed = extension == 'svg'
-          ? PlanExportBuilder.parseProjectSvg(fileContent)
-          : PlanExportBuilder.parseProjectJson(fileContent);
+          ? await compute(PlanExportBuilder.parseProjectSvg, fileContent)
+          : await compute(PlanExportBuilder.parseProjectJson, fileContent);
       if (parsed == null) {
         return JsonImportResult.invalid;
       }
@@ -252,6 +265,7 @@ class ImportExportService {
   static Future<String?> _readSelectedText(PlatformFile selectedFile) async {
     final bytes = selectedFile.bytes;
     if (bytes != null) {
+      if (bytes.length > PlanExportBuilder.maxImportBytes) return null;
       return utf8.decode(bytes);
     }
 
@@ -260,7 +274,14 @@ class ImportExportService {
       return null;
     }
 
-    return File(path).readAsString(encoding: utf8);
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in File(path).openRead()) {
+      if (builder.length + chunk.length > PlanExportBuilder.maxImportBytes) {
+        return null;
+      }
+      builder.add(chunk);
+    }
+    return utf8.decode(builder.takeBytes());
   }
 
   /// Genera el informe técnico y lo guarda fuera de la app.
@@ -269,13 +290,15 @@ class ImportExportService {
     String projectName,
     MeasurementSystem measurementSystem, {
     ExportDestination destination = ExportDestination.saveToFiles,
+    ui.Rect? sharePositionOrigin,
+    String? languageCode,
   }) async {
     final pdfFileName = PlanExportBuilder.buildPdfFileName(projectName);
     final pdf = PlanExportBuilder.buildPdfDocument(
       rooms,
       projectName,
       measurementSystem,
-      languageCode: Platform.localeName,
+      languageCode: languageCode ?? Platform.localeName,
     );
 
     return _deliverFile(
@@ -284,6 +307,7 @@ class ImportExportService {
       allowedExtension: 'pdf',
       mimeType: 'application/pdf',
       destination: destination,
+      sharePositionOrigin: sharePositionOrigin,
     );
   }
 
@@ -293,12 +317,14 @@ class ImportExportService {
     required String allowedExtension,
     required String mimeType,
     required ExportDestination destination,
+    ui.Rect? sharePositionOrigin,
   }) {
     if (destination == ExportDestination.share) {
       return _shareTemporaryFile(
         fileName: fileName,
         bytes: bytes,
         mimeType: mimeType,
+        sharePositionOrigin: sharePositionOrigin,
       );
     }
     return _saveOutsideApp(
@@ -312,14 +338,16 @@ class ImportExportService {
     required String fileName,
     required List<int> bytes,
     required String mimeType,
+    ui.Rect? sharePositionOrigin,
   }) async {
     final directory = await getTemporaryDirectory();
     final file = File('${directory.path}/$fileName');
     await file.writeAsBytes(bytes, flush: true);
-    await Share.shareXFiles([
+    final result = await Share.shareXFiles([
       XFile(file.path, mimeType: mimeType, name: fileName),
-    ]);
-    return true;
+    ], sharePositionOrigin: sharePositionOrigin);
+    // Some destinations cannot report completion; dismissal is never success.
+    return result.status != ShareResultStatus.dismissed;
   }
 
   static Future<bool> _saveOutsideApp({

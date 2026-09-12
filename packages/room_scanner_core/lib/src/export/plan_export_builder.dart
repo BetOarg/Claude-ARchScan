@@ -16,6 +16,11 @@ import '../utils/measurement_units.dart';
 /// los bytes/strings resultantes (`file_picker`, `share_plus`, `printing`,
 /// `path_provider`).
 class PlanExportBuilder {
+  static const int maxImportBytes = 10 * 1024 * 1024;
+  static const int maxImportRooms = 1000;
+  static const int maxImportPoints = 10000;
+  static const int maxImportFeatures = 10000;
+  static const int maxImportPointsPerRoom = 500;
   /// Arma el mapa serializable del proyecto para exportación JSON.
   static Map<String, dynamic> buildJsonData(
     List<RoomModel> rooms,
@@ -73,6 +78,7 @@ class PlanExportBuilder {
   static ({List<RoomModel> rooms, String projectName})? parseProjectSvg(
     String svgString,
   ) {
+    if (svgString.length > maxImportBytes) return null;
     final match = RegExp(
       r'<metadata\s+id="archscan-project"\s+data-format="json-base64-v1"(?:\s+data-generator="ARchScan")?>([A-Za-z0-9+/=\s]+)</metadata>',
     ).firstMatch(svgString);
@@ -93,6 +99,7 @@ class PlanExportBuilder {
   static ({List<RoomModel> rooms, String projectName})? parseProjectJson(
     String jsonString,
   ) {
+    if (jsonString.length > maxImportBytes) return null;
     var source = jsonString;
     if (source.startsWith('\uFEFF')) {
       source = source.substring(1);
@@ -123,8 +130,25 @@ class PlanExportBuilder {
       }
 
       final roomsData = decoded['rooms'];
-      if (roomsData is! List) {
+      if (roomsData is! List || roomsData.length > maxImportRooms) {
         return null;
+      }
+
+      var pointCount = 0;
+      var featureCount = 0;
+      for (final room in roomsData) {
+        if (room is! Map) return null;
+        final points = room['points'];
+        final features = room['features'];
+        if (points is! List || (features != null && features is! List)) {
+          return null;
+        }
+        if (points.length > maxImportPointsPerRoom) return null;
+        pointCount += points.length;
+        featureCount += features is List ? features.length : 0;
+        if (pointCount > maxImportPoints || featureCount > maxImportFeatures) {
+          return null;
+        }
       }
 
       final rawProjectName = decoded['projectName'];

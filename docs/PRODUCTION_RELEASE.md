@@ -2,7 +2,7 @@
 
 ## Modelo de datos
 
-ARchScan funciona sin cuenta y guarda los proyectos únicamente en el dispositivo. Las compilaciones no requieren configuración, claves ni servicios de backend. JSON, PDF y DXF se exportan solo por decisión del usuario.
+ARchScan funciona sin cuenta y guarda los proyectos únicamente en el dispositivo. Las compilaciones no requieren configuración, claves ni servicios de backend. JSON, SVG, PDF, DXF, PNG y JPG se exportan solo por decisión del usuario.
 
 ## Modelo comercial
 
@@ -53,3 +53,7 @@ El verificador no certifica firma, URLs accesibles, compatibilidad binaria ni ap
 
 No publicar hasta que todas las compilaciones estén verdes y las URLs públicas coincidan con la funcionalidad real.
 
+
+## Límites y verificación de exportaciones
+
+La importación admite JSON y SVG producido por ARchScan con metadatos. Límite: 10 MiB, 1000 ambientes, 10000 puntos y 10000 aberturas. El análisis de archivos se ejecuta fuera del hilo de interfaz en dispositivos móviles. Probar cancelación, compartir en iPad y coherencia del idioma de PDF/SVG/DXF. Los archivos externos y las copias temporales compartidas no se eliminan al borrar un proyecto.

@@ -60,6 +60,14 @@ jobs:
           flutter pub get
           flutter pub run build_runner build --delete-conflicting-outputs
 
+      - name: Prepare app and audit repository before signing
+        working-directory: packages/room_scanner_app
+        run: |
+          flutter pub get
+          flutter gen-l10n
+          dart run tool/verify_store_readiness.dart --strict
+          dart run tool/security_audit.dart
+
       - name: Prepare signing
         working-directory: packages/room_scanner_app
         shell: bash
@@ -73,20 +81,13 @@ jobs:
             echo "keyPassword=$ANDROID_KEY_PASSWORD"
           } > android/key.properties
 
-      - name: Validate store readiness
-        working-directory: packages/room_scanner_app
-        run: |
-          dart run tool/verify_store_readiness.dart --strict
-          dart run tool/security_audit.dart
-          cd android
-          ./gradlew :app:verifyProductionSigning
+      - name: Validate production signing
+        working-directory: packages/room_scanner_app/android
+        run: ./gradlew :app:verifyProductionSigning
 
       - name: Build signed App Bundle
         working-directory: packages/room_scanner_app
-        run: |
-          flutter pub get
-          flutter gen-l10n
-          flutter build appbundle --release
+        run: flutter build appbundle --release
 
       - name: Audit final App Bundle
         working-directory: packages/room_scanner_app

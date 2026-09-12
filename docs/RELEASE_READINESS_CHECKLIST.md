@@ -1,10 +1,11 @@
 # Lista de preparación para publicación — ARchScan
 
-## Mejoras futuras pendientes
+## Exportaciones implementadas
 
-- Exportar SVG editable con metadatos completos del proyecto ARchScan.
-- Importar SVG generado por ARchScan sin perder ambientes, paredes,
-  aberturas, medidas ni compatibilidad con proyectos históricos.
+- JSON y SVG de ARchScan permiten recuperar el proyecto con sus metadatos.
+- PDF, DXF 2D, PNG y JPG permiten entregar el plano.
+- Guardar en Archivos y Compartir son destinos disponibles.
+- Revalidar todos los formatos y compartir en iPad con la compilación firmada final.
 
 ## Estado verificable en repositorio
 
@@ -68,6 +69,17 @@
 | PDF técnico y DXF 2D | ✓ | ✓ | ✓ | [ ] |
 | Eliminación de datos locales | ✓ | ✓ | ✓ | [ ] |
 | Textos largos en español e inglés | ✓ | ✓ | ✓ | [ ] |
+
+## Auditoría de lanzamiento — 12/09/2026
+
+- [x] PR #4 de estabilidad de continuaciones fusionado tras CI verde.
+- [ ] Comprobar CI del nuevo candidato de lanzamiento.
+- [ ] Probar Compartir en iPad y cancelación del menú.
+- [ ] Verificar límites de importación (10 MiB, 1000 ambientes, 10000 puntos y 10000 aberturas).
+- [ ] Probar PDF usando el idioma efectivo de la aplicación.
+- [ ] Publicar la política actualizada con SVG, PNG/JPG y caché de archivos compartidos.
+- [ ] Confirmar en Play Console/App Store Connect que el build 4 todavía está disponible; incrementar si ya se utilizó.
+- [ ] Completar evidencia física separada para Basic, ARCore, ARKit y RoomPlan; la confirmación del usuario cubre únicamente lo que probó.
 
 ## Criterio de salida
 
