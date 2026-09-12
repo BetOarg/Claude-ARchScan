@@ -576,6 +576,17 @@ class FloorPlanProvider extends ChangeNotifier {
 
     var roomToAdd = room;
 
+    final anchor = sourceRoom.features[sourceFeatureIndex];
+    bool matches(ARPoint a, ARPoint b) =>
+        (a.x - b.x).abs() < 0.000001 &&
+        (a.z - b.z).abs() < 0.000001;
+    if (anchor.type != reference.featureType ||
+        !matches(anchor.start, reference.globalStart) ||
+        !matches(anchor.end, reference.globalEnd) ||
+        PlanEditGeometry.featureWall(sourceRoom, anchor) < 0) {
+      return false;
+    }
+
     if (roomToAdd.id.trim().isEmpty ||
         _completedRooms.any(
           (existing) => existing.id == roomToAdd.id,

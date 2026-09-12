@@ -5,11 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ScanDraft {
   final RoomModel room;
+  final RoomModel? resumeRoom;
   final ScanContinuationReference? continuationReference;
   final List<ARPoint> basicHistory;
 
   const ScanDraft({
     required this.room,
+    this.resumeRoom,
     required this.continuationReference,
     this.basicHistory = const <ARPoint>[],
   });
@@ -17,6 +19,7 @@ class ScanDraft {
   Map<String, dynamic> toJson() => <String, dynamic>{
         'version': 1,
         'room': room.toJson(),
+        'resumeRoom': resumeRoom?.toJson(),
         'continuationReference':
             continuationReference == null
                 ? null
@@ -28,6 +31,9 @@ class ScanDraft {
     final historyJson = json['basicHistory'] as List<dynamic>?;
 
     return ScanDraft(
+      resumeRoom: json['resumeRoom'] is Map
+          ? RoomModel.fromJson(Map<String, dynamic>.from(json['resumeRoom'] as Map))
+          : null,
       room: RoomModel.fromJson(
         Map<String, dynamic>.from(json['room'] as Map),
       ),
@@ -92,6 +98,15 @@ class ScanDraft {
 class ScanDraftService {
   static const String _keyPrefix = 'scan_draft_v1_';
 
+  static Future<void> _mutations = Future<void>.value();
+  static final Set<String> _deletedIds = <String>{};
+
+  Future<void> _serialize(Future<void> Function() action) {
+    final result = _mutations.then((_) => action());
+    _mutations = result.then<void>((_) {}, onError: (Object error, StackTrace stack) {});
+    return result;
+  }
+
   const ScanDraftService();
 
   String _key(String projectUuid) => '$_keyPrefix$projectUuid';
@@ -99,12 +114,16 @@ class ScanDraftService {
   Future<void> save({
     required String projectUuid,
     required RoomModel room,
+    RoomModel? resumeRoom,
     ScanContinuationReference? continuationReference,
     List<ARPoint> basicHistory = const <ARPoint>[],
   }) async {
+    return _serialize(() async {
     final preferences = await SharedPreferences.getInstance();
+    if (_deletedIds.contains(projectUuid)) throw StateError('Project was deleted.');
     final draft = ScanDraft(
       room: room,
+      resumeRoom: resumeRoom,
       continuationReference: continuationReference,
       basicHistory: basicHistory,
     );
@@ -113,6 +132,8 @@ class ScanDraftService {
       jsonEncode(draft.toJson()),
     );
     if (!saved) throw StateError('Scan draft could not be saved.');
+
+    });
   }
 
   Future<ScanDraft?> load(String projectUuid) async {
@@ -133,14 +154,19 @@ class ScanDraftService {
     }
   }
 
-  Future<void> clear(String projectUuid) async {
+  Future<void> clear(String projectUuid, {bool permanentlyDeleted = false}) async {
+    if (permanentlyDeleted) _deletedIds.add(projectUuid);
+    return _serialize(() async {
     final preferences = await SharedPreferences.getInstance();
     if (!await preferences.remove(_key(projectUuid))) {
       throw StateError('Scan draft could not be deleted.');
     }
+
+    });
   }
 
   Future<void> clearAll() async {
+    return _serialize(() async {
     final preferences = await SharedPreferences.getInstance();
     final keys = preferences.getKeys().where((key) => key.startsWith(_keyPrefix)).toList();
     for (final key in keys) {
@@ -148,5 +174,7 @@ class ScanDraftService {
         throw StateError('Scan draft could not be deleted.');
       }
     }
+
+    });
   }
 }

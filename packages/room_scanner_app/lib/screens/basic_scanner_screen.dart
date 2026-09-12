@@ -84,6 +84,7 @@ class _BasicScannerScreenState
   bool _scannerInitialized = false;
   bool _roomStarted = false;
   ScanContinuationReference? _activeContinuationReference;
+  RoomModel? _activeResumeRoom;
   ScannerProvider? _draftProvider;
   Timer? _draftSaveTimer;
   String? _lastDraftFingerprint;
@@ -97,6 +98,7 @@ class _BasicScannerScreenState
     super.initState();
 
     _activeContinuationReference = widget.continuationReference;
+    _activeResumeRoom = widget.resumeRoom;
     _shouldResumeCamera =
         WidgetsBinding.instance.lifecycleState == null ||
             WidgetsBinding.instance.lifecycleState ==
@@ -262,7 +264,7 @@ class _BasicScannerScreenState
   }
 
   Future<void> _restoreOrStartRoom(ScannerProvider provider) async {
-    final resumeRoom = widget.resumeRoom;
+    final resumeRoom = _activeResumeRoom;
     if (resumeRoom != null) {
       provider.restoreCurrentRoom(resumeRoom);
       _scannerAdapter.seedPath(
@@ -326,6 +328,7 @@ class _BasicScannerScreenState
 
     if (continueDraft == true) {
       _activeContinuationReference = draft.continuationReference;
+      _activeResumeRoom = draft.resumeRoom;
       provider.restoreCurrentRoom(draft.room);
       final history = draft.basicHistory.isNotEmpty
           ? draft.basicHistory
@@ -382,6 +385,7 @@ class _BasicScannerScreenState
       _scanDraftService.save(
         projectUuid: widget.projectUuid,
         room: room,
+        resumeRoom: _activeResumeRoom,
         continuationReference: _activeContinuationReference,
         basicHistory: history,
       ).then((_) {
@@ -401,6 +405,7 @@ class _BasicScannerScreenState
     await _scanDraftService.save(
       projectUuid: widget.projectUuid,
       room: room,
+      resumeRoom: _activeResumeRoom,
       continuationReference: _activeContinuationReference,
       basicHistory: _basicHistory(),
     );
@@ -863,7 +868,7 @@ class _BasicScannerScreenState
           features: features,
           previousRooms:
               _activeContinuationReference == null &&
-                      widget.resumeRoom == null
+                      _activeResumeRoom == null
                   ? const <RoomModel>[]
                   : completedRooms,
           continuationReference:
@@ -2785,7 +2790,7 @@ class _BasicScannerScreenState
       return;
     }
 
-    final resumeRoom = widget.resumeRoom;
+    final resumeRoom = _activeResumeRoom;
     final resumesExistingRoom = resumeRoom != null &&
         floorPlanProvider.completedRooms.any(
           (existing) => existing.id == resumeRoom.id,

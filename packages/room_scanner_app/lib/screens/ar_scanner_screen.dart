@@ -70,6 +70,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   final AppMode _currentMode = AppMode.wall;
   bool _placingOpening = false;
   ScanContinuationReference? _activeContinuationReference;
+  RoomModel? _activeResumeRoom;
   ScannerProvider? _draftProvider;
   Timer? _draftSaveTimer;
   String? _lastDraftFingerprint;
@@ -81,7 +82,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   vector.Vector3? _continuationSessionEnd;
 
   bool get _requiresContinuationCalibration =>
-      _activeContinuationReference != null || widget.resumeRoom != null;
+      _activeContinuationReference != null || _activeResumeRoom != null;
 
   bool get _isContinuationCalibrated =>
       !_requiresContinuationCalibration ||
@@ -128,6 +129,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     super.initState();
 
     _activeContinuationReference = widget.continuationReference;
+    _activeResumeRoom = widget.resumeRoom;
     _appIsResumed =
         WidgetsBinding.instance.lifecycleState == null ||
             WidgetsBinding.instance.lifecycleState ==
@@ -176,7 +178,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   }
 
   Future<void> _restoreOrStartRoom(ScannerProvider provider) async {
-    final resumeRoom = widget.resumeRoom;
+    final resumeRoom = _activeResumeRoom;
     if (resumeRoom != null) {
       provider.restoreCurrentRoom(resumeRoom);
       return;
@@ -228,6 +230,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
     if (continueDraft == true) {
       _activeContinuationReference = draft.continuationReference;
+      _activeResumeRoom = draft.resumeRoom;
       provider.restoreCurrentRoom(draft.room);
       return;
     }
@@ -261,6 +264,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       _scanDraftService.save(
         projectUuid: widget.projectUuid,
         room: room,
+        resumeRoom: _activeResumeRoom,
         continuationReference: _activeContinuationReference,
       ).then((_) {
         _lastDraftFingerprint = fingerprint;
@@ -279,6 +283,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     await _scanDraftService.save(
       projectUuid: widget.projectUuid,
       room: room,
+      resumeRoom: _activeResumeRoom,
       continuationReference: _activeContinuationReference,
     );
   }
@@ -645,7 +650,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                     points: provider.currentRoom?.points ?? const <ARPoint>[],
                     features: provider.currentRoom?.features ?? const <WallFeature>[],
                     previousRooms: _activeContinuationReference == null &&
-                            widget.resumeRoom == null
+                            _activeResumeRoom == null
                         ? const <RoomModel>[]
                         : context
                             .watch<FloorPlanProvider>()
@@ -1096,7 +1101,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
   String _continuationInstruction() {
     final l10n = AppLocalizations.of(context)!;
-    final resumesRoom = widget.resumeRoom != null;
+    final resumesRoom = _activeResumeRoom != null;
 
     if (_continuationSessionStart == null) {
       return resumesRoom
@@ -1116,7 +1121,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   }
 
   String _continuationCaptureLabel(AppLocalizations l10n) {
-    if (widget.resumeRoom != null) {
+    if (_activeResumeRoom != null) {
       return _continuationSessionStart == null
           ? l10n.markPreviousVertex
           : l10n.markStartVertex;
@@ -1167,8 +1172,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       return;
     }
 
-    if (widget.resumeRoom != null) {
-      final points = widget.resumeRoom!.points;
+    if (_activeResumeRoom != null) {
+      final points = _activeResumeRoom!.points;
       final calibration = points.length < 2
           ? null
           : ResumeRoomCalibration.tryCreate(
@@ -1279,8 +1284,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     final start = _continuationSessionStart!;
     final end = _continuationSessionEnd!;
 
-    if (widget.resumeRoom != null) {
-      final points = widget.resumeRoom!.points;
+    if (_activeResumeRoom != null) {
+      final points = _activeResumeRoom!.points;
       if (points.length < 2) return sessionPoint;
       final calibration = ResumeRoomCalibration.tryCreate(
         modelPrevious: points[points.length - 2],
@@ -1664,7 +1669,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       return;
     }
 
-    final resumeRoom = widget.resumeRoom;
+    final resumeRoom = _activeResumeRoom;
     final resumesExistingRoom = resumeRoom != null &&
         floorPlanProvider.completedRooms.any(
           (room) => room.id == resumeRoom.id,
