@@ -9,7 +9,7 @@ ARchScan permite medir ambientes, paredes, puertas y ventanas; conectar espacios
 ## Estado y modelo comercial
 
 - Versión declarada: **2.7.0+4**. Núcleo de dominio: **1.0.0**.
-- Versión actual destinada a pruebas: gratuita, sin anuncios y sin compras integradas.
+- Candidato de beta abierta: gratuito, sin anuncios y sin compras integradas. La publicación depende del AAB/IPA firmado y de la configuración de las tiendas.
 - Modelo previsto: **freemium sin anuncios**, con funciones locales esenciales gratuitas y un desbloqueo Pro opcional.
 - **Pro todavía no está implementado ni a la venta.** Funciones, precio y modalidad de cobro requieren definición antes de integrar compras.
 - No se agregaron límites a los proyectos ni bloqueos a las funciones existentes.
@@ -64,6 +64,8 @@ Las conexiones se protegen: no se desplaza silenciosamente una abertura conectad
 | SVG | Sí | Sí* | Plano vectorial editable y respaldo ARchScan embebido |
 | PDF | Sí | No | Plano vectorial e informe técnico |
 | DXF 2D | Sí | No | Geometría editable para herramientas CAD |
+| PNG | Sí | No | Imagen del plano en alta resolución |
+| JPG | Sí | No | Imagen del plano con fondo blanco |
 
 - Todos los formatos se pueden **guardar en Archivos** o **compartir** mediante las aplicaciones instaladas.
 - Los archivos guardados fuera de ARchScan permanecen en el dispositivo aunque se desinstale la aplicación.
@@ -95,7 +97,7 @@ Se conserva el formato histórico y el orden de las enumeraciones persistidas. A
 | `packages/room_scanner_core` | Modelos, geometría, persistencia Isar y exportaciones/importaciones JSON/SVG, PDF y DXF |
 | `packages/room_scanner_app` | Flutter, estado, pantallas, localización, cámara y adaptadores AR |
 
-Las herramientas de geometría y el editor común no dependen del modo de captura. Esto no equivale a haber probado cada dispositivo AR.
+Las herramientas de geometría y el editor común no dependen del modo de captura. Basic, ARCore y ARKit comparten el modelo del plano y las herramientas posteriores; RoomPlan se integra como captura nativa compatible cuando está disponible. La disponibilidad y precisión dependen del dispositivo.
 
 ## Desarrollo
 
@@ -137,19 +139,22 @@ Ver [guía de publicación](docs/PRODUCTION_RELEASE.md), [lista de preparación]
 
 No se ejecutan ni supervisan workflows automáticamente como parte de esta documentación. Los secretos de firma, la cuenta de Play Console y la aprobación de Google requieren intervención del titular.
 
-## Validación y pendientes
+## Estado de lanzamiento
 
-El bloque de edición táctil y la geometría cuentan con pruebas automatizadas. El titular confirmó las compilaciones anteriores en verde. La cantidad exacta de pruebas cambia con cada mejora y una ejecución en CI no certifica ausencia de errores en el teléfono.
+El titular confirmó el funcionamiento de los flujos principales y el último CI quedó verde. Las correcciones de persistencia, continuación entre esquinas, conservación de paredes, navegación del plano, acciones 2×2, compartir en iPad e importación segura están integradas en `main`.
 
-Pendientes principales:
+Antes de enviar la beta a revisión todavía corresponde:
 
-- Validación física completa de Basic, ARCore y ARKit.
-- Confirmar que no reaparece la pantalla roja al cerrar o editar diálogos.
-- Validar físicamente la continuidad sin giro de orientación, incluida la selección táctil entre esquinas compartidas, el cierre correcto y la conservación de la pared original.
-- Pruebas de guardado, reapertura, deshacer/rehacer y exportación de contornos abiertos.
-- Ejecutar el workflow firmado: conserva SHA-256, identidad de compilación, manifiesto fusionado, permisos y auditoría estricta de alineación de bibliotecas nativas para páginas de 16 KB. Luego completar los formularios de tienda.
-- Definir e implementar Pro antes de ofrecer compras.
-- Importación DXF, si se incorpora en una etapa posterior.
+- crear y custodiar la clave privada de carga de Android;
+- configurar los cuatro secretos de firma en GitHub Actions;
+- generar el AAB firmado mediante `ARchScan - Android Store Build` y conservar su auditoría;
+- comprobar en el AAB final firma, permisos, versión y bibliotecas nativas de 16 KB;
+- configurar Play App Signing, ficha, Seguridad de los datos, clasificación, países y canal de prueba;
+- preparar capturas obtenidas de la compilación final;
+- para iOS, configurar certificados, perfil, Team ID y App Store Connect antes de generar el IPA;
+- mantener públicas y coherentes las páginas de soporte, privacidad, eliminación local y guía de uso.
+
+Un CI verde demuestra que el código compila y pasa las pruebas automatizadas configuradas; no equivale a una aprobación de Google Play o App Store.
 
 ## Contacto
 
@@ -166,11 +171,3 @@ No se publican teléfono ni domicilio en estos documentos. Play Console puede re
 Preservá proyectos históricos, no publiques secretos y agregá pruebas para los cambios de geometría, persistencia y unidades. Los textos de interfaz deben utilizar gen-l10n en español e inglés.
 
 Código distribuido bajo [licencia MIT](LICENSE). La preparación freemium no cambia la licencia del repositorio.
-
-## Launch candidate / Candidato de lanzamiento — 2026-09-12
-
-Exports: JSON, SVG with project metadata, PDF, DXF 2D, PNG and JPG. Imports: JSON and ARchScan-generated SVG; external SVG without project metadata is unsupported. Files can be saved outside the app or shared. Import limits: 10 MiB, 1000 rooms, 10000 points and 10000 openings. JSON/SVG preserve project data; PDF/DXF/PNG/JPG are deliverables, not complete backups. Sharing can leave temporary cache copies; deleting projects does not delete external exports.
-
-Exportaciones: JSON, SVG con metadatos del proyecto, PDF, DXF 2D, PNG y JPG. Importación: JSON y SVG generado por ARchScan; SVG externo sin metadatos no compatible. Guardar en Archivos y Compartir disponibles. Límites de importación: 10 MiB, 1000 ambientes, 10000 puntos y 10000 aberturas. JSON/SVG recuperan el proyecto; PDF/DXF/PNG/JPG son entregables, no copias completas. Borrar proyectos no borra archivos externos ni garantiza limpiar inmediatamente la caché de archivos compartidos.
-
-Do not submit until final CI, production signatures, native-library compatibility, public policy/support URLs and physical tests are verified. No enviar hasta verificar CI final, firmas de producción, bibliotecas nativas, URLs públicas y pruebas físicas. See [release checklist](docs/RELEASE_READINESS_CHECKLIST.md).
