@@ -845,6 +845,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                 Row(
                   children: [
                     IconButton.filledTonal(
+                      tooltip: l10n.undoScanEdit,
                       onPressed:
                           provider.canUndo && !_placingOpening
                               ? () {
@@ -869,7 +870,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                       ),
                     ),
 
-                    IconButton(
+                    IconButton.filledTonal(
                       tooltip: l10n.redoScanEdit,
                       onPressed: provider.canRedo && !_placingOpening ? () {
                         setState(() {
@@ -879,6 +880,10 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                         provider.redoEdit();
                       } : null,
                       icon: const Icon(Icons.redo),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.black87,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                     const SizedBox(width: 12),
 
@@ -942,6 +947,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                     const SizedBox(width: 12),
 
                     IconButton.filled(
+                      tooltip: l10n.closeRoom,
                       onPressed:
                           provider.currentPointsCount >=
                                   3
