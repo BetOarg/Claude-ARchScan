@@ -769,12 +769,14 @@ class _ARScannerScreenState extends State<ARScannerScreen>
           // ============================================================
 
           Positioned(
-            bottom: 24,
-            left: 16,
-            right: 16,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 PopupMenuButton<MeasurementSystem>(
                   tooltip: l10n.measurementSystem,
                   initialValue: measurementSystem,
@@ -963,7 +965,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                     ),
                   ],
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
