@@ -152,15 +152,6 @@ class ARScannerAdapter implements ScannerAdapter {
     return vector.Vector3(x.toDouble(), y.toDouble(), z.toDouble());
   }
 
-  /// Precisión estimada.
-  ///
-  /// ARCore/ARKit no necesariamente entregan aquí una precisión métrica
-  /// directa mediante este plugin, por lo que no inventamos una precisión
-  /// falsa. El valor 0 significa "desconocida".
-  double _estimateAccuracy() {
-    return 0.0;
-  }
-
   vector.Vector3? get lastPosition => _lastPosition;
 
   /// Notifica al adapter que el tracking se encuentra operativo.
