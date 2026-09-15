@@ -5,7 +5,6 @@ import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
-import '../utils/ar_stability_filter.dart';
 import '../engine/scanner_adapter.dart';
 import '../models/scanner_mode.dart';
 import '../models/scanner_point.dart';
@@ -24,8 +23,6 @@ class ARScannerAdapter implements ScannerAdapter {
   ARSessionManager? _sessionManager;
   ARObjectManager? _objectManager;
   MethodChannel? _androidSessionChannel;
-
-  final ARStabilityFilter _stabilityFilter = ARStabilityFilter();
 
   bool _initialized = false;
   bool _tracking = false;
@@ -114,13 +111,13 @@ class ARScannerAdapter implements ScannerAdapter {
 
     _lastPosition = translation;
 
-    final filtered =
-        _stabilityFilter.filter(translation) ?? translation;
-
+    // Cada llamada representa una esquina distinta, no muestras sucesivas de
+    // una misma posición. Aplicar un EMA entre capturas reduce artificialmente
+    // la pared (con alpha 0.3, 1.10 m se convertía en 0.33 m).
     return ScannerPoint(
-      x: filtered.x,
-      y: filtered.y,
-      z: filtered.z,
+      x: translation.x,
+      y: translation.y,
+      z: translation.z,
       accuracy: _estimateAccuracy(),
       source: PointSource.ar,
     );
