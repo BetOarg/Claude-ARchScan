@@ -86,6 +86,7 @@
 - [x] Basic y ARCore validados físicamente por el responsable del lanzamiento.
 - [ ] ARKit y RoomPlan continúan sin validación física; no presentarlos como aprobados.
 - [x] Detectada y corregida la invasión de la navegación del sistema por los controles inferiores de ARCore mediante `SafeArea`.
+- [x] Acciones principales de Basic/ARCore con objetivos táctiles mínimos de 48 × 48 dp y etiquetas accesibles.
 - [x] El APK de prueba del commit `eddaee11bf276b09993d527e3998feef244655dd` fue inspeccionado: identidad y firma de prueba correctas.
 - [x] El mismo APK reveló permisos transitivos `RECORD_AUDIO` e `INTERNET`; el candidato queda rechazado y ambos permisos se eliminan explícitamente del manifiesto fusionado.
 - [ ] Generar un APK posterior, comprobar que solo conserva `CAMERA` más permisos internos del paquete y repetir Basic/ARCore en el dispositivo.
