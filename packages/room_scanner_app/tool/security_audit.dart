@@ -148,21 +148,25 @@ void _verifyPermissions(Directory root, List<String> errors) {
     '${root.path}/packages/room_scanner_app/android/app/src/main/'
     'AndroidManifest.xml',
   ).readAsStringSync();
-  final permissionPattern = RegExp(
-    r'<uses-permission\s+android:name="([^"]+)"',
-  );
-  final permissions = permissionPattern
-      .allMatches(manifest)
-      .map((match) => match.group(1))
-      .whereType<String>()
-      .toSet();
-
-  const expectedPermissions = {'android.permission.CAMERA'};
-  if (permissions.length != expectedPermissions.length ||
-      !permissions.containsAll(expectedPermissions)) {
-    errors.add(
-      'Permisos Android inesperados: ${permissions.join(', ')}.',
+  if (!manifest.contains(
+    '<uses-permission android:name="android.permission.CAMERA" />',
+  )) {
+    errors.add('Falta el permiso funcional de cámara en Android.');
+  }
+  for (final permission in [
+    'android.permission.RECORD_AUDIO',
+    'android.permission.INTERNET',
+  ]) {
+    final removalPattern = RegExp(
+      '<uses-permission\\s+android:name="$permission"\\s+'
+      'tools:node="remove"\\s*/>',
+      multiLine: true,
     );
+    if (!removalPattern.hasMatch(manifest)) {
+      errors.add(
+        '$permission debe eliminarse explícitamente del manifiesto fusionado.',
+      );
+    }
   }
 
   if (!manifest.contains(

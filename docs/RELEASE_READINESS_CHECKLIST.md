@@ -81,6 +81,32 @@
 - [ ] Confirmar en Play Console/App Store Connect que el build 4 todavía está disponible; incrementar si ya se utilizó.
 - [ ] Completar evidencia física separada para Basic, ARCore, ARKit y RoomPlan; la confirmación del usuario cubre únicamente lo que probó.
 
+## Revisión final — 15/09/2026
+
+- [x] Basic y ARCore validados físicamente por el responsable del lanzamiento.
+- [ ] ARKit y RoomPlan continúan sin validación física; no presentarlos como aprobados.
+- [x] Detectada y corregida la invasión de la navegación del sistema por los controles inferiores de ARCore mediante `SafeArea`.
+- [x] Acciones principales de Basic/ARCore con objetivos táctiles mínimos de 48 × 48 dp y etiquetas accesibles.
+- [x] El APK de prueba del commit `eddaee11bf276b09993d527e3998feef244655dd` fue inspeccionado: identidad y firma de prueba correctas.
+- [x] El mismo APK reveló permisos transitivos `RECORD_AUDIO` e `INTERNET`; el candidato queda rechazado y ambos permisos se eliminan explícitamente del manifiesto fusionado.
+- [ ] Generar un APK posterior, comprobar que solo conserva `CAMERA` más permisos internos del paquete y repetir Basic/ARCore en el dispositivo.
+- [ ] Generar y auditar el AAB firmado de producción; el APK debug no sustituye este control.
+- [ ] Generar y auditar el archive/IPA firmado de iOS y ejecutar la matriz ARKit/RoomPlan.
+- [x] Inicio, soporte y privacidad responden públicamente sin autenticación.
+- [ ] La política pública debe mencionar expresamente JPG y las copias temporales de caché al compartir, igual que el binario y las fichas.
+- [ ] Activar protección de `main`; actualmente la rama no está protegida y no hay rulesets activos.
+- [ ] Activar eliminación automática de ramas fusionadas después de proteger `main`.
+
+## Respaldo y recuperación de una publicación fallida
+
+1. Antes de enviar, conservar el SHA del commit, SHA-256 del AAB/IPA, informes de permisos/firma y exportaciones JSON de proyectos históricos usados en regresión.
+2. Publicar primero en prueba interna/TestFlight y promover exactamente el mismo artefacto; no reconstruir entre validación y promoción.
+3. Usar despliegue gradual en Google Play y publicación manual o por fases en App Store Connect.
+4. Si aparece una regresión, detener la distribución. No reutilizar el número de compilación rechazado.
+5. Corregir desde una rama creada sobre el tag del lanzamiento, incrementar el build number y repetir la auditoría completa.
+6. Si la versión ya llegó a usuarios, publicar un hotfix compatible con la base local. No degradar esquemas Isar ni borrar proyectos.
+7. Mantener disponible la versión estable anterior en los canales que permitan detener o reemplazar la entrega; Apple no permite volver a un binario anterior como rollback directo.
+
 ## Criterio de salida
 
 No enviar a revisión hasta que todos los jobs de CI estén verdes, la compilación firmada coincida con la probada, no queden placeholders, la matriz física tenga evidencia, las URL públicas sean accesibles sin autenticación y la eliminación local funcione. La página web explica cómo eliminar datos y contactar a soporte; no ofrece borrado remoto de proyectos.

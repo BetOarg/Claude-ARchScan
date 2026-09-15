@@ -113,6 +113,17 @@ jobs:
           cp "$manifest" "$report/AndroidManifest.xml"
           grep -o 'uses-permission[^>]*' "$manifest"             | sort -u > "$report/permissions.txt" || true
 
+          grep -Fq 'android.permission.CAMERA' "$report/permissions.txt" || {
+            echo "::error::El AAB final no declara el permiso de cámara"
+            exit 1
+          }
+
+          if grep -Eq 'android.permission.(RECORD_AUDIO|INTERNET)' \
+              "$report/permissions.txt"; then
+            echo "::error::El AAB contiene permisos incompatibles con la declaración de privacidad"
+            exit 1
+          fi
+
           unzip -q "$aab" 'base/lib/*/*.so' -d "$report/native"
           find "$report/native" -type f -name '*.so'             | sort > "$report/native-libraries.txt"
 

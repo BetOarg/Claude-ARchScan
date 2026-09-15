@@ -2,6 +2,17 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <!--
+      camera and ar_flutter_plugin declare these transitively. ARchScan never
+      records audio and does not make network requests, so keep them out of the
+      merged manifest and the store privacy surface.
+    -->
+    <uses-permission
+        android:name="android.permission.RECORD_AUDIO"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.INTERNET"
+        tools:node="remove" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.ar" android:required="false" tools:replace="android:required" />

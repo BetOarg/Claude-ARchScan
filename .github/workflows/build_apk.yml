@@ -130,6 +130,17 @@ jobs:
               exit 1
             }
 
+          grep -Fq "android.permission.CAMERA" "$REPORT_DIR/permissions.txt" || {
+              echo "El APK final no declara el permiso de cámara."
+              exit 1
+            }
+
+          if grep -Eq "android.permission.(RECORD_AUDIO|INTERNET)" \
+              "$REPORT_DIR/permissions.txt"; then
+            echo "El APK final contiene permisos incompatibles con la declaración de privacidad."
+            exit 1
+          fi
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

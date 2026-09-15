@@ -1464,8 +1464,8 @@ class _BasicScannerScreenState
     final enabled = !_processing && provider.canUndo;
 
     return SizedBox(
-      width: 42,
-      height: 44,
+      width: 48,
+      height: 48,
       child: IconButton(
         tooltip: l10n.undoScanEdit,
         onPressed: enabled
@@ -1576,8 +1576,9 @@ class _BasicScannerScreenState
         provider.currentPointsCount >= 3;
 
     return SizedBox(
-      width: 44,
-      height: 44,      child: IconButton(
+      width: 48,
+      height: 48,      child: IconButton(
+        tooltip: AppLocalizations.of(context)!.closeRoom,
         onPressed: enabled && !_processing
             ? () => _closeRoom(
                   provider,
