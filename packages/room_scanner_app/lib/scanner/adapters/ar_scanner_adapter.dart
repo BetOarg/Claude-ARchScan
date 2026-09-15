@@ -114,11 +114,15 @@ class ARScannerAdapter implements ScannerAdapter {
     // Cada llamada representa una esquina distinta, no muestras sucesivas de
     // una misma posición. Aplicar un EMA entre capturas reduce artificialmente
     // la pared (con alpha 0.3, 1.10 m se convertía en 0.33 m).
+    return scannerPointFromTranslation(translation);
+  }
+
+  static ScannerPoint scannerPointFromTranslation(vector.Vector3 translation) {
     return ScannerPoint(
       x: translation.x,
       y: translation.y,
       z: translation.z,
-      accuracy: _estimateAccuracy(),
+      accuracy: 0.0,
       source: PointSource.ar,
     );
   }
