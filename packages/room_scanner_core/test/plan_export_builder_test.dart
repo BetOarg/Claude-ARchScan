@@ -152,7 +152,7 @@ void main() {
         [room],
         MeasurementSystem.metric,
       );
-      expect(svg, contains('x1="108.00" y1="72.00" x2="108.00" y2="25.00"'));
+      expect(svg, contains('x1="108.00" y1="72.00" x2="108.00" y2="41.00"'));
     });
 
     test('repositions coincident dimensions instead of stacking them', () {
@@ -181,8 +181,8 @@ void main() {
         MeasurementSystem.imperial,
         languageCode: 'en',
       );
-      expect(svg, contains('ft'));
-      expect(svg, contains('in'));
+      expect(svg, contains('′'));
+      expect(svg, contains('″'));
     });
 
     test('preserves door interior/exterior distinction', () {
@@ -235,7 +235,7 @@ void main() {
       expect(RegExp('data-feature-id="shared-window"').allMatches(svg), hasLength(1));
     });
 
-    test('snaps near-right angles only in technical geometry', () {
+    test('preserves near-right-angle technical geometry without altering persisted data', () {
       final room = RoomModel(
         id: 'angled',
         name: 'Angulado',
@@ -253,7 +253,8 @@ void main() {
         [room],
         MeasurementSystem.metric,
       );
-      expect(svg, contains('792.00,528.00 108.00,528.00'));
+      expect(svg, contains('points="108.04,72.00 791.96,72.00 791.96,528.00 108.04,528.00"'));
+      expect(room.points[2].x, 3.03);
     });
   });
 
