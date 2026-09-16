@@ -66,7 +66,9 @@ class PlanExportBuilder {
   static ({List<RoomModel> rooms, String projectName})? parseProjectJson(String jsonString) {
     if (jsonString.length > maxImportBytes) return null;
     var source = jsonString;
-    if (source.startsWith('\uFEFF')) source = source.substring(1);
+    if (source.startsWith('\uFEFF')) {
+      source = source.substring(1);
+    }
     if (source.trim().isEmpty) return null;
     try {
       final decoded = jsonDecode(source);
@@ -93,7 +95,9 @@ class PlanExportBuilder {
         if (pointCount > maxImportPoints || featureCount > maxImportFeatures) return null;
       }
       final rawProjectName = decoded['projectName'];
-      if (rawProjectName != null && rawProjectName is! String) return null;
+      if (rawProjectName != null && rawProjectName is! String) {
+        return null;
+      }
       final projectName = rawProjectName as String? ?? 'Proyecto Importado';
       final rooms = roomsData
           .map((room) => RoomModel.fromJson(Map<String, dynamic>.from(room as Map)))
@@ -509,8 +513,12 @@ class _SvgDimensionLayout {
     required double dimensionLength,
   }) {
     final offsets = <double>[];
-    for (var step = 0; step < 16; step++) offsets.add(preferredOffset + step * 16.0);
-    for (var step = 0; step < 16; step++) offsets.add(-preferredOffset - step * 16.0);
+    for (var step = 0; step < 16; step++) {
+      offsets.add(preferredOffset + step * 16.0);
+    }
+    for (var step = 0; step < 16; step++) {
+      offsets.add(-preferredOffset - step * 16.0);
+    }
 
     _SvgPoint? selectedCenter;
     _SvgDimensionRect? selectedRect;
