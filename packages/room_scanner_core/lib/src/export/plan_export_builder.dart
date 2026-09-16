@@ -4,25 +4,23 @@ import 'dart:math' as math;
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/room_model.dart';
-import '../geometry/geometry_service.dart'; // <-- Añadir esta importación (ajusta la ruta según la estructura de carpetas)
+import '../geometry/geometry_service.dart';
 import '../utils/measurement_units.dart';
 import 'technical_drawing_geometry.dart';
 
-/// Construye los datos y documentos de exportación/importación del plano
-/// (JSON, SVG del plano y PDF técnico) de forma puramente computacional.
+/// Builds ARchScan project data and technical drawing exports.
 ///
-/// No realiza ningún I/O: no escribe archivos, no abre selectores, no
-/// comparte ni imprime. Eso es responsabilidad de la capa de aplicación
-/// (`room_scanner_app`), que consume estos métodos y decide qué hacer con
-/// los bytes/strings resultantes (`file_picker`, `share_plus`, `printing`,
-/// `path_provider`).
+/// Visual exports contain only the architectural drawing itself: walls,
+/// openings and dimensional annotations. Project names, room names and
+/// report/legend text are kept only in machine-readable metadata where
+/// required for import compatibility.
 class PlanExportBuilder {
   static const int maxImportBytes = 10 * 1024 * 1024;
   static const int maxImportRooms = 1000;
   static const int maxImportPoints = 10000;
   static const int maxImportFeatures = 10000;
   static const int maxImportPointsPerRoom = 500;
-  /// Arma el mapa serializable del proyecto para exportación JSON.
+
   static Map<String, dynamic> buildJsonData(
     List<RoomModel> rooms,
     String projectName,
@@ -37,31 +35,21 @@ class PlanExportBuilder {
     };
   }
 
-  /// Construye un nombre de archivo válido para Android, iOS y los destinos
-  /// habituales del menú de compartir.
   static String buildJsonFileName(String projectName) {
     var safeName = projectName.trim();
-
     safeName = safeName.replaceAll(
       RegExp(r'[<>:"/\\|?*\x00-\x1F]'),
       '_',
     );
     safeName = safeName.replaceAll(RegExp(r'\s+'), ' ');
     safeName = safeName.replaceAll(RegExp(r'[. ]+$'), '');
-
-    if (safeName.isEmpty) {
-      safeName = 'Plano 2D';
-    }
-
+    if (safeName.isEmpty) safeName = 'Plano 2D';
     if (safeName.length > 80) {
       safeName = safeName.substring(0, 80).trimRight();
     }
-
     return '$safeName.json';
   }
 
-  /// Construye un nombre seguro para guardar o compartir el PDF desde el
-  /// diálogo nativo de Android o iOS.
   static String buildPdfFileName(String projectName) {
     final jsonFileName = buildJsonFileName(projectName);
     final baseName = jsonFileName.substring(
@@ -92,28 +80,17 @@ class PlanExportBuilder {
     }
   }
 
-  /// Parsea el contenido de un archivo JSON de proyecto previamente
-  /// exportado. Devuelve `null` si el contenido no tiene el formato
-  /// esperado; no lanza excepciones para que la capa de app decida cómo
-  /// informar el error (esto reemplaza el `try/catch` silencioso que antes
-  /// vivía junto al `file_picker`).
   static ({List<RoomModel> rooms, String projectName})? parseProjectJson(
     String jsonString,
   ) {
     if (jsonString.length > maxImportBytes) return null;
     var source = jsonString;
-    if (source.startsWith('\uFEFF')) {
-      source = source.substring(1);
-    }
-    if (source.trim().isEmpty) {
-      return null;
-    }
+    if (source.startsWith('\uFEFF')) source = source.substring(1);
+    if (source.trim().isEmpty) return null;
 
     try {
       final decoded = jsonDecode(source);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
-      }
+      if (decoded is! Map<String, dynamic>) return null;
 
       final formatVersion = decoded['formatVersion'];
       if (formatVersion != null &&
@@ -126,9 +103,7 @@ class PlanExportBuilder {
       }
 
       final lengthUnit = decoded['lengthUnit'];
-      if (lengthUnit != null && lengthUnit != 'meters') {
-        return null;
-      }
+      if (lengthUnit != null && lengthUnit != 'meters') return null;
 
       final roomsData = decoded['rooms'];
       if (roomsData is! List || roomsData.length > maxImportRooms) {
@@ -153,11 +128,8 @@ class PlanExportBuilder {
       }
 
       final rawProjectName = decoded['projectName'];
-      if (rawProjectName != null && rawProjectName is! String) {
-        return null;
-      }
-      final projectName =
-          rawProjectName as String? ?? 'Proyecto Importado';
+      if (rawProjectName != null && rawProjectName is! String) return null;
+      final projectName = rawProjectName as String? ?? 'Proyecto Importado';
 
       final rooms = roomsData
           .map(
@@ -167,10 +139,7 @@ class PlanExportBuilder {
           )
           .toList(growable: false);
 
-      if (rooms.any((room) => !_hasFiniteGeometry(room))) {
-        return null;
-      }
-
+      if (rooms.any((room) => !_hasFiniteGeometry(room))) return null;
       return (rooms: rooms, projectName: projectName);
     } on FormatException {
       return null;
@@ -187,10 +156,7 @@ class PlanExportBuilder {
     bool pointIsFinite(ARPoint point) =>
         point.x.isFinite && point.y.isFinite && point.z.isFinite;
 
-    if (!room.points.every(pointIsFinite)) {
-      return false;
-    }
-
+    if (!room.points.every(pointIsFinite)) return false;
     for (final feature in room.features) {
       if (!pointIsFinite(feature.start) ||
           !pointIsFinite(feature.end) ||
@@ -201,77 +167,40 @@ class PlanExportBuilder {
         return false;
       }
     }
-
     return true;
   }
 
-  /// Genera el documento PDF completo del informe técnico del plano.
-  /// No lo imprime ni lo comparte: eso es responsabilidad de `app`
-  /// (`Printing.layoutPdf`).
+  /// Generates a PDF containing only the technical floor plan.
+  /// Project identity remains PDF metadata and is never rendered as text.
   static pw.Document buildPdfDocument(
     List<RoomModel> rooms,
     String projectName,
     MeasurementSystem measurementSystem, {
     String languageCode = 'es',
   }) {
-    final labels = _PdfLabels.forLanguage(languageCode);
     final pdf = pw.Document(
       title: projectName.trim().isEmpty ? 'Plano 2D' : projectName.trim(),
       author: 'ARchScan',
       creator: 'ARchScan',
       producer: 'ARchScan',
-      subject: labels.documentSubject,
-      keywords: labels.documentKeywords,
+      subject: 'Two-dimensional architectural plan',
+      keywords: 'plan, rooms, doors, windows, dimensions',
     );
 
     pdf.addPage(
-      pw.MultiPage(
-        margin: const pw.EdgeInsets.all(32),
+      pw.Page(
+        margin: const pw.EdgeInsets.all(18),
         build: (pw.Context context) {
-          return [
-            pw.Header(
-              level: 0,
-              child: pw.Text('${labels.architecturalPlan}: $projectName'),
-            ),
-            pw.Text(
-              '${labels.surveyedRooms}: ${rooms.length}',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 16),
-            if (rooms.any((room) => room.points.length >= 2)) ...[
-              pw.Text(
-                labels.generalPlan,
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 8),
-              pw.Container(
-                height: 390,
-                padding: const pw.EdgeInsets.all(8),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(width: 0.6),
-                ),
-                child: pw.SvgImage(
-                  svg: buildFloorPlanSvg(
-                    rooms,
-                    measurementSystem,
-                    languageCode: labels.languageCode,
-                    projectName: projectName,
-                  ),
-                ),
-              ),
-              pw.SizedBox(height: 18),
-            ],
-            ...rooms.map(
-              (room) => _buildRoomReport(
-                room,
+          return pw.Center(
+            child: pw.SvgImage(
+              svg: buildFloorPlanSvg(
+                rooms,
                 measurementSystem,
-                labels,
+                languageCode: languageCode,
+                projectName: projectName,
               ),
             ),
-          ];
+          );
         },
       ),
     );
@@ -279,20 +208,24 @@ class PlanExportBuilder {
     return pdf;
   }
 
-  /// Construye el dibujo vectorial del plano completo para incorporarlo al
-  /// PDF. Mantiene las coordenadas globales y ajusta la escala a la página.
+  /// Builds the vector technical plan used by SVG, PDF and raster exports.
+  ///
+  /// The ARCore/ARKit wall and opening coordinates are normalized into the
+  /// same 2D technical drawing frame. Dimensions are deliberately placed
+  /// outside the wall/opening geometry with collision-aware label placement.
   static String buildFloorPlanSvg(
     List<RoomModel> rooms,
     MeasurementSystem measurementSystem, {
     String languageCode = 'es',
     String projectName = 'Plano 2D',
   }) {
-    final labels = _PdfLabels.forLanguage(languageCode);
     final drawingRooms =
         rooms.map(TechnicalDrawingGeometry.normalizeRoom).toList();
-    const canvasWidth = 760.0;
-    const canvasHeight = 500.0;
-    const padding = 42.0;
+    const canvasWidth = 900.0;
+    const canvasHeight = 600.0;
+    const padding = 72.0;
+    final decimalSeparator =
+        languageCode.toLowerCase().startsWith('en') ? '.' : ',';
 
     final points = <ARPoint>[
       for (final room in drawingRooms) ...room.points,
@@ -305,14 +238,15 @@ class PlanExportBuilder {
 
     if (points.isEmpty) {
       return '<svg xmlns="http://www.w3.org/2000/svg" '
-          'viewBox="0 0 760 500">${_projectSvgMetadata(rooms, projectName)}</svg>';
+          'viewBox="0 0 $canvasWidth $canvasHeight">'
+          '${_projectSvgMetadata(rooms, projectName)}'
+          '</svg>';
     }
 
     var minX = points.first.x;
     var maxX = points.first.x;
     var minZ = points.first.z;
     var maxZ = points.first.z;
-
     for (final point in points.skip(1)) {
       minX = math.min(minX, point.x);
       maxX = math.max(maxX, point.x);
@@ -333,12 +267,10 @@ class PlanExportBuilder {
     final offsetY =
         padding + (availableHeight - (planHeight * scale)) / 2.0;
 
-    _SvgPoint transform(ARPoint point) {
-      return _SvgPoint(
-        offsetX + ((point.x - minX) * scale),
-        offsetY + ((point.z - minZ) * scale),
-      );
-    }
+    _SvgPoint transform(ARPoint point) => _SvgPoint(
+          offsetX + ((point.x - minX) * scale),
+          offsetY + ((point.z - minZ) * scale),
+        );
 
     final svg = StringBuffer()
       ..writeln(
@@ -346,60 +278,30 @@ class PlanExportBuilder {
         'viewBox="0 0 $canvasWidth $canvasHeight">',
       )
       ..writeln(_projectSvgMetadata(rooms, projectName))
-      ..writeln('<rect width="760" height="500" fill="white"/>');
+      ..writeln('<rect width="$canvasWidth" height="$canvasHeight" fill="white"/>');
+
     final wallsSvg = StringBuffer();
     final carpentrySvg = StringBuffer();
     final dimensionsSvg = StringBuffer();
-    final annotationsSvg = StringBuffer();
-    final labelLayout = _SvgLabelLayout(
+    final dimensionLayout = _SvgDimensionLayout(
       canvasWidth: canvasWidth,
       canvasHeight: canvasHeight,
-      bottomReserved: 34,
+      bottomReserved: 8,
     );
-
-    // Room captions are part of the drawing too. Reserve their space before
-    // placing any dimension so an early wall label cannot occupy the caption
-    // of a room that is drawn later.
-    for (final room in drawingRooms) {
-      if (room.points.length < 2) continue;
-      final transformed = room.points.map(transform).toList();
-      final centerX = transformed
-              .map((point) => point.x)
-              .reduce((value, element) => value + element) /
-          transformed.length;
-      final centerY = transformed
-              .map((point) => point.y)
-              .reduce((value, element) => value + element) /
-          transformed.length;
-      final detailsLength = room.type == RoomType.other
-          ? 12
-          : labels.roomType(room.type).length + 12;
-      final typeAndAreaWidth = math.max(
-        62.0,
-        detailsLength * 5.2,
-      );
-      labelLayout.reserve(
-        center: _SvgPoint(centerX, centerY + 4),
-        width: math.max(typeAndAreaWidth, room.name.length * 6.8),
-        height: 34,
-      );
-    }
 
     final drawnWallKeys = <String>{};
     for (final room in drawingRooms) {
-      if (room.points.length < 2) {
-        continue;
-      }
+      if (room.points.length < 2) continue;
 
       final transformed = room.points.map(transform).toList();
       final outlinePoints = transformed
           .map((point) => '${_svgNumber(point.x)},${_svgNumber(point.y)}')
           .join(' ');
+
       if (room.isClosed) {
         wallsSvg.writeln(
           '<polygon points="$outlinePoints" fill="none" '
-          'stroke="#000000" stroke-width="3.5" '
-          'stroke-linejoin="round"/>',
+          'stroke="#000000" stroke-width="3.5" stroke-linejoin="round"/>',
         );
       } else {
         wallsSvg.writeln(
@@ -409,82 +311,42 @@ class PlanExportBuilder {
         );
       }
 
-      final centerX = transformed
-              .map((point) => point.x)
-              .reduce((value, element) => value + element) /
-          transformed.length;
-      final centerY = transformed
-              .map((point) => point.y)
-              .reduce((value, element) => value + element) /
-          transformed.length;
-      final area = room.isClosed
-          ? GeometryService.calculateArea(room.points)
-          : 0.0;
-      final displayArea = measurementSystem == MeasurementSystem.metric
-          ? area
-          : MeasurementUnits.squareMetersToSquareFeet(area);
-      final areaText = displayArea.toStringAsFixed(2).replaceAll(
-            '.',
-            labels.decimalSeparator,
-          );
-      final areaUnit = measurementSystem == MeasurementSystem.metric
-          ? 'm²'
-          : 'ft²';
-
-      annotationsSvg
-        ..writeln(
-          '<text x="${_svgNumber(centerX)}" '
-          'y="${_svgNumber(centerY - 4)}" text-anchor="middle" '
-          'font-family="Helvetica" font-size="13" font-weight="bold" '
-          'fill="#1F2937">${_escapeSvg(room.name)}</text>',
-        )
-        ..writeln(
-          '<text x="${_svgNumber(centerX)}" '
-          'y="${_svgNumber(centerY + 13)}" text-anchor="middle" '
-          'font-family="Helvetica" font-size="10" fill="#374151">'
-          '${_escapeSvg(_roomDetails(room, areaText, areaUnit, labels))}</text>',
-        );
-
+      final center = _roomCenter(transformed);
       final wallCount = room.isClosed
           ? room.points.length
           : room.points.length - 1;
       for (var index = 0; index < wallCount; index++) {
         final first = room.points[index];
         final second = room.points[(index + 1) % room.points.length];
-        if (!drawnWallKeys.add(_wallKey(first, second))) {
-          continue;
-        }
+        if (!drawnWallKeys.add(_wallKey(first, second))) continue;
 
         _writeDimensionSvg(
           svg: dimensionsSvg,
-          layout: labelLayout,
+          layout: dimensionLayout,
           start: transform(first),
           end: transform(second),
           label: _formatCompactLength(
             GeometryService.calculateDistance(first, second),
             measurementSystem,
-            decimalSeparator: labels.decimalSeparator,
+            decimalSeparator: decimalSeparator,
           ),
-          color: '#000000',
-          center: _SvgPoint(centerX, centerY),
-          offset: 13,
+          preferredOffset: 34,
+          center: center,
         );
       }
     }
 
     final drawnFeatureIds = <String>{};
     for (final room in drawingRooms) {
+      final roomCenter = _roomCenter(room.points.map(transform).toList());
       for (final feature in room.features) {
-        if (!drawnFeatureIds.add(feature.id)) {
-          continue;
-        }
+        if (!drawnFeatureIds.add(feature.id)) continue;
 
         final start = transform(feature.start);
         final end = transform(feature.end);
         carpentrySvg.writeln(
           '<g data-feature-id="${_escapeSvg(feature.id)}">',
         );
-
         if (feature.type == FeatureType.door) {
           _writeDoorSvg(carpentrySvg, feature, start, end);
         } else {
@@ -493,18 +355,17 @@ class PlanExportBuilder {
 
         _writeDimensionSvg(
           svg: dimensionsSvg,
-          layout: labelLayout,
+          layout: dimensionLayout,
           start: start,
           end: end,
           label: _formatCompactLength(
             GeometryService.calculateDistance(feature.start, feature.end),
             measurementSystem,
-            decimalSeparator: labels.decimalSeparator,
+            decimalSeparator: decimalSeparator,
           ),
-          color: '#000000',
-          offset: 11,
+          preferredOffset: 22,
+          center: roomCenter,
         );
-
         carpentrySvg.writeln('</g>');
       }
     }
@@ -519,31 +380,18 @@ class PlanExportBuilder {
       ..writeln('<g id="cotas">')
       ..write(dimensionsSvg)
       ..writeln('</g>')
-      ..writeln('<g id="anotaciones">')
-      ..write(annotationsSvg)
-      ..writeln('</g>')
-      ..writeln(
-        '<g font-family="Helvetica" font-size="10" fill="#374151">',
-      )
-      ..writeln(
-        '<line x1="42" y1="476" x2="66" y2="476" '
-        'stroke="#000000" stroke-width="3.5"/>',
-      )
-      ..writeln('<text x="72" y="480">${labels.wall}</text>')
-      ..writeln(
-        '<line x1="126" y1="476" x2="150" y2="476" '
-        'stroke="#000000" stroke-width="1.4"/>',
-      )
-      ..writeln('<text x="156" y="480">${labels.door}</text>')
-      ..writeln(
-        '<line x1="214" y1="476" x2="238" y2="476" '
-        'stroke="#000000" stroke-width="1.4"/>',
-      )
-      ..writeln('<text x="244" y="480">${labels.window}</text>')
-      ..writeln('</g>')
       ..writeln('</svg>');
 
     return svg.toString();
+  }
+
+  static _SvgPoint _roomCenter(List<_SvgPoint> points) {
+    if (points.isEmpty) return const _SvgPoint(450, 300);
+    final x = points.fold<double>(0, (sum, point) => sum + point.x) /
+        points.length;
+    final y = points.fold<double>(0, (sum, point) => sum + point.y) /
+        points.length;
+    return _SvgPoint(x, y);
   }
 
   static void _writeDoorSvg(
@@ -552,17 +400,12 @@ class PlanExportBuilder {
     _SvgPoint start,
     _SvgPoint end,
   ) {
-    final hinge = feature.doorHingeSide == DoorHingeSide.start
-        ? start
-        : end;
-    final closedEnd = feature.doorHingeSide == DoorHingeSide.start
-        ? end
-        : start;
+    final hinge = feature.doorHingeSide == DoorHingeSide.start ? start : end;
+    final closedEnd =
+        feature.doorHingeSide == DoorHingeSide.start ? end : start;
     final dx = closedEnd.x - hinge.x;
     final dy = closedEnd.y - hinge.y;
-    var direction = feature.doorSwingSide == DoorSwingSide.left
-        ? -1.0
-        : 1.0;
+    var direction = feature.doorSwingSide == DoorSwingSide.left ? -1.0 : 1.0;
     if (feature.doorOpeningDirection == DoorOpeningDirection.exterior) {
       direction = -direction;
     }
@@ -580,10 +423,8 @@ class PlanExportBuilder {
         'stroke="white" stroke-width="8"/>',
       )
       ..writeln(
-        '<line x1="${_svgNumber(hinge.x)}" '
-        'y1="${_svgNumber(hinge.y)}" '
-        'x2="${_svgNumber(openEnd.x)}" '
-        'y2="${_svgNumber(openEnd.y)}" '
+        '<line x1="${_svgNumber(hinge.x)}" y1="${_svgNumber(hinge.y)}" '
+        'x2="${_svgNumber(openEnd.x)}" y2="${_svgNumber(openEnd.y)}" '
         'stroke="#000000" stroke-width="1.4"/>',
       )
       ..writeln(
@@ -593,8 +434,8 @@ class PlanExportBuilder {
         'fill="none" stroke="#000000" stroke-width="1"/>',
       )
       ..writeln(
-        '<circle cx="${_svgNumber(hinge.x)}" '
-        'cy="${_svgNumber(hinge.y)}" r="2" fill="#000000"/>',
+        '<circle cx="${_svgNumber(hinge.x)}" cy="${_svgNumber(hinge.y)}" '
+        'r="2" fill="#000000"/>',
       );
   }
 
@@ -647,13 +488,12 @@ class PlanExportBuilder {
 
   static void _writeDimensionSvg({
     required StringBuffer svg,
-    required _SvgLabelLayout layout,
+    required _SvgDimensionLayout layout,
     required _SvgPoint start,
     required _SvgPoint end,
     required String label,
-    required String color,
-    required double offset,
-    _SvgPoint? center,
+    required double preferredOffset,
+    required _SvgPoint center,
   }) {
     final dx = end.x - start.x;
     final dy = end.y - start.y;
@@ -663,22 +503,20 @@ class PlanExportBuilder {
     final middleX = (start.x + end.x) / 2.0;
     final middleY = (start.y + end.y) / 2.0;
 
-    if (center != null) {
-      final towardCenterX = center.x - middleX;
-      final towardCenterY = center.y - middleY;
-      if ((normalX * towardCenterX) + (normalY * towardCenterY) > 0) {
-        normalX = -normalX;
-        normalY = -normalY;
-      }
+    final towardCenterX = center.x - middleX;
+    final towardCenterY = center.y - middleY;
+    if ((normalX * towardCenterX) + (normalY * towardCenterY) > 0) {
+      normalX = -normalX;
+      normalY = -normalY;
     }
 
-    final labelWidth = math.max(28.0, (label.length * 5.6) + 8.0);
+    final labelWidth = math.max(30.0, (label.length * 5.6) + 10.0);
     final placement = layout.place(
       middle: _SvgPoint(middleX, middleY),
       normal: _SvgPoint(normalX, normalY),
-      preferredOffset: offset,
+      preferredOffset: preferredOffset,
       width: labelWidth,
-      height: 12,
+      height: 14,
     );
     final labelX = placement.center.x;
     final labelY = placement.center.y;
@@ -694,32 +532,33 @@ class PlanExportBuilder {
         '<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" '
         'x2="${_svgNumber(start.x + (normalX * extensionOffset))}" '
         'y2="${_svgNumber(start.y + (normalY * extensionOffset))}" '
-        'stroke="$color" stroke-width="0.7"/>',
+        'stroke="#000000" stroke-width="0.7"/>',
       )
       ..writeln(
         '<line x1="${_svgNumber(end.x)}" y1="${_svgNumber(end.y)}" '
         'x2="${_svgNumber(end.x + (normalX * extensionOffset))}" '
         'y2="${_svgNumber(end.y + (normalY * extensionOffset))}" '
-        'stroke="$color" stroke-width="0.7"/>',
+        'stroke="#000000" stroke-width="0.7"/>',
       )
       ..writeln(
         '<line x1="${_svgNumber(start.x + (normalX * actualOffset))}" '
         'y1="${_svgNumber(start.y + (normalY * actualOffset))}" '
         'x2="${_svgNumber(end.x + (normalX * actualOffset))}" '
         'y2="${_svgNumber(end.y + (normalY * actualOffset))}" '
-        'stroke="$color" stroke-width="0.7"/>',
+        'stroke="#000000" stroke-width="0.7"/>',
       )
       ..writeln(
         '<rect x="${_svgNumber(labelX - (labelWidth / 2))}" '
-        'y="${_svgNumber(labelY - 7)}" width="${_svgNumber(labelWidth)}" '
-        'height="12" rx="2" fill="white" fill-opacity="0.9"/>',
+        'y="${_svgNumber(labelY - 8)}" width="${_svgNumber(labelWidth)}" '
+        'height="14" fill="white" fill-opacity="0.96"/>',
       )
       ..writeln(
         '<text data-dimension-label="${_escapeSvg(label)}" '
         'data-layout-index="${placement.index}" '
-        'x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 2)}" '
+        'x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 3)}" '
         'text-anchor="middle" font-family="Helvetica" font-size="8.5" '
-        'font-weight="bold" fill="$color">${_escapeSvg(label)}</text>',      );
+        'font-weight="bold" fill="#000000">${_escapeSvg(label)}</text>',
+      );
   }
 
   static String _wallKey(ARPoint first, ARPoint second) {
@@ -768,333 +607,34 @@ class PlanExportBuilder {
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&apos;');
   }
-
-  static String _roomDetails(
-    RoomModel room,
-    String areaText,
-    String areaUnit,
-    _PdfLabels labels,
-  ) {
-    final area = '$areaText $areaUnit';
-    return room.type == RoomType.other
-        ? area
-        : '${labels.roomType(room.type)} · $area';
-  }
-
-  static pw.Widget _buildRoomReport(
-    RoomModel room,
-    MeasurementSystem measurementSystem,
-    _PdfLabels labels,
-  ) {
-    final area = room.isClosed
-        ? GeometryService.calculateArea(room.points)
-        : 0.0;
-    final perimeter = GeometryService.calculatePathLength(
-      room.points,
-      closePath: room.isClosed,
-    );
-    final wallCount = room.points.length < 2
-        ? 0
-        : room.isClosed
-            ? room.points.length
-            : room.points.length - 1;
-
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 18),
-      padding: const pw.EdgeInsets.all(12),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(width: 0.6),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            room.type == RoomType.other
-                ? room.name
-                : '${room.name} · ${labels.roomType(room.type)}',
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            '${labels.area}: '
-            '${_formatArea(area, measurementSystem, labels)} · '
-            '${labels.perimeter}: '
-            '${_formatLength(perimeter, measurementSystem, labels)}',
-          ),
-          pw.Text('${labels.registeredCorners}: ${room.points.length}'),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            labels.wallMeasurements,
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-          ),
-          if (wallCount == 0)
-            pw.Text(labels.noMeasuredWalls)
-          else
-            ...List.generate(wallCount, (index) {
-              final start = room.points[index];
-              final end = room.points[(index + 1) % room.points.length];
-              final length =
-                  GeometryService.calculateDistance(start, end);
-              return pw.Bullet(
-                text: '${labels.wall} ${index + 1}: '
-                    '${_formatLength(length, measurementSystem, labels)}',
-              );
-            }),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            labels.doorsAndWindows,
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-          ),
-          if (room.features.isEmpty)
-            pw.Text(labels.noOpenings)
-          else
-            ...room.features.map(
-              (feature) => pw.Bullet(
-                text: _featureDescription(
-                  feature,
-                  measurementSystem,
-                  labels,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  static String _featureDescription(
-    WallFeature feature,
-    MeasurementSystem measurementSystem,
-    _PdfLabels labels,
-  ) {
-    final width = GeometryService.calculateDistance(
-      feature.start,
-      feature.end,
-    );
-    final type = feature.type == FeatureType.door
-        ? labels.door
-        : labels.window;
-    final parts = <String>[
-      '$type: ${_formatLength(width, measurementSystem, labels)} '
-          '${labels.wide}',
-      '${_formatLength(feature.openingHeightMeters, measurementSystem, labels)} '
-          '${labels.high}',
-    ];
-
-    if (feature.type == FeatureType.window) {
-      parts.add(
-        '${_formatLength(feature.sillHeightMeters, measurementSystem, labels)} '
-        '${labels.fromFloor}',
-      );
-      parts.add(
-        width >= feature.openingHeightMeters
-            ? labels.horizontalOrientation
-            : labels.verticalOrientation,
-      );
-    } else {
-      parts.add(
-        feature.doorHingeSide == DoorHingeSide.start
-            ? labels.hingeAtStart
-            : labels.hingeAtEnd,
-      );
-      parts.add(
-        feature.doorSwingSide == DoorSwingSide.left
-            ? labels.leftSwing
-            : labels.rightSwing,
-      );
-      parts.add(
-        feature.doorOpeningDirection == DoorOpeningDirection.interior
-            ? labels.interiorOpening
-            : labels.exteriorOpening,
-      );
-    }
-
-    return parts.join(' · ');
-  }
-
-  static String _formatLength(
-    double meters,
-    MeasurementSystem measurementSystem,
-    _PdfLabels labels,
-  ) {
-    return MeasurementUnits.formatLength(
-      meters,
-      measurementSystem,
-      metersLabel: labels.meters,
-      feetLabel: labels.feet,
-      inchesLabel: labels.inches,
-      decimalSeparator: labels.decimalSeparator,
-    );
-  }
-
-  static String _formatArea(
-    double squareMeters,
-    MeasurementSystem measurementSystem,
-    _PdfLabels labels,
-  ) {
-    if (measurementSystem == MeasurementSystem.metric) {
-      final value = squareMeters.toStringAsFixed(2).replaceAll(
-            '.',
-            labels.decimalSeparator,
-          );
-      return '$value ${labels.squareMeters}';
-    }
-
-    final squareFeet =
-        MeasurementUnits.squareMetersToSquareFeet(squareMeters);
-    final value = squareFeet.toStringAsFixed(2).replaceAll(
-          '.',
-          labels.decimalSeparator,
-        );
-    return '$value ${labels.squareFeet}';
-  }
-}
-
-class _PdfLabels {
-  final String languageCode;
-
-  const _PdfLabels._(this.languageCode);
-
-  factory _PdfLabels.forLanguage(String languageCode) {
-    return _PdfLabels._(
-      languageCode.toLowerCase().startsWith('en') ? 'en' : 'es',
-    );
-  }
-
-  bool get isEnglish => languageCode == 'en';
-  String get decimalSeparator => isEnglish ? '.' : ',';
-  String get architecturalPlan =>
-      isEnglish ? 'Architectural plan' : 'Plano arquitectónico';
-  String get surveyedRooms =>
-      isEnglish ? 'Surveyed rooms' : 'Ambientes relevados';
-  String get generalPlan => isEnglish ? 'General plan' : 'Plano general';
-  String get area => isEnglish ? 'Area' : 'Superficie';
-  String get perimeter => isEnglish ? 'Perimeter' : 'Perímetro';
-  String get registeredCorners =>
-      isEnglish ? 'Registered corners' : 'Esquinas registradas';
-  String get wallMeasurements =>
-      isEnglish ? 'Wall measurements' : 'Medidas de paredes';
-  String get noMeasuredWalls => isEnglish
-      ? 'There are no measured walls.'
-      : 'No hay paredes medidas.';
-  String get doorsAndWindows =>
-      isEnglish ? 'Doors and windows' : 'Puertas y ventanas';
-  String get noOpenings => isEnglish
-      ? 'There are no registered openings.'
-      : 'No hay aberturas registradas.';
-  String get wall => isEnglish ? 'Wall' : 'Pared';
-  String get door => isEnglish ? 'Door' : 'Puerta';
-  String get window => isEnglish ? 'Window' : 'Ventana';
-  String get wide => isEnglish ? 'wide' : 'de ancho';
-  String get high => isEnglish ? 'high' : 'de alto';
-  String get fromFloor => isEnglish ? 'from the floor' : 'desde el piso';
-  String get horizontalOrientation => isEnglish
-      ? 'horizontal orientation'
-      : 'orientación horizontal';
-  String get verticalOrientation => isEnglish
-      ? 'vertical orientation'
-      : 'orientación vertical';
-  String get hingeAtStart =>
-      isEnglish ? 'hinge at the start' : 'bisagra en el inicio';
-  String get hingeAtEnd =>
-      isEnglish ? 'hinge at the end' : 'bisagra en el final';
-  String get leftSwing =>
-      isEnglish ? 'opens to the left' : 'giro hacia la izquierda';
-  String get rightSwing =>
-      isEnglish ? 'opens to the right' : 'giro hacia la derecha';
-  String get interiorOpening =>
-      isEnglish ? 'opens inward' : 'apertura hacia el interior';
-  String get exteriorOpening =>
-      isEnglish ? 'opens outward' : 'apertura hacia el exterior';
-  String get meters => isEnglish ? 'meters' : 'metros';
-  String get feet => isEnglish ? 'feet' : 'pies';
-  String get inches => isEnglish ? 'inches' : 'pulgadas';
-  String get squareMeters =>
-      isEnglish ? 'square meters' : 'metros cuadrados';
-  String get squareFeet =>
-      isEnglish ? 'square feet' : 'pies cuadrados';
-  String get documentSubject => isEnglish
-      ? 'Two-dimensional architectural plan'
-      : 'Plano arquitectónico 2D';
-  String get documentKeywords => isEnglish
-      ? 'plan, rooms, doors, windows, dimensions'
-      : 'plano, ambientes, puertas, ventanas, cotas';
-
-  String roomType(RoomType type) {
-    if (!isEnglish) {
-      return type.displayName;
-    }
-
-    switch (type) {
-      case RoomType.living:
-        return 'Living room';
-      case RoomType.cocina:
-        return 'Kitchen';
-      case RoomType.bano:
-        return 'Bathroom';
-      case RoomType.dormitorio:
-        return 'Bedroom';
-      case RoomType.lavadero:
-        return 'Laundry room';
-      case RoomType.pasillo:
-        return 'Hallway';
-      case RoomType.comedor:
-        return 'Dining room';
-      case RoomType.comedorDiario:
-        return 'Breakfast room';
-      case RoomType.patio:
-        return 'Patio';
-      case RoomType.hall:
-        return 'Hall';
-      case RoomType.balcon:
-        return 'Balcony';
-      case RoomType.terraza:
-        return 'Terrace';
-      case RoomType.cochera:
-        return 'Garage';
-      case RoomType.playroom:
-        return 'Playroom';
-      case RoomType.other:
-        return 'Other space';
-    }
-  }
 }
 
 class _SvgPoint {
   final double x;
   final double y;
-
   const _SvgPoint(this.x, this.y);
 }
 
-class _SvgLabelPlacement {
+class _SvgDimensionPlacement {
   final _SvgPoint center;
   final int index;
-
-  const _SvgLabelPlacement({
-    required this.center,
-    required this.index,
-  });
+  const _SvgDimensionPlacement({required this.center, required this.index});
 }
 
-class _SvgLabelRect {
+class _SvgDimensionRect {
   final double left;
   final double top;
   final double right;
   final double bottom;
-
-  const _SvgLabelRect({
+  const _SvgDimensionRect({
     required this.left,
     required this.top,
     required this.right,
     required this.bottom,
   });
 
-  bool overlaps(_SvgLabelRect other) {
-    const separation = 2.0;
+  bool overlaps(_SvgDimensionRect other) {
+    const separation = 4.0;
     return left < other.right + separation &&
         right > other.left - separation &&
         top < other.bottom + separation &&
@@ -1102,28 +642,20 @@ class _SvgLabelRect {
   }
 }
 
-class _SvgLabelLayout {
+class _SvgDimensionLayout {
   final double canvasWidth;
   final double canvasHeight;
   final double bottomReserved;
-  final List<_SvgLabelRect> _occupied = [];
+  final List<_SvgDimensionRect> _occupied = [];
   int _nextIndex = 0;
 
-  _SvgLabelLayout({
+  _SvgDimensionLayout({
     required this.canvasWidth,
     required this.canvasHeight,
     required this.bottomReserved,
   });
 
-  void reserve({
-    required _SvgPoint center,
-    required double width,
-    required double height,
-  }) {
-    _occupied.add(_rectFor(center, width, height));
-  }
-
-  _SvgLabelPlacement place({
+  _SvgDimensionPlacement place({
     required _SvgPoint middle,
     required _SvgPoint normal,
     required double preferredOffset,
@@ -1132,35 +664,31 @@ class _SvgLabelLayout {
   }) {
     final offsets = <double>[
       preferredOffset,
+      preferredOffset + 12,
+      preferredOffset + 24,
+      preferredOffset + 38,
+      preferredOffset + 54,
+      preferredOffset + 72,
       -preferredOffset,
-      preferredOffset + 14,
-      -preferredOffset - 14,
-      preferredOffset + 28,
-      -preferredOffset - 28,
-      preferredOffset + 42,
-      -preferredOffset - 42,
-      preferredOffset + 56,
-      -preferredOffset - 56,
-      preferredOffset + 70,
-      -preferredOffset - 70,
-      preferredOffset + 84,
-      -preferredOffset - 84,
+      -preferredOffset - 12,
+      -preferredOffset - 24,
+      -preferredOffset - 38,
+      -preferredOffset - 54,
+      -preferredOffset - 72,
     ];
 
     _SvgPoint? selectedCenter;
-    _SvgLabelRect? selectedRect;
-
+    _SvgDimensionRect? selectedRect;
     for (final offset in offsets) {
       final candidateCenter = _clampCenter(
         _SvgPoint(
-          middle.x + (normal.x * offset),
-          middle.y + (normal.y * offset),
+          middle.x + normal.x * offset,
+          middle.y + normal.y * offset,
         ),
         width,
         height,
       );
       final candidateRect = _rectFor(candidateCenter, width, height);
-
       if (_occupied.every((rect) => !rect.overlaps(candidateRect))) {
         selectedCenter = candidateCenter;
         selectedRect = candidateRect;
@@ -1170,8 +698,8 @@ class _SvgLabelLayout {
 
     selectedCenter ??= _clampCenter(
       _SvgPoint(
-        middle.x + (normal.x * offsets.last),
-        middle.y + (normal.y * offsets.last),
+        middle.x + normal.x * offsets.last,
+        middle.y + normal.y * offsets.last,
       ),
       width,
       height,
@@ -1179,7 +707,7 @@ class _SvgLabelLayout {
     selectedRect ??= _rectFor(selectedCenter, width, height);
     _occupied.add(selectedRect);
 
-    return _SvgLabelPlacement(
+    return _SvgDimensionPlacement(
       center: selectedCenter,
       index: _nextIndex++,
     );
@@ -1190,7 +718,7 @@ class _SvgLabelLayout {
     double width,
     double height,
   ) {
-    const margin = 3.0;
+    const margin = 6.0;
     final halfWidth = width / 2.0;
     final halfHeight = height / 2.0;
     return _SvgPoint(
@@ -1205,16 +733,16 @@ class _SvgLabelLayout {
     );
   }
 
-  _SvgLabelRect _rectFor(
+  _SvgDimensionRect _rectFor(
     _SvgPoint center,
     double width,
     double height,
   ) {
-    return _SvgLabelRect(
-      left: center.x - (width / 2.0),
-      top: center.y - (height / 2.0),
-      right: center.x + (width / 2.0),
-      bottom: center.y + (height / 2.0),
+    return _SvgDimensionRect(
+      left: center.x - width / 2.0,
+      top: center.y - height / 2.0,
+      right: center.x + width / 2.0,
+      bottom: center.y + height / 2.0,
     );
   }
 }
