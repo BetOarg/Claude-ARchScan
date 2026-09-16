@@ -2,84 +2,63 @@
 
 **Fecha:** 16/09/2026  
 **Rama auditada:** `main`  
-**Commit auditado:** `b3cabb8249b7576e3a63188f7d75bc646c15e9f5`  
+**Commit funcional auditado:** `a445e4903af7a4ffa80464c7971a625861f3841e`  
 **Versión declarada:** `2.7.0+4`
 
-## 1. Resultado de la auditoría
+## Resultado
 
-El estado de `main` es coherente para continuar con la preparación de publicación. El último cambio funcional de exportaciones técnicas está integrado y el workflow `ARchScan - CI Build Check` terminó correctamente para el mismo commit auditado.
+`main` contiene los cambios funcionales integrados hasta la ordenación profesional de cotas del PR #11. El usuario confirmó CI verde para ese candidato. La auditoría de repositorio no sustituye la validación física en dispositivos ni la auditoría de los artefactos firmados de producción.
 
-La auditoría del repositorio no sustituye la validación física en dispositivos ni la auditoría del AAB/IPA firmado de producción.
+## Integración funcional
 
-## 2. Evidencia de integración
+- PR #9: exportaciones técnicas SVG/PDF/DXF/JPG/PNG.
+- PR #10: separación profesional de cotas y conservación del nombre del ambiente como texto visible.
+- PR #11: orden de cotas de adentro hacia afuera, cortas → intermedias → totales, con reserva de espacio para reducir cruces.
+- Persistencia del proyecto y geometría almacenada no se modifican por la presentación técnica de las exportaciones.
 
-- PR #9, **Exportar planos técnicos coherentes en SVG, PDF, DXF, JPG y PNG**, fue fusionado el 16/09/2026 en `main`.
-- El merge generó el commit `b3cabb8249b7576e3a63188f7d75bc646c15e9f5`.
-- El CI del mismo commit terminó con conclusión `success`.
-- El cambio conserva las mediciones originales en JSON y metadatos mientras normaliza la geometría técnica usada por las exportaciones.
+## Documentación
 
-## 3. Documentación revisada
+La documentación principal existe en `README.md` y en `docs/`, incluyendo guía de uso, DXF, privacidad, seguridad, preparación de tiendas, publicación y checklist de salida.
 
-La documentación de repositorio debe describir el estado real, sin presentar como completadas tareas que dependen de tiendas, firma de producción o pruebas físicas. Los documentos principales son:
+## Seguridad y privacidad
 
-- `README.md`: estado del producto, arquitectura, desarrollo, privacidad y preparación de tienda.
-- `docs/USER_GUIDE.md`: guía funcional bilingüe.
-- `docs/plan-touch-editor.md`: edición táctil y continuidad.
-- `docs/dxf-2d.md`: contrato de exportación DXF.
-- `docs/PUBLIC_PRIVACY_POLICY.md`: política pública.
-- `docs/ACCOUNT_DELETION_PAGE.md`: eliminación de datos locales.
-- `docs/PRIVACY_DATA_AUDIT.md`: inventario de privacidad.
-- `docs/SECURITY_AUDIT.md`: controles de seguridad.
-- `docs/GOOGLE_PLAY_FREEMIUM.md`: preparación comercial de Google Play.
-- `docs/PRODUCTION_RELEASE.md`: procedimiento de publicación.
-- `docs/STORE_LISTING_ES_EN.md`: textos de ficha ES/EN.
-- `docs/APP_STORE_CHECKLIST.md`: preparación de App Store.
-- `docs/RELEASE_READINESS_CHECKLIST.md`: matriz de salida y evidencia pendiente.
+El workflow incluye verificaciones de estructura de publicación y auditoría de secretos, permisos y almacenamiento local. No se deben incorporar al repositorio keystores, certificados, perfiles ni credenciales de producción.
 
-## 4. Seguridad y secretos
+La política pública contempla JSON/SVG/PDF/DXF/PNG/JPG y copias temporales de caché durante la compartición. Debe comprobarse que la URL pública accesible sin autenticación coincide con esta versión antes de enviar a revisión.
 
-No se incorporan secretos de producción en la documentación. El repositorio contiene un auditor de patrones de secretos y las comprobaciones históricas registradas para la revisión de lanzamiento no encontraron credenciales reales en el historial.
+## Ramas
 
-La firma de producción, certificados, perfiles y credenciales de tienda deben permanecer fuera de Git y configurarse únicamente en los mecanismos seguros de CI/las consolas de las tiendas.
+Al momento de esta revisión GitHub muestra `main` y dos ramas de trabajo que corresponden a PR ya fusionados:
 
-## 5. Ramas
+- `fix/ordered-architectural-dimensions`
+- `fix/professional-export-dimensions`
 
-Las ramas no principales actualmente visibles son:
+La eliminación física de estas ramas es administrativa. `main` no debe eliminarse ni moverse.
 
-- `codex/continuation-draft-stability`
-- `codex/launch-readiness-fixes`
-- `codex/readme-launch-docs`
-- `feat/iso128-svg`
-- `fix/arcore-surface-hit-measurement`
-- `fix/final-launch-audit`
-- `fix/local-data-draft-cleanup`
-- `fix/ordered-project-persistence`
-- `fix/scan-save-and-corner-boundary`
+## Pendientes reales para publicación
 
-Las ramas asociadas a cambios ya fusionados deben eliminarse para dejar `main` como referencia de trabajo limpia. El conector disponible para esta auditoría permite verificar y modificar refs, pero no expone una operación de borrado de ramas; por tanto, **la eliminación física de estas refs queda como operación administrativa pendiente en GitHub** y no se simula moviendo las ramas a otro commit.
+### Repositorio
 
-## 6. Estado de lanzamiento
+- Actualizar el checklist al commit actual.
+- Proteger `main` con las reglas deseadas.
+- Eliminar las ramas de trabajo fusionadas.
+- Confirmar que no existan PR abiertos.
 
-### Integrado en `main`
+### Validación física
 
-- Escaneo Basic y flujo AR existente.
-- Continuación de contornos y conservación de paredes/aberturas.
-- Edición táctil y navegación del plano.
-- Persistencia local y compatibilidad histórica documentada.
-- Exportación JSON/SVG/PDF/DXF/PNG/JPG.
-- Geometría técnica coherente entre formatos.
-- Documentación de privacidad, soporte y eliminación de datos locales.
-- Controles de accesibilidad y área segura documentados en las revisiones previas.
+- Basic y ARCore: ya validados por el responsable; repetir sobre el candidato final después de generar el artefacto definitivo.
+- ARKit y RoomPlan: falta validación física final.
+- Probar persistencia, importación/exportación, borrado local, compartir y textos largos en el candidato final.
 
-### Fuera del alcance de esta auditoría de repositorio
+### Artefactos y tiendas
 
-- Creación y custodia del keystore de producción.
-- Play App Signing y configuración de Play Console.
-- Certificados/perfiles de Apple y App Store Connect.
-- AAB/IPA de producción y su auditoría de firma, permisos y bibliotecas nativas.
-- Validación física final de ARKit y RoomPlan.
-- Capturas y material definitivo de las tiendas.
+- Crear/custodiar keystore Android de producción y configurar Play App Signing.
+- Generar AAB firmado definitivo y auditar firma, manifiesto, permisos, SDK y bibliotecas nativas.
+- Generar archive/IPA firmado definitivo y auditar configuración de Apple.
+- Completar formularios de privacidad de Google Play y Apple.
+- Confirmar categoría, precio/estado gratuito y países de distribución.
+- Preparar capturas y material definitivo.
 
-## 7. Criterio de cierre
+## Criterio de cierre
 
-El repositorio queda técnicamente documentado y con `main` actualizado al último cambio funcional integrado y verificado por CI. Antes de una publicación real deben completarse únicamente las tareas externas y de validación física indicadas arriba, además de la limpieza administrativa de las ramas fusionadas.
+ARchScan queda listo a nivel de código/documentación cuando el checklist y este informe coincidan con el commit final. La publicación solo queda cerrada después de validar físicamente el candidato final, auditar AAB/IPA firmados y completar la configuración externa de las tiendas.
