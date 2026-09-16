@@ -97,6 +97,19 @@
 - [ ] Activar protección de `main`; actualmente la rama no está protegida y no hay rulesets activos.
 - [ ] Activar eliminación automática de ramas fusionadas después de proteger `main`.
 
+## Auditoría final del repositorio — 16/09/2026
+
+- [x] `main` auditada en el commit `b3cabb8249b7576e3a63188f7d75bc646c15e9f5` antes de la actualización documental.
+- [x] PR #9 de exportaciones SVG/PDF/DXF/JPG/PNG fusionado en `main`.
+- [x] CI del commit `b3cabb8249b7576e3a63188f7d75bc646c15e9f5` finalizado correctamente.
+- [x] Auditoría final del repositorio añadida en `docs/FINAL_REPOSITORY_AUDIT.md`.
+- [x] README enlazado con la auditoría final.
+- [x] La documentación mantiene separadas las tareas ya integradas de las tareas externas de publicación.
+- [x] No se han introducido secretos de producción en los cambios documentales.
+- [ ] Eliminar físicamente las ramas de trabajo fusionadas desde la administración de GitHub; la conexión disponible para esta tarea no expone una operación de borrado de refs.
+- [ ] Proteger `main` y activar eliminación automática de ramas fusionadas desde la configuración del repositorio.
+- [ ] Ejecutar la validación física y de artefacto final indicada en las secciones anteriores antes de publicar.
+
 ## Respaldo y recuperación de una publicación fallida
 
 1. Antes de enviar, conservar el SHA del commit, SHA-256 del AAB/IPA, informes de permisos/firma y exportaciones JSON de proyectos históricos usados en regresión.
