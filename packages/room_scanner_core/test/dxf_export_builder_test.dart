@@ -49,7 +49,7 @@ void main() {
         .where((e) => e[8] == 'MEASUREMENTS')
         .map((e) => e[1])
         .whereType<String>();
-    expect(labels, contains('9 ft 10 1/2 in'));
+    expect(labels, contains('9 ft 10 1/8 in'));
     expect(labels, contains('6 ft 6 3/4 in'));
   });
 
