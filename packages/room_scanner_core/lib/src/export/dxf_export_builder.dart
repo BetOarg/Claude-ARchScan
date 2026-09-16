@@ -4,7 +4,7 @@ import '../models/room_model.dart';
 import 'technical_drawing_geometry.dart';
 
 /// AutoCAD 2000 ASCII DXF. Spanish uses metres; English uses inches.
-/// The visible drawing contains only walls, openings and dimensions.
+/// The visible drawing contains the plan, room names, openings and dimensions.
 class DxfExportBuilder {
   static String build(List<RoomModel> rooms, {String languageCode = 'es'}) {
     final imperial =
@@ -74,6 +74,22 @@ class DxfExportBuilder {
           center: _roomCenter(drawingRooms, wall),
         );
       }
+    }
+
+    for (final room in drawingRooms) {
+      if (room.points.isEmpty || room.name.trim().isEmpty) continue;
+      final x = room.points.fold<double>(0, (sum, p) => sum + p.x) /
+          room.points.length;
+      final z = room.points.fold<double>(0, (sum, p) => sum + p.z) /
+          room.points.length;
+      drawing.text(
+        'ROOM_NAMES',
+        x,
+        z,
+        room.name.trim(),
+        0.18,
+        centered: true,
+      );
     }
 
     for (final feature in openings.values) {
@@ -390,6 +406,7 @@ class _DxfWriter {
       'WALLS': 35,
       'DOORS': 13,
       'WINDOWS': 13,
+      'ROOM_NAMES': 13,
       'MEASUREMENTS': 13,
     };
     table('LAYER', '3', layers.length);
