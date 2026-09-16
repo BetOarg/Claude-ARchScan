@@ -7,13 +7,13 @@ void main() {
       id: 'ordered-dimensions',
       name: 'Dormitorio',
       type: RoomType.dormitorio,
-      points: const [
+      points: [
         ARPoint(x: 0, y: 0, z: 0),
         ARPoint(x: 3, y: 0, z: 0),
         ARPoint(x: 3, y: 0, z: 2),
         ARPoint(x: 0, y: 0, z: 2),
       ],
-      features: const [
+      features: [
         WallFeature(
           id: 'door-short',
           type: FeatureType.door,
