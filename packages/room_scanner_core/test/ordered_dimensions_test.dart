@@ -57,12 +57,14 @@ void main() {
     expect(shortWall, lessThan(longWall));
   });
 
-  test('keeps room name out of visible technical drawing text', () {
+  test('keeps the room name visible and other labels out of the drawing', () {
     final svg = PlanExportBuilder.buildFloorPlanSvg(
       [roomWithFeatures()],
       MeasurementSystem.metric,
     );
-    expect(svg, isNot(contains('>Dormitorio<')));
-    expect(svg, contains('archscan-project'));
+    expect(svg, contains('>Dormitorio<'));
+    expect(svg, isNot(contains('>Pared<')));
+    expect(svg, isNot(contains('>Puerta<')));
+    expect(svg, isNot(contains('>Ventana<')));
   });
 }
