@@ -2,7 +2,7 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('metric DXF contains walls, openings and dimensions only', () {
+  test('metric DXF contains walls, room names, openings and dimensions only', () {
     final door = WallFeature(
       id: 'door',
       type: FeatureType.door,
@@ -18,13 +18,13 @@ void main() {
     final room = _room().copyWith(features: [door, window]);
     final dxf = DxfExportBuilder.build([room]);
 
-    expect(dxf, contains(r'$INSUNITS\r\n70\r\n6\r\n'));
+    expect(dxf, contains('\$INSUNITS\r\n70\r\n6\r\n'));
     expect(dxf, contains('2\r\nWALLS\r\n'));
     expect(dxf, contains('2\r\nDOORS\r\n'));
     expect(dxf, contains('2\r\nWINDOWS\r\n'));
+    expect(dxf, contains('2\r\nROOM_NAMES\r\n'));
     expect(dxf, contains('2\r\nMEASUREMENTS\r\n'));
-    expect(dxf, isNot(contains('ROOM_NAMES')));
-    expect(dxf, isNot(contains('Dormitorio')));
+    expect(dxf, contains('Dormitorio'));
   });
 
   test('dimension geometry is separated from the wall', () {
@@ -83,6 +83,10 @@ void main() {
     expect(
       entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'),
       hasLength(7),
+    );
+    expect(
+      entities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'),
+      hasLength(2),
     );
   });
 
