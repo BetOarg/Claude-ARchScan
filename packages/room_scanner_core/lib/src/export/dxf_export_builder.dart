@@ -4,8 +4,7 @@ import '../models/room_model.dart';
 import 'technical_drawing_geometry.dart';
 
 /// AutoCAD 2000 ASCII DXF. Spanish uses metres; English uses inches.
-/// Scanner (x, z) maps to CAD (x, y); elevation is deliberately flattened.
-/// This is a drawing interchange, not a lossless replacement for project JSON.
+/// The visible drawing contains only walls, openings and dimensions.
 class DxfExportBuilder {
   static String build(List<RoomModel> rooms, {String languageCode = 'es'}) {
     final imperial =
@@ -15,6 +14,7 @@ class DxfExportBuilder {
         rooms.map(TechnicalDrawingGeometry.normalizeRoom).toList();
     final walls = <_Segment>[];
     final openings = <String, WallFeature>{};
+
     for (final room in drawingRooms) {
       for (final point in room.points) {
         _validate(point);
@@ -26,25 +26,15 @@ class DxfExportBuilder {
       }
       final count = room.isClosed ? room.points.length : room.points.length - 1;
       for (var i = 0; i < count; i++) {
-        final wall = _Segment(
-          room.points[i],
-          room.points[(i + 1) % room.points.length],
+        walls.add(
+          _Segment(
+            room.points[i],
+            room.points[(i + 1) % room.points.length],
+          ),
         );
-        if (wall.length > 0.000001) walls.add(wall);
-      }
-      if (room.points.isNotEmpty) {
-        final x =
-            room.points.fold<double>(0, (sum, p) => sum + p.x) /
-            room.points.length;
-        final y =
-            room.points.fold<double>(0, (sum, p) => sum + p.z) /
-            room.points.length;
-        drawing.text('ROOM_NAMES', x, y, room.name, 0.18);
       }
     }
 
-    // Split at all collinear endpoints before deduplicating. This handles
-    // complete and partial shared walls, including reversed wall directions.
     final drawn = <String>{};
     final dimensioned = <String>{};
     for (final wall in walls) {
@@ -74,17 +64,23 @@ class DxfExportBuilder {
         final part = _Segment(wall.at(cuts[i - 1]), wall.at(cuts[i]));
         if (drawn.add(part.key)) drawing.line('WALLS', part.a, part.b);
       }
+
       if (dimensioned.add(wall.key)) {
         drawing.dimension(
           wall.a,
           wall.b,
           _formatLength(wall.length, imperial),
+          offset: 0.35,
+          center: _roomCenter(drawingRooms, wall),
         );
       }
     }
+
     for (final feature in openings.values) {
       final segment = _Segment(feature.start, feature.end);
       if (segment.length <= 0.000001) continue;
+      final roomCenter = _openingRoomCenter(drawingRooms, feature);
+
       if (feature.type == FeatureType.window) {
         for (final offset in [-0.03, 0.0, 0.03]) {
           final dx = -segment.dz / segment.length * offset;
@@ -122,16 +118,57 @@ class DxfExportBuilder {
           sign > 0 ? angle + 90 : angle,
         );
       }
+
       drawing.dimension(
         segment.a,
         segment.b,
         _formatLength(segment.length, imperial),
+        offset: 0.22,
+        center: roomCenter,
       );
     }
+
     return drawing.finish();
   }
 
-  // Round once to sixteenths of an inch, carrying into the next foot.
+  static ARPoint? _roomCenter(
+    List<RoomModel> rooms,
+    _Segment segment,
+  ) {
+    for (final room in rooms) {
+      if (room.points.any((p) => _samePoint(p, segment.a)) &&
+          room.points.any((p) => _samePoint(p, segment.b))) {
+        if (room.points.isEmpty) return null;
+        final x = room.points.fold<double>(0, (sum, p) => sum + p.x) /
+            room.points.length;
+        final z = room.points.fold<double>(0, (sum, p) => sum + p.z) /
+            room.points.length;
+        return ARPoint(x: x, y: 0, z: z);
+      }
+    }
+    return null;
+  }
+
+  static ARPoint? _openingRoomCenter(
+    List<RoomModel> rooms,
+    WallFeature feature,
+  ) {
+    for (final room in rooms) {
+      if (room.features.any((candidate) => candidate.id == feature.id)) {
+        if (room.points.isEmpty) return null;
+        final x = room.points.fold<double>(0, (sum, p) => sum + p.x) /
+            room.points.length;
+        final z = room.points.fold<double>(0, (sum, p) => sum + p.z) /
+            room.points.length;
+        return ARPoint(x: x, y: 0, z: z);
+      }
+    }
+    return null;
+  }
+
+  static bool _samePoint(ARPoint a, ARPoint b) =>
+      (a.x - b.x).abs() < 0.00001 && (a.z - b.z).abs() < 0.00001;
+
   static String _formatLength(double meters, bool imperial) {
     if (!imperial) return '${meters.toStringAsFixed(2)} m';
     final ticks = (meters / 0.0254 * 16).round();
@@ -222,14 +259,31 @@ class _DxfWriter {
     _pair(_entities, 51, end % 360);
   }
 
-  void dimension(ARPoint a, ARPoint b, String value) {
+  void dimension(
+    ARPoint a,
+    ARPoint b,
+    String value, {
+    required double offset,
+    ARPoint? center,
+  }) {
     final dx = b.x - a.x;
     final dz = b.z - a.z;
     final length = math.sqrt(dx * dx + dz * dz);
     if (length < 0.000001) return;
-    const offset = 0.18;
-    final normalX = -dz / length;
-    final normalZ = dx / length;
+
+    var normalX = -dz / length;
+    var normalZ = dx / length;
+    final middleX = (a.x + b.x) / 2;
+    final middleZ = (a.z + b.z) / 2;
+    if (center != null) {
+      final towardCenterX = center.x - middleX;
+      final towardCenterZ = center.z - middleZ;
+      if ((normalX * towardCenterX) + (normalZ * towardCenterZ) > 0) {
+        normalX = -normalX;
+        normalZ = -normalZ;
+      }
+    }
+
     final dimensionStart = ARPoint(
       x: a.x + normalX * offset,
       y: 0,
@@ -240,6 +294,7 @@ class _DxfWriter {
       y: 0,
       z: b.z + normalZ * offset,
     );
+
     line('MEASUREMENTS', a, dimensionStart);
     line('MEASUREMENTS', b, dimensionEnd);
     line('MEASUREMENTS', dimensionStart, dimensionEnd);
@@ -264,7 +319,6 @@ class _DxfWriter {
     _entity('TEXT', layer, 'AcDbText');
     _point(ARPoint(x: x, y: 0, z: y));
     _pair(_entities, 40, height * scale);
-    // ASCII DXF Unicode escapes also prevent names injecting group codes.
     final escaped = StringBuffer();
     for (final unit in value.codeUnits) {
       if (unit < 32 || unit == 127) {
@@ -314,6 +368,7 @@ class _DxfWriter {
     p(9, '\$HANDSEED');
     p(5, _nextHandle.toRadixString(16).toUpperCase());
     p(0, 'ENDSEC');
+
     p(0, 'SECTION');
     p(2, 'TABLES');
     table('LTYPE', '1', 1);
@@ -329,12 +384,12 @@ class _DxfWriter {
     p(73, 0);
     p(40, 0.0);
     p(0, 'ENDTAB');
+
     const layers = {
       '0': 0,
       'WALLS': 35,
       'DOORS': 13,
       'WINDOWS': 13,
-      'ROOM_NAMES': 13,
       'MEASUREMENTS': 13,
     };
     table('LAYER', '3', layers.length);
@@ -352,6 +407,7 @@ class _DxfWriter {
       p(370, entry.value);
     }
     p(0, 'ENDTAB');
+
     table('STYLE', 'A', 1);
     p(0, 'STYLE');
     p(5, 'B');
@@ -368,6 +424,7 @@ class _DxfWriter {
     p(3, 'txt');
     p(4, '');
     p(0, 'ENDTAB');
+
     table('BLOCK_RECORD', 'C', 2);
     for (final entry in {'20': '*Model_Space', '21': '*Paper_Space'}.entries) {
       p(0, 'BLOCK_RECORD');
@@ -379,6 +436,7 @@ class _DxfWriter {
     }
     p(0, 'ENDTAB');
     p(0, 'ENDSEC');
+
     p(0, 'SECTION');
     p(2, 'BLOCKS');
     var blockHandle = 0x30;
@@ -404,6 +462,7 @@ class _DxfWriter {
       p(100, 'AcDbBlockEnd');
     }
     p(0, 'ENDSEC');
+
     p(0, 'SECTION');
     p(2, 'ENTITIES');
     out.write(_entities);
