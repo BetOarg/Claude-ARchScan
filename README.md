@@ -17,6 +17,8 @@ ARchScan permite medir ambientes, paredes, puertas y ventanas; conectar espacios
 
 La preparación comercial y los pasos de Google Play están en [Freemium y Google Play](docs/GOOGLE_PLAY_FREEMIUM.md). La guía completa, primero en inglés y luego en español, está en [User Guide / Guía de uso](docs/USER_GUIDE.md).
 
+La auditoría final del estado del repositorio al 16/09/2026 está en [Auditoría final del repositorio](docs/FINAL_REPOSITORY_AUDIT.md).
+
 ## Funciones implementadas
 
 ### Escaneo y continuidad
@@ -25,14 +27,10 @@ La preparación comercial y los pasos de Google Play están en [Freemium y Googl
 - Escaneo AR en dispositivos compatibles; el hardware y las condiciones del entorno afectan la precisión.
 - Nombres libres para espacios y sugerencias rápidas; los nombres personalizados no se traducen.
 - Puertas y ventanas con ancho, altura y antepecho; orientación de puertas conservada.
-- El escaneo se concentra en medir el contorno. Puertas y ventanas se agregan
-  después desde el plano general tocando su pared; este flujo es común a Basic,
-  ARCore y ARKit.
+- El escaneo se concentra en medir el contorno. Puertas y ventanas se agregan después desde el plano general tocando su pared; este flujo es común a Basic, ARCore y ARKit.
 - Continuación desde aberturas y referencia del plano anterior.
 - Continuación de contornos abiertos desde cualquiera de sus extremos.
-- Continuación desde ambientes cerrados mediante selección táctil de la esquina
-  inicial y la esquina final. El recorrido crea un ambiente nuevo y conserva
-  intactos el ambiente original, sus aberturas y la pared compartida.
+- Continuación desde ambientes cerrados mediante selección táctil de la esquina inicial y la esquina final. El recorrido crea un ambiente nuevo y conserva intactos el ambiente original, sus aberturas y la pared compartida.
 - En ARCore/ARKit, calibración con el vértice anterior y el vértice inicial para conservar traslación, orientación y paredes inclinadas al reanudar una sesión.
 - Deshacer/rehacer del escaneo y protección frente a aberturas que pierden su pared.
 
@@ -48,8 +46,7 @@ Las siguientes herramientas se aplican a proyectos provenientes de Basic, ARCore
 - Botones de ambientes registrados, puerta, ventana, deshacer y rehacer.
 - Ubicación táctil de aberturas sobre paredes reales, incluida la pared de cierre.
 - Movimiento y rotación de ambientes, grupos conectados y alineación de paredes.
-- Navegación con dos dedos y controles de acercar, alejar y restablecer la vista
-  para mantener visible el plano durante la edición.
+- Navegación con dos dedos y controles de acercar, alejar y restablecer la vista para mantener visible el plano durante la edición.
 - Acciones organizadas en pares consistentes: puerta/ventana y deshacer/rehacer.
 - Detección de paredes compartidas completas y parciales.
 - Historial reversible de edición; los contornos abiertos no suman superficie.
