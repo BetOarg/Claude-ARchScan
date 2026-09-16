@@ -80,10 +80,11 @@ void main() {
     ]);
     final entities = _entities(dxf);
     expect(entities.where((e) => e[0] == 'ARC'), hasLength(1));
-    expect(
-      entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'),
-      hasLength(7),
-    );
+    final wallLines = entities
+        .where((e) => e[0] == 'LINE' && e[8] == 'WALLS')
+        .toList();
+    expect(wallLines, hasLength(11));
+    expect(wallLines.toSet(), hasLength(11));
     expect(
       entities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'),
       hasLength(2),
