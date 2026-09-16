@@ -47,6 +47,12 @@ class TechnicalDrawingGeometry {
           snappedStart,
           snappedEnd,
         ),
+        // The technical exporters draw in the mirrored 2D coordinate frame
+        // used by the generated plan. Keep the persisted project semantics
+        // untouched and compensate only in this drawing copy.
+        doorSwingSide: feature.doorSwingSide == DoorSwingSide.left
+            ? DoorSwingSide.right
+            : DoorSwingSide.left,
       );
     }).toList();
     return room.copyWith(points: snappedPoints, features: features);
