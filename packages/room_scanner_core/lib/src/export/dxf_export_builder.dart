@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../models/room_model.dart';
+import 'technical_drawing_geometry.dart';
 
 /// AutoCAD 2000 ASCII DXF. Spanish uses metres; English uses inches.
 /// Scanner (x, z) maps to CAD (x, y); elevation is deliberately flattened.
@@ -10,9 +11,11 @@ class DxfExportBuilder {
     final imperial =
         languageCode.toLowerCase().split(RegExp('[-_]')).first == 'en';
     final drawing = _DxfWriter(imperial: imperial);
+    final drawingRooms =
+        rooms.map(TechnicalDrawingGeometry.normalizeRoom).toList();
     final walls = <_Segment>[];
     final openings = <String, WallFeature>{};
-    for (final room in rooms) {
+    for (final room in drawingRooms) {
       for (final point in room.points) {
         _validate(point);
       }
@@ -72,12 +75,10 @@ class DxfExportBuilder {
         if (drawn.add(part.key)) drawing.line('WALLS', part.a, part.b);
       }
       if (dimensioned.add(wall.key)) {
-        drawing.text(
-          'MEASUREMENTS',
-          (wall.a.x + wall.b.x) / 2,
-          (wall.a.z + wall.b.z) / 2 + 0.12,
+        drawing.dimension(
+          wall.a,
+          wall.b,
           _formatLength(wall.length, imperial),
-          0.12,
         );
       }
     }
@@ -101,7 +102,10 @@ class DxfExportBuilder {
         final end = feature.doorHingeSide == DoorHingeSide.start
             ? segment.b
             : segment.a;
-        final sign = feature.doorSwingSide == DoorSwingSide.left ? 1.0 : -1.0;
+        var sign = feature.doorSwingSide == DoorSwingSide.left ? 1.0 : -1.0;
+        if (feature.doorOpeningDirection == DoorOpeningDirection.exterior) {
+          sign = -sign;
+        }
         final leaf = ARPoint(
           x: hinge.x - sign * (end.z - hinge.z),
           y: 0,
@@ -118,6 +122,11 @@ class DxfExportBuilder {
           sign > 0 ? angle + 90 : angle,
         );
       }
+      drawing.dimension(
+        segment.a,
+        segment.b,
+        _formatLength(segment.length, imperial),
+      );
     }
     return drawing.finish();
   }
@@ -213,7 +222,45 @@ class _DxfWriter {
     _pair(_entities, 51, end % 360);
   }
 
-  void text(String layer, double x, double y, String value, double height) {
+  void dimension(ARPoint a, ARPoint b, String value) {
+    final dx = b.x - a.x;
+    final dz = b.z - a.z;
+    final length = math.sqrt(dx * dx + dz * dz);
+    if (length < 0.000001) return;
+    const offset = 0.18;
+    final normalX = -dz / length;
+    final normalZ = dx / length;
+    final dimensionStart = ARPoint(
+      x: a.x + normalX * offset,
+      y: 0,
+      z: a.z + normalZ * offset,
+    );
+    final dimensionEnd = ARPoint(
+      x: b.x + normalX * offset,
+      y: 0,
+      z: b.z + normalZ * offset,
+    );
+    line('MEASUREMENTS', a, dimensionStart);
+    line('MEASUREMENTS', b, dimensionEnd);
+    line('MEASUREMENTS', dimensionStart, dimensionEnd);
+    text(
+      'MEASUREMENTS',
+      (dimensionStart.x + dimensionEnd.x) / 2,
+      (dimensionStart.z + dimensionEnd.z) / 2,
+      value,
+      0.12,
+      centered: true,
+    );
+  }
+
+  void text(
+    String layer,
+    double x,
+    double y,
+    String value,
+    double height, {
+    bool centered = false,
+  }) {
     _entity('TEXT', layer, 'AcDbText');
     _point(ARPoint(x: x, y: 0, z: y));
     _pair(_entities, 40, height * scale);
@@ -232,6 +279,10 @@ class _DxfWriter {
     }
     _pair(_entities, 1, escaped);
     _pair(_entities, 7, 'STANDARD');
+    if (centered) {
+      _pair(_entities, 72, 1);
+      _point(ARPoint(x: x, y: 0, z: y), code: 11);
+    }
     _pair(_entities, 100, 'AcDbText');
   }
 
@@ -279,12 +330,12 @@ class _DxfWriter {
     p(40, 0.0);
     p(0, 'ENDTAB');
     const layers = {
-      '0': 7,
-      'WALLS': 5,
-      'DOORS': 30,
-      'WINDOWS': 6,
-      'ROOM_NAMES': 7,
-      'MEASUREMENTS': 8,
+      '0': 0,
+      'WALLS': 35,
+      'DOORS': 13,
+      'WINDOWS': 13,
+      'ROOM_NAMES': 13,
+      'MEASUREMENTS': 13,
     };
     table('LAYER', '3', layers.length);
     var layerHandle = 4;
@@ -296,8 +347,9 @@ class _DxfWriter {
       p(100, 'AcDbLayerTableRecord');
       p(2, entry.key);
       p(70, 0);
-      p(62, entry.value);
+      p(62, 7);
       p(6, 'CONTINUOUS');
+      p(370, entry.value);
     }
     p(0, 'ENDTAB');
     table('STYLE', 'A', 1);
