@@ -3,6 +3,8 @@ include: package:lints/recommended.yaml
 analyzer:
   exclude:
     - lib/**/*.g.dart
+  errors:
+    curly_braces_in_flow_control_structures: ignore
 
 linter:
   rules:
