@@ -155,10 +155,9 @@ class PlanExportBuilder {
   }
 
   /// Builds the vector technical plan used by SVG, PDF and raster exports.
-  /// Dimensions are emitted in architectural order: shortest/interior
-  /// measurements first, then longer/outer measurements. The layout reserves
-  /// the occupied corridor of each dimension so dimension lines themselves do
-  /// not cross one another.
+  /// Dimensions are ordered by physical length, from shortest/interior to
+  /// longest/outer. Each occupied dimension corridor is reserved before the
+  /// next one is placed, reducing crossings of lines as well as labels.
   static String buildFloorPlanSvg(
     List<RoomModel> rooms,
     MeasurementSystem measurementSystem, {
@@ -209,6 +208,7 @@ class PlanExportBuilder {
       ..writeln('<rect width="$canvasWidth" height="$canvasHeight" fill="white"/>');
     final wallsSvg = StringBuffer();
     final carpentrySvg = StringBuffer();
+    final roomNamesSvg = StringBuffer();
     final dimensionsSvg = StringBuffer();
     final dimensionLayout = _SvgDimensionLayout(
       canvasWidth: canvasWidth,
@@ -228,6 +228,9 @@ class PlanExportBuilder {
         wallsSvg.writeln('<polyline points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>');
       }
       final center = _roomCenter(transformed);
+      if (room.name.trim().isNotEmpty) {
+        roomNamesSvg.writeln('<text x="${_svgNumber(center.x)}" y="${_svgNumber(center.y + 3)}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="bold" fill="#000000">${_escapeSvg(room.name.trim())}</text>');
+      }
       final wallCount = room.isClosed ? room.points.length : room.points.length - 1;
       for (var index = 0; index < wallCount; index++) {
         final first = room.points[index];
@@ -304,6 +307,9 @@ class PlanExportBuilder {
       ..writeln('</g>')
       ..writeln('<g id="carpinteria">')
       ..write(carpentrySvg)
+      ..writeln('</g>')
+      ..writeln('<g id="nombres-ambientes">')
+      ..write(roomNamesSvg)
       ..writeln('</g>')
       ..writeln('<g id="cotas">')
       ..write(dimensionsSvg)
