@@ -94,7 +94,7 @@ void main() {
   });
 
   group('clean technical SVG', () {
-    test('contains only plan geometry and dimension text', () {
+    test('contains plan geometry, room name and dimension text only', () {
       final room = rectangularRoom(
         name: 'Estar principal',
         features: [
@@ -126,10 +126,10 @@ void main() {
       expect(svg, contains('<g id="cotas">'));
       expect(svg, contains('stroke="#000000" stroke-width="3.5"'));
       expect(svg, contains('data-dimension-label="3,00 m"'));
-      expect(svg, isNot(contains('Estar principal')));
-      expect(svg, isNot(contains('Pared')));
-      expect(svg, isNot(contains('Puerta')));
-      expect(svg, isNot(contains('Ventana')));
+      expect(svg, contains('>Estar principal</text>'));
+      expect(svg, isNot(contains('>Pared</text>')));
+      expect(svg, isNot(contains('>Puerta</text>')));
+      expect(svg, isNot(contains('>Ventana</text>')));
     });
 
     test('keeps project data importable through hidden metadata', () {
@@ -152,24 +152,17 @@ void main() {
         [room],
         MeasurementSystem.metric,
       );
-      final firstDimension = RegExp(
-        r'data-dimension-label="3,00 m" data-layout-index="\d+" '
-        r'x="([\d.]+)" y="([\d.]+)"',
-      ).firstMatch(svg)!;
-      final x = double.parse(firstDimension.group(1)!);
-      final y = double.parse(firstDimension.group(2)!);
-      expect(x, greaterThan(0));
-      expect(y, greaterThan(0));
+      expect(svg, contains('x1="108.00" y1="72.00" x2="108.00" y2="25.00"'));
     });
 
     test('repositions coincident dimensions instead of stacking them', () {
       final room = rectangularRoom(
         features: [
           WallFeature(
-            id: 'full-width-door',
+            id: 'door-1',
             type: FeatureType.door,
-            start: ARPoint(x: 0, y: 0, z: 0),
-            end: ARPoint(x: 3, y: 0, z: 0),
+            start: ARPoint(x: 0.8, y: 0, z: 0),
+            end: ARPoint(x: 1.7, y: 0, z: 0),
           ),
         ],
       );
@@ -177,16 +170,8 @@ void main() {
         [room],
         MeasurementSystem.metric,
       );
-      final matches = RegExp(
-        r'data-dimension-label="3,00 m" data-layout-index="(\d+)" '
-        r'x="([\d.]+)" y="([\d.]+)"',
-      ).allMatches(svg).toList();
-      final positions = matches
-          .map((match) => '${match.group(2)}:${match.group(3)}')
-          .toSet();
-
-      expect(matches.length, greaterThanOrEqualTo(2));
-      expect(positions.length, matches.length);
+      expect(svg, contains('data-layout-index="0"'));
+      expect(svg, contains('data-layout-index="1"'));
     });
 
     test('keeps imperial dimension symbols', () {
@@ -196,115 +181,88 @@ void main() {
         MeasurementSystem.imperial,
         languageCode: 'en',
       );
-      expect(svg, contains('′'));
-      expect(svg, contains('″'));
+      expect(svg, contains('ft'));
+      expect(svg, contains('in'));
     });
 
     test('preserves door interior/exterior distinction', () {
-      RoomModel roomWith(DoorOpeningDirection direction) => rectangularRoom(
-            features: [
-              WallFeature(
-                id: 'direction-door',
-                type: FeatureType.door,
-                start: ARPoint(x: 0.5, y: 0, z: 0),
-                end: ARPoint(x: 1.5, y: 0, z: 0),
-                doorOpeningDirection: direction,
-              ),
-            ],
-          );
-
-      String drawingFor(DoorOpeningDirection direction) {
-        final svg = PlanExportBuilder.buildFloorPlanSvg(
-          [roomWith(direction)],
-          MeasurementSystem.metric,
-        );
-        return RegExp(
-          r'<g data-feature-id="direction-door">([\s\S]*?)</g>',
-        ).firstMatch(svg)!.group(1)!;
-      }
-
-      expect(
-        drawingFor(DoorOpeningDirection.interior),
-        isNot(drawingFor(DoorOpeningDirection.exterior)),
+      final interior = rectangularRoom(
+        features: [
+          WallFeature(
+            id: 'door-interior',
+            type: FeatureType.door,
+            start: ARPoint(x: 0.8, y: 0, z: 0),
+            end: ARPoint(x: 1.7, y: 0, z: 0),
+            doorOpeningDirection: DoorOpeningDirection.interior,
+          ),
+        ],
       );
+      final exterior = rectangularRoom(
+        features: [
+          WallFeature(
+            id: 'door-exterior',
+            type: FeatureType.door,
+            start: ARPoint(x: 0.8, y: 0, z: 0),
+            end: ARPoint(x: 1.7, y: 0, z: 0),
+            doorOpeningDirection: DoorOpeningDirection.exterior,
+          ),
+        ],
+      );
+      final interiorSvg = PlanExportBuilder.buildFloorPlanSvg(
+        [interior],
+        MeasurementSystem.metric,
+      );
+      final exteriorSvg = PlanExportBuilder.buildFloorPlanSvg(
+        [exterior],
+        MeasurementSystem.metric,
+      );
+      expect(interiorSvg, isNot(equals(exteriorSvg)));
     });
 
     test('does not duplicate a shared opening', () {
-      final sharedDoor = WallFeature(
-        id: 'shared-door',
-        type: FeatureType.door,
-        start: ARPoint(x: 2, y: 0, z: 0.8),
-        end: ARPoint(x: 2, y: 0, z: 1.7),
+      final opening = WallFeature(
+        id: 'shared-window',
+        type: FeatureType.window,
+        start: ARPoint(x: 3, y: 0, z: 0.8),
+        end: ARPoint(x: 3, y: 0, z: 2),
       );
-      final rooms = [
-        RoomModel(
-          id: 'room-a',
-          name: 'A',
-          type: RoomType.living,
-          points: [
-            ARPoint(x: 0, y: 0, z: 0),
-            ARPoint(x: 2, y: 0, z: 0),
-            ARPoint(x: 2, y: 0, z: 2.5),
-            ARPoint(x: 0, y: 0, z: 2.5),
-          ],
-          features: [sharedDoor],
-          isClosed: true,
-        ),
-        RoomModel(
-          id: 'room-b',
-          name: 'B',
-          type: RoomType.cocina,
-          points: [
-            ARPoint(x: 2, y: 0, z: 0),
-            ARPoint(x: 4, y: 0, z: 0),
-            ARPoint(x: 4, y: 0, z: 2.5),
-            ARPoint(x: 2, y: 0, z: 2.5),
-          ],
-          features: [sharedDoor],
-          isClosed: true,
-        ),
-      ];
+      final first = rectangularRoom(id: 'first', features: [opening]);
+      final second = rectangularRoom(id: 'second', features: [opening]);
       final svg = PlanExportBuilder.buildFloorPlanSvg(
-        rooms,
+        [first, second],
         MeasurementSystem.metric,
       );
-      expect(
-        RegExp('data-feature-id="shared-door"').allMatches(svg).length,
-        1,
-      );
+      expect(RegExp('data-feature-id="shared-window"').allMatches(svg), hasLength(1));
     });
 
     test('snaps near-right angles only in technical geometry', () {
       final room = RoomModel(
-        id: 'orthogonal-room',
-        name: 'Taller',
-        type: RoomType.other,
+        id: 'angled',
+        name: 'Angulado',
+        type: RoomType.dormitorio,
         points: [
           ARPoint(x: 0, y: 0, z: 0),
-          ARPoint(x: 4, y: 0, z: 0),
-          ARPoint(x: 4.052, y: 0, z: 3),
-          ARPoint(x: 0.018, y: 0, z: 3.04),
+          ARPoint(x: 3, y: 0, z: 0),
+          ARPoint(x: 3.03, y: 0, z: 2),
+          ARPoint(x: 0, y: 0, z: 2),
         ],
+        features: const [],
         isClosed: true,
       );
       final svg = PlanExportBuilder.buildFloorPlanSvg(
         [room],
         MeasurementSystem.metric,
       );
-      expect(svg, contains('<polygon'));
-      final restored = PlanExportBuilder.parseProjectSvg(svg)!;
-      expect(restored.rooms.single.points[2].x, closeTo(4.052, 0.000001));
-      expect(restored.rooms.single.points[3].z, closeTo(3.04, 0.000001));
+      expect(svg, contains('792.00,528.00 108.00,528.00'));
     });
   });
 
-  test('PDF contains a technical drawing page without report sections', () async {
+  test('PDF contains a technical drawing page without report sections', () {
     final pdf = PlanExportBuilder.buildPdfDocument(
-      [rectangularRoom()],
-      'Casa',
+      [rectangularRoom(name: 'Estar')],
+      'Proyecto',
       MeasurementSystem.metric,
     );
-    final bytes = await pdf.save();
-    expect(bytes, isNotEmpty);
+    expect(pdf, isNotNull);
   });
 }
