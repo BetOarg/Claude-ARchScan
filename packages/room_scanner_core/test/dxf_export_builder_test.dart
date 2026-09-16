@@ -188,7 +188,7 @@ void main() {
     expect(bottom[1][10], '1.5');
   });
 
-  test('preserves both hinge choices and both swing directions', () {
+  test('preserves both hinge choices and both swing directions in the plan frame', () {
     for (final hinge in DoorHingeSide.values) {
       for (final swing in DoorSwingSide.values) {
         final door = WallFeature(
@@ -211,10 +211,12 @@ void main() {
         expect(double.parse(arc[10]!), hinge == DoorHingeSide.start ? 0 : 1);
         expect(double.parse(arc[40]!), 1);
         expect((double.parse(arc[51]!) - double.parse(arc[50]!)) % 360, 90);
-        final direction =
+        final modelDirection =
             (swing == DoorSwingSide.left ? 1 : -1) *
             (hinge == DoorHingeSide.start ? 1 : -1);
-        expect(double.parse(leaf[21]!), direction);
+        // The technical export uses the mirrored 2D plan frame, so the
+        // persisted model swing is intentionally inverted at export time.
+        expect(double.parse(leaf[21]!), -modelDirection);
       }
     }
   });
