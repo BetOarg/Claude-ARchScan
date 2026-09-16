@@ -179,8 +179,55 @@ void main() {
       expect(svg, contains('Estar principal'));
       expect(svg, contains('data-feature-id="door-svg"'));
       expect(svg, contains('data-feature-id="window-svg"'));
-      expect(svg, contains('#F57C00'));
-      expect(svg, contains('#C2185B'));
+      expect(svg, contains('<g id="paredes">'));
+      expect(svg, contains('<g id="carpinteria">'));
+      expect(svg, contains('<g id="cotas">'));
+      expect(svg, contains('stroke="#000000" stroke-width="3.5"'));
+      expect(svg, isNot(contains('#F57C00')));
+      expect(svg, isNot(contains('#C2185B')));
+    });
+
+    test('corrige a 90 grados solo la geometría técnica cercana', () {
+      final room = RoomModel(
+        id: 'orthogonal-room',
+        name: 'Taller',
+        type: RoomType.other,
+        points: [
+          ARPoint(x: 0, y: 0, z: 0),
+          ARPoint(x: 4, y: 0, z: 0),
+          ARPoint(x: 4.052, y: 0, z: 3),
+          ARPoint(x: 0.018, y: 0, z: 3.04),
+        ],
+        isClosed: true,
+      );
+
+      final svg = PlanExportBuilder.buildFloorPlanSvg(
+        [room],
+        MeasurementSystem.metric,
+      );
+      final polygon = RegExp(r'<polygon points="([^"]+)"')
+          .firstMatch(svg)!
+          .group(1)!;
+      final points = polygon.split(' ').map((value) {
+        final coordinates = value.split(',').map(double.parse).toList();
+        return (coordinates[0], coordinates[1]);
+      }).toList();
+
+      double dotAt(int index) {
+        final previous = points[(index - 1) % points.length];
+        final current = points[index];
+        final next = points[(index + 1) % points.length];
+        return (previous.$1 - current.$1) * (next.$1 - current.$1) +
+            (previous.$2 - current.$2) * (next.$2 - current.$2);
+      }
+
+      for (var index = 0; index < points.length; index++) {
+        expect(dotAt(index).abs(), lessThan(0.1));
+      }
+
+      final restored = PlanExportBuilder.parseProjectSvg(svg)!;
+      expect(restored.rooms.single.points[2].x, closeTo(4.052, 0.000001));
+      expect(restored.rooms.single.points[3].z, closeTo(3.04, 0.000001));
     });
 
     test('omite el tipo genérico Otro espacio del plano exportado', () {

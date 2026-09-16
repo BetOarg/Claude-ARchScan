@@ -88,6 +88,16 @@ void main() {
       ]) {
         expect(dxf, contains('2\r\n$layer\r\n'));
       }
+      expect(
+        dxf,
+        contains('2\r\nWALLS\r\n70\r\n0\r\n62\r\n7\r\n'
+            '6\r\nCONTINUOUS\r\n370\r\n35\r\n'),
+      );
+      expect(
+        dxf,
+        contains('2\r\nMEASUREMENTS\r\n70\r\n0\r\n62\r\n7\r\n'
+            '6\r\nCONTINUOUS\r\n370\r\n13\r\n'),
+      );
       final walls = _entities(dxf)
           .where((e) => e[0] == 'LINE' && e[8] == 'WALLS')
           .toList();
@@ -119,6 +129,37 @@ void main() {
       );
       expect(length, closeTo(shift == 0 ? 14 : 15, 1e-8));
     }
+  });
+
+  test('orthogonalizes only the technical DXF and draws dimension lines', () {
+    final room = RoomModel(
+      id: 'technical',
+      name: 'technical',
+      type: RoomType.other,
+      isClosed: true,
+      points: [
+        ARPoint(x: 0, y: 0, z: 0),
+        ARPoint(x: 4, y: 0, z: 0),
+        ARPoint(x: 4.052, y: 0, z: 3),
+        ARPoint(x: 0.018, y: 0, z: 3.04),
+      ],
+    );
+    final before = room.toJson();
+    final entities = _entities(DxfExportBuilder.build([room]));
+    final walls = entities
+        .where((entity) => entity[0] == 'LINE' && entity[8] == 'WALLS')
+        .toList();
+    final dimensions = entities
+        .where((entity) => entity[0] == 'LINE' && entity[8] == 'MEASUREMENTS')
+        .toList();
+
+    expect(walls, hasLength(4));
+    expect(dimensions, hasLength(12));
+    expect(double.parse(walls[1][10]!), closeTo(4, 0.000001));
+    expect(double.parse(walls[1][11]!), closeTo(4, 0.000001));
+    expect(double.parse(walls[2][21]!), closeTo(3.00045, 0.00001));
+    expect(double.parse(walls[3][10]!), closeTo(0, 0.000001));
+    expect(room.toJson(), before);
   });
 
   test('cuts a wall gap and draws a shared door once', () {

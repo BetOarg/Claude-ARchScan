@@ -93,8 +93,9 @@ class ImportExportService {
     );
   }
 
-  /// Rasteriza únicamente el plano vectorial a una imagen de alta resolución.
-  /// El PNG conserva máxima nitidez; el JPG usa calidad 92 y fondo blanco.
+  /// Rasteriza el mismo SVG técnico utilizado por PDF y SVG a alta resolución.
+  /// Así JPG/PNG conservan la ortogonalización, carpinterías y cotas. El PNG
+  /// mantiene máxima nitidez; el JPG usa calidad 92 y fondo blanco.
   static Future<bool> exportToRasterImage(
     List<RoomModel> rooms,
     String projectName,

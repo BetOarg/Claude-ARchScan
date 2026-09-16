@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../models/room_model.dart';
 import '../geometry/geometry_service.dart'; // <-- Añadir esta importación (ajusta la ruta según la estructura de carpetas)
 import '../utils/measurement_units.dart';
+import 'technical_drawing_geometry.dart';
 
 /// Construye los datos y documentos de exportación/importación del plano
 /// (JSON, SVG del plano y PDF técnico) de forma puramente computacional.
@@ -287,13 +288,15 @@ class PlanExportBuilder {
     String projectName = 'Plano 2D',
   }) {
     final labels = _PdfLabels.forLanguage(languageCode);
+    final drawingRooms =
+        rooms.map(TechnicalDrawingGeometry.normalizeRoom).toList();
     const canvasWidth = 760.0;
     const canvasHeight = 500.0;
     const padding = 42.0;
 
     final points = <ARPoint>[
-      for (final room in rooms) ...room.points,
-      for (final room in rooms)
+      for (final room in drawingRooms) ...room.points,
+      for (final room in drawingRooms)
         for (final feature in room.features) ...[
           feature.start,
           feature.end,
@@ -344,6 +347,10 @@ class PlanExportBuilder {
       )
       ..writeln(_projectSvgMetadata(rooms, projectName))
       ..writeln('<rect width="760" height="500" fill="white"/>');
+    final wallsSvg = StringBuffer();
+    final carpentrySvg = StringBuffer();
+    final dimensionsSvg = StringBuffer();
+    final annotationsSvg = StringBuffer();
     final labelLayout = _SvgLabelLayout(
       canvasWidth: canvasWidth,
       canvasHeight: canvasHeight,
@@ -353,7 +360,7 @@ class PlanExportBuilder {
     // Room captions are part of the drawing too. Reserve their space before
     // placing any dimension so an early wall label cannot occupy the caption
     // of a room that is drawn later.
-    for (final room in rooms) {
+    for (final room in drawingRooms) {
       if (room.points.length < 2) continue;
       final transformed = room.points.map(transform).toList();
       final centerX = transformed
@@ -379,7 +386,7 @@ class PlanExportBuilder {
     }
 
     final drawnWallKeys = <String>{};
-    for (final room in rooms) {
+    for (final room in drawingRooms) {
       if (room.points.length < 2) {
         continue;
       }
@@ -389,15 +396,15 @@ class PlanExportBuilder {
           .map((point) => '${_svgNumber(point.x)},${_svgNumber(point.y)}')
           .join(' ');
       if (room.isClosed) {
-        svg.writeln(
-          '<polygon points="$outlinePoints" fill="#E3F2FD" '
-          'fill-opacity="0.34" stroke="#1565C0" stroke-width="3" '
+        wallsSvg.writeln(
+          '<polygon points="$outlinePoints" fill="none" '
+          'stroke="#000000" stroke-width="3.5" '
           'stroke-linejoin="round"/>',
         );
       } else {
-        svg.writeln(
+        wallsSvg.writeln(
           '<polyline points="$outlinePoints" fill="none" '
-          'stroke="#1565C0" stroke-width="3" stroke-linejoin="round" '
+          'stroke="#000000" stroke-width="3.5" stroke-linejoin="round" '
           'stroke-linecap="round"/>',
         );
       }
@@ -424,7 +431,7 @@ class PlanExportBuilder {
           ? 'm²'
           : 'ft²';
 
-      svg
+      annotationsSvg
         ..writeln(
           '<text x="${_svgNumber(centerX)}" '
           'y="${_svgNumber(centerY - 4)}" text-anchor="middle" '
@@ -449,7 +456,7 @@ class PlanExportBuilder {
         }
 
         _writeDimensionSvg(
-          svg: svg,
+          svg: dimensionsSvg,
           layout: labelLayout,
           start: transform(first),
           end: transform(second),
@@ -458,7 +465,7 @@ class PlanExportBuilder {
             measurementSystem,
             decimalSeparator: labels.decimalSeparator,
           ),
-          color: '#1565C0',
+          color: '#000000',
           center: _SvgPoint(centerX, centerY),
           offset: 13,
         );
@@ -466,7 +473,7 @@ class PlanExportBuilder {
     }
 
     final drawnFeatureIds = <String>{};
-    for (final room in rooms) {
+    for (final room in drawingRooms) {
       for (final feature in room.features) {
         if (!drawnFeatureIds.add(feature.id)) {
           continue;
@@ -474,18 +481,18 @@ class PlanExportBuilder {
 
         final start = transform(feature.start);
         final end = transform(feature.end);
-        svg.writeln(
+        carpentrySvg.writeln(
           '<g data-feature-id="${_escapeSvg(feature.id)}">',
         );
 
         if (feature.type == FeatureType.door) {
-          _writeDoorSvg(svg, feature, start, end);
+          _writeDoorSvg(carpentrySvg, feature, start, end);
         } else {
-          _writeWindowSvg(svg, start, end);
+          _writeWindowSvg(carpentrySvg, start, end);
         }
 
         _writeDimensionSvg(
-          svg: svg,
+          svg: dimensionsSvg,
           layout: labelLayout,
           start: start,
           end: end,
@@ -494,33 +501,43 @@ class PlanExportBuilder {
             measurementSystem,
             decimalSeparator: labels.decimalSeparator,
           ),
-          color: feature.type == FeatureType.door
-              ? '#F57C00'
-              : '#C2185B',
+          color: '#000000',
           offset: 11,
         );
 
-        svg.writeln('</g>');
+        carpentrySvg.writeln('</g>');
       }
     }
 
     svg
+      ..writeln('<g id="paredes">')
+      ..write(wallsSvg)
+      ..writeln('</g>')
+      ..writeln('<g id="carpinteria">')
+      ..write(carpentrySvg)
+      ..writeln('</g>')
+      ..writeln('<g id="cotas">')
+      ..write(dimensionsSvg)
+      ..writeln('</g>')
+      ..writeln('<g id="anotaciones">')
+      ..write(annotationsSvg)
+      ..writeln('</g>')
       ..writeln(
         '<g font-family="Helvetica" font-size="10" fill="#374151">',
       )
       ..writeln(
         '<line x1="42" y1="476" x2="66" y2="476" '
-        'stroke="#1565C0" stroke-width="3"/>',
+        'stroke="#000000" stroke-width="3.5"/>',
       )
       ..writeln('<text x="72" y="480">${labels.wall}</text>')
       ..writeln(
         '<line x1="126" y1="476" x2="150" y2="476" '
-        'stroke="#F57C00" stroke-width="3"/>',
+        'stroke="#000000" stroke-width="1.4"/>',
       )
       ..writeln('<text x="156" y="480">${labels.door}</text>')
       ..writeln(
         '<line x1="214" y1="476" x2="238" y2="476" '
-        'stroke="#C2185B" stroke-width="3"/>',
+        'stroke="#000000" stroke-width="1.4"/>',
       )
       ..writeln('<text x="244" y="480">${labels.window}</text>')
       ..writeln('</g>')
@@ -567,18 +584,17 @@ class PlanExportBuilder {
         'y1="${_svgNumber(hinge.y)}" '
         'x2="${_svgNumber(openEnd.x)}" '
         'y2="${_svgNumber(openEnd.y)}" '
-        'stroke="#F57C00" stroke-width="2.5"/>',
+        'stroke="#000000" stroke-width="1.4"/>',
       )
       ..writeln(
         '<path d="M ${_svgNumber(closedEnd.x)} ${_svgNumber(closedEnd.y)} '
         'A ${_svgNumber(radius)} ${_svgNumber(radius)} 0 0 $sweep '
         '${_svgNumber(openEnd.x)} ${_svgNumber(openEnd.y)}" '
-        'fill="none" stroke="#F57C00" stroke-width="1.4" '
-        'stroke-dasharray="4 3"/>',
+        'fill="none" stroke="#000000" stroke-width="1"/>',
       )
       ..writeln(
         '<circle cx="${_svgNumber(hinge.x)}" '
-        'cy="${_svgNumber(hinge.y)}" r="2.4" fill="#F57C00"/>',
+        'cy="${_svgNumber(hinge.y)}" r="2" fill="#000000"/>',
       );
   }
 
@@ -596,35 +612,36 @@ class PlanExportBuilder {
     svg
       ..writeln(
         '<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" '
-        'x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" '        'stroke="white" stroke-width="8"/>',
+        'x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" '
+        'stroke="white" stroke-width="8"/>',
       )
       ..writeln(
         '<line x1="${_svgNumber(start.x + normalX)}" '
         'y1="${_svgNumber(start.y + normalY)}" '
         'x2="${_svgNumber(end.x + normalX)}" '
         'y2="${_svgNumber(end.y + normalY)}" '
-        'stroke="#C2185B" stroke-width="2"/>',
+        'stroke="#000000" stroke-width="1"/>',
       )
       ..writeln(
         '<line x1="${_svgNumber(start.x - normalX)}" '
         'y1="${_svgNumber(start.y - normalY)}" '
         'x2="${_svgNumber(end.x - normalX)}" '
         'y2="${_svgNumber(end.y - normalY)}" '
-        'stroke="#C2185B" stroke-width="2"/>',
+        'stroke="#000000" stroke-width="1"/>',
       )
       ..writeln(
         '<line x1="${_svgNumber(start.x + normalX)}" '
         'y1="${_svgNumber(start.y + normalY)}" '
         'x2="${_svgNumber(start.x - normalX)}" '
         'y2="${_svgNumber(start.y - normalY)}" '
-        'stroke="#C2185B" stroke-width="2"/>',
+        'stroke="#000000" stroke-width="1"/>',
       )
       ..writeln(
         '<line x1="${_svgNumber(end.x + normalX)}" '
         'y1="${_svgNumber(end.y + normalY)}" '
         'x2="${_svgNumber(end.x - normalX)}" '
         'y2="${_svgNumber(end.y - normalY)}" '
-        'stroke="#C2185B" stroke-width="2"/>',
+        'stroke="#000000" stroke-width="1"/>',
       );
   }
 
@@ -683,6 +700,13 @@ class PlanExportBuilder {
         '<line x1="${_svgNumber(end.x)}" y1="${_svgNumber(end.y)}" '
         'x2="${_svgNumber(end.x + (normalX * extensionOffset))}" '
         'y2="${_svgNumber(end.y + (normalY * extensionOffset))}" '
+        'stroke="$color" stroke-width="0.7"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(start.x + (normalX * actualOffset))}" '
+        'y1="${_svgNumber(start.y + (normalY * actualOffset))}" '
+        'x2="${_svgNumber(end.x + (normalX * actualOffset))}" '
+        'y2="${_svgNumber(end.y + (normalY * actualOffset))}" '
         'stroke="$color" stroke-width="0.7"/>',
       )
       ..writeln(
