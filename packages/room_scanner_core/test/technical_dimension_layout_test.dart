@@ -35,10 +35,12 @@ void main() {
       y: (point) => point.z,
     );
 
-    expect(dimensions, hasLength(7));
+    // The horizontal total is geometrically identical to the 4 m wall and is
+    // intentionally removed by the shared CAD de-duplication rule.
+    expect(dimensions, hasLength(6));
     expect(dimensions.where((d) => d.kind == DimensionKind.opening), hasLength(1));
     expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(4));
-    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(2));
+    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(1));
     expect(dimensions.first.kind, DimensionKind.opening);
     expect(dimensions.last.kind, DimensionKind.total);
     expect(room.points, orderedEquals(originalPoints));
