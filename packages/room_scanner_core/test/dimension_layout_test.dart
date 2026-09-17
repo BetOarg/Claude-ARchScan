@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 
-import '../lib/src/export/dimension_layout.dart';
+import 'package:room_scanner_core/src/export/dimension_layout.dart';
 
 void main() {
   test('orders openings, wall segments, then totals', () {
