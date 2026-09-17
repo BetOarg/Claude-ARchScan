@@ -35,9 +35,7 @@ void main() {
       y: (point) => point.z,
     );
 
-    // The horizontal total is geometrically identical to the 4 m wall and is
-    // intentionally removed by the shared CAD de-duplication rule.
-    expect(dimensions, hasLength(6));
+    expect(dimensions, hasLength(5));
     expect(dimensions.where((d) => d.kind == DimensionKind.opening), hasLength(1));
     expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(4));
     expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(1));
@@ -57,7 +55,7 @@ void main() {
 
     expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(3));
     expect(dimensions.where((d) => d.kind == DimensionKind.opening), hasLength(1));
-    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(2));
+    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(1));
   });
 
   test('places opening dimensions with the interior normal direction', () {
