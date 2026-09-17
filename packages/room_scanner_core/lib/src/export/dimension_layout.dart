@@ -117,9 +117,22 @@ class DimensionLayout {
   }
 
   static int _comparePriority(DimensionSegment a, DimensionSegment b) {
-    final kind = _kindOrder(a.kind).compareTo(_kindOrder(b.kind));
+    final kind = _deduplicationPriority(a.kind).compareTo(
+      _deduplicationPriority(b.kind),
+    );
     if (kind != 0) return kind;
     return a.id.compareTo(b.id);
+  }
+
+  static int _deduplicationPriority(DimensionKind kind) {
+    switch (kind) {
+      case DimensionKind.opening:
+        return 0;
+      case DimensionKind.total:
+        return 1;
+      case DimensionKind.wall:
+        return 2;
+    }
   }
 
   static int _kindOrder(DimensionKind kind) {
