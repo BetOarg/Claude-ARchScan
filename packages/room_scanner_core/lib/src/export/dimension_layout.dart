@@ -77,7 +77,7 @@ class DimensionLayout {
   }) {
     final ordered = sort(input);
     final occupied = <_DimensionCorridor>[];
-    final spacing = math.max(gap, textHeight + gap);
+    final spacing = math.max(gap, textHeight + gap).toDouble();
     final result = <DimensionPlacement>[];
 
     for (final dimension in ordered) {
@@ -128,7 +128,7 @@ class DimensionLayout {
   }
 
   static _Vector _tangent(DimensionSegment d) {
-    final length = math.max(d.length, 0.000001);
+    final length = math.max(d.length, 0.000001).toDouble();
     return _Vector(d.dx / length, d.dy / length);
   }
 
@@ -174,21 +174,28 @@ class _DimensionCorridor {
     final y2 = d.y2 + normal.y * offset;
     final margin = halfLabelWidth + 4.0;
     final points = <List<double>>[
-      [x1, y1], [x2, y2],
+      [x1, y1],
+      [x2, y2],
       [x1 + tangent.x * margin, y1 + tangent.y * margin],
       [x1 - tangent.x * margin, y1 - tangent.y * margin],
       [x2 + tangent.x * margin, y2 + tangent.y * margin],
       [x2 - tangent.x * margin, y2 - tangent.y * margin],
     ];
+    final minX = points.map((p) => p[0]).reduce((a, b) => math.min(a, b));
+    final minY = points.map((p) => p[1]).reduce((a, b) => math.min(a, b));
+    final maxX = points.map((p) => p[0]).reduce((a, b) => math.max(a, b));
+    final maxY = points.map((p) => p[1]).reduce((a, b) => math.max(a, b));
     return _DimensionCorridor(
-      minX: points.map((p) => p[0]).reduce(math.min) - 2,
-      minY: points.map((p) => p[1]).reduce(math.min) - textHeight / 2,
-      maxX: points.map((p) => p[0]).reduce(math.max) + 2,
-      maxY: points.map((p) => p[1]).reduce(math.max) + textHeight / 2,
+      minX: minX - 2.0,
+      minY: minY - textHeight / 2.0,
+      maxX: maxX + 2.0,
+      maxY: maxY + textHeight / 2.0,
     );
   }
 
   bool overlaps(_DimensionCorridor other) =>
-      minX < other.maxX && maxX > other.minX &&
-      minY < other.maxY && maxY > other.minY;
+      minX < other.maxX &&
+      maxX > other.minX &&
+      minY < other.maxY &&
+      maxY > other.minY;
 }
