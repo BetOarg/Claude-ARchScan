@@ -52,13 +52,16 @@ class DimensionLayout {
   const DimensionLayout._();
 
   static List<DimensionSegment> deduplicate(Iterable<DimensionSegment> input) {
-    final result = <DimensionSegment>[];
-    final keys = <String>{};
+    final byGeometry = <String, DimensionSegment>{};
     for (final dimension in input) {
       if (dimension.length < 0.000001) continue;
-      if (keys.add(_canonicalKey(dimension))) result.add(dimension);
+      final key = _canonicalGeometryKey(dimension);
+      final current = byGeometry[key];
+      if (current == null || _comparePriority(dimension, current) < 0) {
+        byGeometry[key] = dimension;
+      }
     }
-    return result;
+    return byGeometry.values.toList();
   }
 
   static List<DimensionSegment> sort(Iterable<DimensionSegment> input) {
@@ -113,6 +116,12 @@ class DimensionLayout {
     return result;
   }
 
+  static int _comparePriority(DimensionSegment a, DimensionSegment b) {
+    final kind = _kindOrder(a.kind).compareTo(_kindOrder(b.kind));
+    if (kind != 0) return kind;
+    return a.id.compareTo(b.id);
+  }
+
   static int _kindOrder(DimensionKind kind) {
     switch (kind) {
       case DimensionKind.opening:
@@ -124,11 +133,11 @@ class DimensionLayout {
     }
   }
 
-  static String _canonicalKey(DimensionSegment d) {
+  static String _canonicalGeometryKey(DimensionSegment d) {
     final a = '${d.x1.toStringAsFixed(2)},${d.y1.toStringAsFixed(2)}';
     final b = '${d.x2.toStringAsFixed(2)},${d.y2.toStringAsFixed(2)}';
     final points = [a, b]..sort();
-    return '${d.kind.index}:${points[0]}|${points[1]}';
+    return '${points[0]}|${points[1]}';
   }
 
   static _Vector _tangent(DimensionSegment d) {
