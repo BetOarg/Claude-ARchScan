@@ -8,6 +8,8 @@ class DimensionSegment {
   final DimensionKind kind;
   final String id;
   final double? centerX, centerY;
+  final double normalDirection;
+  final double labelHalfWidth;
 
   const DimensionSegment({
     required this.x1,
@@ -18,6 +20,8 @@ class DimensionSegment {
     required this.id,
     this.centerX,
     this.centerY,
+    this.normalDirection = 1.0,
+    this.labelHalfWidth = 19.0,
   });
 
   double get dx => x2 - x1;
@@ -91,7 +95,7 @@ class DimensionLayout {
           normal,
           tangent,
           offset,
-          19.0,
+          dimension.labelHalfWidth,
           textHeight,
         );
         if (occupied.every((other) => !other.overlaps(corridor))) {
@@ -142,7 +146,10 @@ class DimensionLayout {
         normal = _Vector(-normal.x, -normal.y);
       }
     }
-    return normal;
+    return _Vector(
+      normal.x * d.normalDirection,
+      normal.y * d.normalDirection,
+    );
   }
 }
 
