@@ -179,9 +179,9 @@ void main() {
     );
     const second = DimensionSegment(
       x1: 0,
-      y1: 5,
+      y1: 8,
       x2: 10,
-      y2: 15,
+      y2: 18,
       kind: DimensionKind.opening,
       id: 'diagonal-b',
     );
@@ -234,5 +234,4 @@ void main() {
     expect(placement.level, greaterThan(0));
     expect(placement.offset, greaterThan(22));
   });
-
 }
