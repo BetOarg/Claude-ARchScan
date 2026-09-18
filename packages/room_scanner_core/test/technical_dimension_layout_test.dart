@@ -35,10 +35,10 @@ void main() {
       y: (point) => point.z,
     );
 
-    expect(dimensions, hasLength(5));
+    expect(dimensions, hasLength(7));
     expect(dimensions.where((d) => d.kind == DimensionKind.opening), hasLength(1));
     expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(4));
-    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(1));
+    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(2));
     expect(dimensions.first.kind, DimensionKind.opening);
     expect(dimensions.last.kind, DimensionKind.total);
     expect(room.points, orderedEquals(originalPoints));
@@ -55,7 +55,7 @@ void main() {
 
     expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(3));
     expect(dimensions.where((d) => d.kind == DimensionKind.opening), hasLength(1));
-    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(1));
+    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(2));
   });
 
   test('places opening dimensions with the interior normal direction', () {
