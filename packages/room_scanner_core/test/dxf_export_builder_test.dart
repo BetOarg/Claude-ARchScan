@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:test/test.dart';
 
@@ -37,10 +39,15 @@ void main() {
         .toList();
 
     expect(walls, hasLength(4));
-    expect(measurements, hasLength(12));
-    final wallY = double.parse(walls.first[20]!);
-    final dimensionY = double.parse(measurements[2][20]!);
-    expect((dimensionY - wallY).abs(), closeTo(0.35, 1e-8));
+    expect(measurements, hasLength(18));
+    // The shortest wall is vertical, so the first dimension line is offset
+    // horizontally. Compare its X coordinate with either vertical wall.
+    final dimensionX = double.parse(measurements[2][10]!);
+    final distanceToNearestVerticalWall = math.min(
+      dimensionX.abs(),
+      (dimensionX - 3.0).abs(),
+    );
+    expect(distanceToNearestVerticalWall, closeTo(0.35, 1e-8));
   });
 
   test('imperial labels use feet and inches', () {
