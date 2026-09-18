@@ -156,9 +156,9 @@ class DxfExportBuilder {
           final feature = openings[featureId];
           if (feature != null) {
             label = _formatLength(
-              GeometryService.calculateDistance(
-                feature.start,
-                feature.end,
+              math.sqrt(
+                math.pow(feature.end.x - feature.start.x, 2) +
+                    math.pow(feature.end.z - feature.start.z, 2),
               ),
               imperial,
             );
@@ -189,44 +189,6 @@ class DxfExportBuilder {
     final dz = segment.y2 - segment.y1;
     return math.sqrt(dx * dx + dz * dz);
   }
-
-  static ARPoint? _roomCenter(
-    List<RoomModel> rooms,
-    _Segment segment,
-  ) {
-    for (final room in rooms) {
-      if (room.points.any((p) => _samePoint(p, segment.a)) &&
-          room.points.any((p) => _samePoint(p, segment.b))) {
-        if (room.points.isEmpty) return null;
-        final x = room.points.fold<double>(0, (sum, p) => sum + p.x) /
-            room.points.length;
-        final z = room.points.fold<double>(0, (sum, p) => sum + p.z) /
-            room.points.length;
-        return ARPoint(x: x, y: 0, z: z);
-      }
-    }
-    return null;
-  }
-
-  static ARPoint? _openingRoomCenter(
-    List<RoomModel> rooms,
-    WallFeature feature,
-  ) {
-    for (final room in rooms) {
-      if (room.features.any((candidate) => candidate.id == feature.id)) {
-        if (room.points.isEmpty) return null;
-        final x = room.points.fold<double>(0, (sum, p) => sum + p.x) /
-            room.points.length;
-        final z = room.points.fold<double>(0, (sum, p) => sum + p.z) /
-            room.points.length;
-        return ARPoint(x: x, y: 0, z: z);
-      }
-    }
-    return null;
-  }
-
-  static bool _samePoint(ARPoint a, ARPoint b) =>
-      (a.x - b.x).abs() < 0.00001 && (a.z - b.z).abs() < 0.00001;
 
   static String _formatLength(double meters, bool imperial) {
     if (!imperial) return '${meters.toStringAsFixed(2)} m';
