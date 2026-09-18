@@ -216,7 +216,6 @@ class PlanExportBuilder {
     final roomNamesSvg = StringBuffer();
     final dimensionsSvg = StringBuffer();
 
-    final drawnWallKeys = <String>{};
     final dimensionSegments = <DimensionSegment>[];
     final dimensionLabels = <String, String>{};
     for (final room in drawingRooms) {
@@ -231,13 +230,6 @@ class PlanExportBuilder {
       final center = _roomCenter(transformed);
       if (room.name.trim().isNotEmpty) {
         roomNamesSvg.writeln('<text x="${_svgNumber(center.x)}" y="${_svgNumber(center.y + 3)}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="bold" fill="#000000">${_escapeSvg(room.name.trim())}</text>');
-      }
-      final wallCount = room.isClosed ? room.points.length : room.points.length - 1;
-      for (var index = 0; index < wallCount; index++) {
-        final first = room.points[index];
-        final second = room.points[(index + 1) % room.points.length];
-        if (!drawnWallKeys.add(_wallKey(first, second))) continue;
-
       }
     }
 
@@ -397,13 +389,6 @@ class PlanExportBuilder {
       ..writeln('<line x1="${_svgNumber(segment.x1 + normalX * actualOffset)}" y1="${_svgNumber(segment.y1 + normalY * actualOffset)}" x2="${_svgNumber(segment.x2 + normalX * actualOffset)}" y2="${_svgNumber(segment.y2 + normalY * actualOffset)}" stroke="#000000" stroke-width="0.7"/>')
       ..writeln('<rect x="${_svgNumber(labelX - labelWidth / 2)}" y="${_svgNumber(labelY - 8)}" width="${_svgNumber(labelWidth)}" height="14" fill="white" fill-opacity="0.96"/>')
       ..writeln('<text data-dimension-label="${_escapeSvg(label)}" data-layout-index="${placement.level}" x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 3)}" text-anchor="middle" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="#000000">${_escapeSvg(label)}</text>');
-  }
-
-  static String _wallKey(ARPoint first, ARPoint second) {
-    String pointKey(ARPoint point) => '${point.x.toStringAsFixed(4)}:${point.z.toStringAsFixed(4)}';
-    final firstKey = pointKey(first);
-    final secondKey = pointKey(second);
-    return firstKey.compareTo(secondKey) <= 0 ? '$firstKey|$secondKey' : '$secondKey|$firstKey';
   }
 
   static String _formatCompactLength(double meters, MeasurementSystem measurementSystem, {required String decimalSeparator}) {
