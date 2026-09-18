@@ -141,6 +141,33 @@ void main() {
     expect(placements.last.offset, greaterThan(placements.first.offset));
   });
 
+  test('keeps a total dimension distinct from coincident wall geometry', () {
+    const wall = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'wall',
+    );
+    const total = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.total,
+      id: 'total',
+    );
+
+    final result = DimensionLayout.deduplicate([wall, total]);
+
+    expect(result, hasLength(2));
+    expect(result.map((d) => d.kind), containsAll([
+      DimensionKind.wall,
+      DimensionKind.total,
+    ]));
+  });
+
   test('moves a dimension outward when its corridor crosses another wall', () {
     const dimension = DimensionSegment(
       x1: 0,
