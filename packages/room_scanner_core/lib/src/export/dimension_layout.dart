@@ -368,7 +368,7 @@ class _DimensionCorridor {
     for (var i = 0; i < corners.length; i++) {
       final a = corners[i];
       final b = corners[(i + 1) % corners.length];
-      if (_segmentsIntersect(
+      if (DimensionLayout._segmentsIntersect(
         x1, y1, x2, y2, a.x, a.y, b.x, b.y,
       )) {
         return true;
