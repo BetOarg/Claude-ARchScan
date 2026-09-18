@@ -4,8 +4,9 @@ import 'dart:math' as math;
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/room_model.dart';
-import '../geometry/geometry_service.dart';
 import '../utils/measurement_units.dart';
+import 'dimension_layout.dart';
+import 'technical_dimension_layout.dart';
 import 'technical_drawing_geometry.dart';
 
 /// Builds ARchScan project data and technical drawing exports.
@@ -214,14 +215,9 @@ class PlanExportBuilder {
     final carpentrySvg = StringBuffer();
     final roomNamesSvg = StringBuffer();
     final dimensionsSvg = StringBuffer();
-    final dimensionLayout = _SvgDimensionLayout(
-      canvasWidth: canvasWidth,
-      canvasHeight: canvasHeight,
-      bottomReserved: 8,
-    );
 
-    final drawnWallKeys = <String>{};
-    final dimensions = <_SvgDimensionSpec>[];
+    final dimensionSegments = <DimensionSegment>[];
+    final dimensionLabels = <String, String>{};
     for (final room in drawingRooms) {
       if (room.points.length < 2) continue;
       final transformed = room.points.map(transform).toList();
@@ -235,29 +231,10 @@ class PlanExportBuilder {
       if (room.name.trim().isNotEmpty) {
         roomNamesSvg.writeln('<text x="${_svgNumber(center.x)}" y="${_svgNumber(center.y + 3)}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="bold" fill="#000000">${_escapeSvg(room.name.trim())}</text>');
       }
-      final wallCount = room.isClosed ? room.points.length : room.points.length - 1;
-      for (var index = 0; index < wallCount; index++) {
-        final first = room.points[index];
-        final second = room.points[(index + 1) % room.points.length];
-        if (!drawnWallKeys.add(_wallKey(first, second))) continue;
-        dimensions.add(_SvgDimensionSpec(
-          start: transform(first),
-          end: transform(second),
-          label: _formatCompactLength(
-            GeometryService.calculateDistance(first, second),
-            measurementSystem,
-            decimalSeparator: decimalSeparator,
-          ),
-          preferredOffset: 34,
-          center: center,
-          kind: _SvgDimensionKind.wall,
-        ));
-      }
     }
 
     final drawnFeatureIds = <String>{};
     for (final room in drawingRooms) {
-      final roomCenter = _roomCenter(room.points.map(transform).toList());
       for (final feature in room.features) {
         if (!drawnFeatureIds.add(feature.id)) continue;
         final start = transform(feature.start);
@@ -268,40 +245,56 @@ class PlanExportBuilder {
         } else {
           _writeWindowSvg(carpentrySvg, start, end);
         }
-        dimensions.add(_SvgDimensionSpec(
-          start: start,
-          end: end,
-          label: _formatCompactLength(
-            GeometryService.calculateDistance(feature.start, feature.end),
-            measurementSystem,
-            decimalSeparator: decimalSeparator,
-          ),
-          preferredOffset: 22,
-          center: roomCenter,
-          kind: _SvgDimensionKind.opening,
-        ));
+
         carpentrySvg.writeln('</g>');
       }
     }
 
-    dimensions.sort((a, b) {
-      final byLength = a.length.compareTo(b.length);
-      if (byLength != 0) return byLength;
-      final byKind = a.kind.index.compareTo(b.kind.index);
-      if (byKind != 0) return byKind;
-      final byX = a.middle.x.compareTo(b.middle.x);
-      return byX != 0 ? byX : a.middle.y.compareTo(b.middle.y);
-    });
-    for (final dimension in dimensions) {
+    for (final room in drawingRooms) {
+      final semanticSegments = TechnicalDimensionLayout.forRoom(
+        room: room,
+        x: (point) => point.x,
+        y: (point) => point.z,
+        includeTotals: true,
+      );
+      for (final semantic in semanticSegments) {
+        final start = transform(ARPoint(x: semantic.x1, y: 0, z: semantic.y1));
+        final end = transform(ARPoint(x: semantic.x2, y: 0, z: semantic.y2));
+        final center = semantic.centerX == null || semantic.centerY == null
+            ? null
+            : transform(ARPoint(
+                x: semantic.centerX!,
+                y: 0,
+                z: semantic.centerY!,
+              ));
+        dimensionSegments.add(DimensionSegment(
+          x1: start.x,
+          y1: start.y,
+          x2: end.x,
+          y2: end.y,
+          kind: semantic.kind,
+          id: semantic.id,
+          centerX: center?.x,
+          centerY: center?.y,
+          normalDirection: semantic.normalDirection,
+          labelHalfWidth: 19.0,
+        ));
+        dimensionLabels[semantic.id] = _formatCompactLength(
+          semantic.length,
+          measurementSystem,
+          decimalSeparator: decimalSeparator,
+        );
+      }
+    }
+
+    final placements = DimensionLayout.layout(dimensionSegments);
+    for (final placement in placements) {
+      final label = dimensionLabels[placement.segment.id];
+      if (label == null) continue;
       _writeDimensionSvg(
         svg: dimensionsSvg,
-        layout: dimensionLayout,
-        start: dimension.start,
-        end: dimension.end,
-        label: dimension.label,
-        preferredOffset: dimension.preferredOffset,
-        center: dimension.center,
-        dimensionLength: dimension.length,
+        placement: placement,
+        label: label,
       );
     }
 
@@ -362,54 +355,40 @@ class PlanExportBuilder {
 
   static void _writeDimensionSvg({
     required StringBuffer svg,
-    required _SvgDimensionLayout layout,
-    required _SvgPoint start,
-    required _SvgPoint end,
+    required DimensionPlacement placement,
     required String label,
-    required double preferredOffset,
-    required _SvgPoint center,
-    required double dimensionLength,
   }) {
-    final dx = end.x - start.x;
-    final dy = end.y - start.y;
-    final length = math.max(math.sqrt(dx * dx + dy * dy), 0.01);
-    var normalX = -dy / length;
-    var normalY = dx / length;
-    final middleX = (start.x + end.x) / 2.0;
-    final middleY = (start.y + end.y) / 2.0;
-    final towardCenterX = center.x - middleX;
-    final towardCenterY = center.y - middleY;
-    if (normalX * towardCenterX + normalY * towardCenterY > 0) {
-      normalX = -normalX;
-      normalY = -normalY;
+    final segment = placement.segment;
+    final length = math.max(segment.length, 0.000001);
+    final tangentX = segment.dx / length;
+    final tangentY = segment.dy / length;
+    var normalX = -tangentY;
+    var normalY = tangentX;
+    final middleX = (segment.x1 + segment.x2) / 2.0;
+    final middleY = (segment.y1 + segment.y2) / 2.0;
+    if (segment.centerX != null && segment.centerY != null) {
+      final towardCenterX = segment.centerX! - middleX;
+      final towardCenterY = segment.centerY! - middleY;
+      if (normalX * towardCenterX + normalY * towardCenterY > 0) {
+        normalX = -normalX;
+        normalY = -normalY;
+      }
     }
-    final labelWidth = math.max(30.0, label.length * 5.6 + 10.0);
-    final placement = layout.place(
-      middle: _SvgPoint(middleX, middleY),
-      normal: _SvgPoint(normalX, normalY),
-      tangent: _SvgPoint(dx / length, dy / length),
-      preferredOffset: preferredOffset,
-      width: labelWidth,
-      height: 14,
-      dimensionLength: dimensionLength,
-    );
-    final labelX = placement.center.x;
-    final labelY = placement.center.y;
-    final actualOffset = (labelX - middleX) * normalX + (labelY - middleY) * normalY;
-    final extensionOffset = actualOffset.abs() < 4 ? 4.0 : actualOffset - actualOffset.sign * 3.0;
-    svg
-      ..writeln('<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" x2="${_svgNumber(start.x + normalX * extensionOffset)}" y2="${_svgNumber(start.y + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
-      ..writeln('<line x1="${_svgNumber(end.x)}" y1="${_svgNumber(end.y)}" x2="${_svgNumber(end.x + normalX * extensionOffset)}" y2="${_svgNumber(end.y + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
-      ..writeln('<line x1="${_svgNumber(start.x + normalX * actualOffset)}" y1="${_svgNumber(start.y + normalY * actualOffset)}" x2="${_svgNumber(end.x + normalX * actualOffset)}" y2="${_svgNumber(end.y + normalY * actualOffset)}" stroke="#000000" stroke-width="0.7"/>')
-      ..writeln('<rect x="${_svgNumber(labelX - labelWidth / 2)}" y="${_svgNumber(labelY - 8)}" width="${_svgNumber(labelWidth)}" height="14" fill="white" fill-opacity="0.96"/>')
-      ..writeln('<text data-dimension-label="${_escapeSvg(label)}" data-layout-index="${placement.index}" x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 3)}" text-anchor="middle" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="#000000">${_escapeSvg(label)}</text>');
-  }
+    normalX *= segment.normalDirection;
+    normalY *= segment.normalDirection;
 
-  static String _wallKey(ARPoint first, ARPoint second) {
-    String pointKey(ARPoint point) => '${point.x.toStringAsFixed(4)}:${point.z.toStringAsFixed(4)}';
-    final firstKey = pointKey(first);
-    final secondKey = pointKey(second);
-    return firstKey.compareTo(secondKey) <= 0 ? '$firstKey|$secondKey' : '$secondKey|$firstKey';
+    final actualOffset = placement.offset;
+    final labelWidth = math.max(38.0, segment.labelHalfWidth * 2.0);
+    final labelX = middleX + normalX * actualOffset;
+    final labelY = middleY + normalY * actualOffset;
+    final extensionOffset = math.max(actualOffset - 3.0, 4.0);
+
+    svg
+      ..writeln('<line x1="${_svgNumber(segment.x1)}" y1="${_svgNumber(segment.y1)}" x2="${_svgNumber(segment.x1 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y1 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
+      ..writeln('<line x1="${_svgNumber(segment.x2)}" y1="${_svgNumber(segment.y2)}" x2="${_svgNumber(segment.x2 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y2 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
+      ..writeln('<line x1="${_svgNumber(segment.x1 + normalX * actualOffset)}" y1="${_svgNumber(segment.y1 + normalY * actualOffset)}" x2="${_svgNumber(segment.x2 + normalX * actualOffset)}" y2="${_svgNumber(segment.y2 + normalY * actualOffset)}" stroke="#000000" stroke-width="0.7"/>')
+      ..writeln('<rect x="${_svgNumber(labelX - labelWidth / 2)}" y="${_svgNumber(labelY - 8)}" width="${_svgNumber(labelWidth)}" height="14" fill="white" fill-opacity="0.96"/>')
+      ..writeln('<text data-dimension-label="${_escapeSvg(label)}" data-layout-index="${placement.level}" x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 3)}" text-anchor="middle" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="#000000">${_escapeSvg(label)}</text>');
   }
 
   static String _formatCompactLength(double meters, MeasurementSystem measurementSystem, {required String decimalSeparator}) {
@@ -445,127 +424,3 @@ class _SvgPoint {
   const _SvgPoint(this.x, this.y);
 }
 
-enum _SvgDimensionKind { opening, wall }
-
-class _SvgDimensionSpec {
-  final _SvgPoint start;
-  final _SvgPoint end;
-  final String label;
-  final double preferredOffset;
-  final _SvgPoint center;
-  final _SvgDimensionKind kind;
-  const _SvgDimensionSpec({
-    required this.start,
-    required this.end,
-    required this.label,
-    required this.preferredOffset,
-    required this.center,
-    required this.kind,
-  });
-
-  double get length {
-    final dx = end.x - start.x;
-    final dy = end.y - start.y;
-    return math.sqrt(dx * dx + dy * dy);
-  }
-
-  _SvgPoint get middle => _SvgPoint((start.x + end.x) / 2, (start.y + end.y) / 2);
-}
-
-class _SvgDimensionPlacement {
-  final _SvgPoint center;
-  final int index;
-  const _SvgDimensionPlacement({required this.center, required this.index});
-}
-
-class _SvgDimensionRect {
-  final double left;
-  final double top;
-  final double right;
-  final double bottom;
-  const _SvgDimensionRect({required this.left, required this.top, required this.right, required this.bottom});
-
-  bool overlaps(_SvgDimensionRect other) {
-    const separation = 4.0;
-    return left < other.right + separation &&
-        right > other.left - separation &&
-        top < other.bottom + separation &&
-        bottom > other.top - separation;
-  }
-}
-
-class _SvgDimensionLayout {
-  final double canvasWidth;
-  final double canvasHeight;
-  final double bottomReserved;
-  final List<_SvgDimensionRect> _occupied = [];
-  int _nextIndex = 0;
-
-  _SvgDimensionLayout({required this.canvasWidth, required this.canvasHeight, required this.bottomReserved});
-
-  _SvgDimensionPlacement place({
-    required _SvgPoint middle,
-    required _SvgPoint normal,
-    required _SvgPoint tangent,
-    required double preferredOffset,
-    required double width,
-    required double height,
-    required double dimensionLength,
-  }) {
-    final offsets = <double>[];
-    for (var step = 0; step < 16; step++) {
-      offsets.add(preferredOffset + step * 16.0);
-    }
-    for (var step = 0; step < 16; step++) {
-      offsets.add(-preferredOffset - step * 16.0);
-    }
-
-    _SvgPoint? selectedCenter;
-    _SvgDimensionRect? selectedRect;
-    for (final offset in offsets) {
-      final candidateCenter = _clampCenter(
-        _SvgPoint(middle.x + normal.x * offset, middle.y + normal.y * offset),
-        width,
-        height,
-      );
-      final candidateRect = _rectForDimension(candidateCenter, tangent, dimensionLength, width, height);
-      if (_occupied.every((rect) => !rect.overlaps(candidateRect))) {
-        selectedCenter = candidateCenter;
-        selectedRect = candidateRect;
-        break;
-      }
-    }
-
-    selectedCenter ??= _clampCenter(
-      _SvgPoint(middle.x + normal.x * (preferredOffset + 16.0 * 16), middle.y + normal.y * (preferredOffset + 16.0 * 16)),
-      width,
-      height,
-    );
-    selectedRect ??= _rectForDimension(selectedCenter, tangent, dimensionLength, width, height);
-    _occupied.add(selectedRect);
-    return _SvgDimensionPlacement(center: selectedCenter, index: _nextIndex++);
-  }
-
-  _SvgPoint _clampCenter(_SvgPoint center, double width, double height) {
-    const margin = 6.0;
-    final halfWidth = width / 2.0;
-    final halfHeight = height / 2.0;
-    return _SvgPoint(
-      center.x.clamp(margin + halfWidth, canvasWidth - margin - halfWidth).toDouble(),
-      center.y.clamp(margin + halfHeight, canvasHeight - bottomReserved - halfHeight).toDouble(),
-    );
-  }
-
-  _SvgDimensionRect _rectForDimension(_SvgPoint center, _SvgPoint tangent, double dimensionLength, double labelWidth, double labelHeight) {
-    final halfLine = dimensionLength / 2.0;
-    final x1 = center.x - tangent.x * halfLine;
-    final y1 = center.y - tangent.y * halfLine;
-    final x2 = center.x + tangent.x * halfLine;
-    final y2 = center.y + tangent.y * halfLine;
-    final left = math.min(x1, x2) - labelWidth / 2.0;
-    final right = math.max(x1, x2) + labelWidth / 2.0;
-    final top = math.min(y1, y2) - labelHeight / 2.0;
-    final bottom = math.max(y1, y2) + labelHeight / 2.0;
-    return _SvgDimensionRect(left: left, top: top, right: right, bottom: bottom);
-  }
-}

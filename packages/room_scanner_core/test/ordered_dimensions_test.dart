@@ -39,18 +39,16 @@ void main() {
       MeasurementSystem.metric,
     );
 
-    int indexFor(String label) {
-      final match = RegExp(
-        'data-dimension-label="$label" data-layout-index="(\\d+)"',
-      ).firstMatch(svg);
-      expect(match, isNotNull, reason: 'Missing dimension $label');
-      return int.parse(match!.group(1)!);
+    int documentPositionFor(String label) {
+      final position = svg.indexOf('data-dimension-label="$label"');
+      expect(position, greaterThanOrEqualTo(0), reason: 'Missing dimension $label');
+      return position;
     }
 
-    final door = indexFor('0,80 m');
-    final window = indexFor('1,20 m');
-    final shortWall = indexFor('2,00 m');
-    final longWall = indexFor('3,00 m');
+    final door = documentPositionFor('0,80 m');
+    final window = documentPositionFor('1,20 m');
+    final shortWall = documentPositionFor('2,00 m');
+    final longWall = documentPositionFor('3,00 m');
 
     expect(door, lessThan(window));
     expect(window, lessThan(shortWall));

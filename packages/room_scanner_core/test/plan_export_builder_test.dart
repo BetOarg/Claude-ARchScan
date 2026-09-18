@@ -146,16 +146,19 @@ void main() {
       expect(parsed.rooms.single.name, 'Nombre no visible');
     });
 
-    test('places dimensions farther from the wall than the old compact offset', () {
+    test('uses shared CAD layout for wall and total dimensions', () {
       final room = rectangularRoom();
       final svg = PlanExportBuilder.buildFloorPlanSvg(
         [room],
         MeasurementSystem.metric,
       );
-      expect(svg, contains('x1="108.00" y1="72.00" x2="108.00" y2="41.00"'));
+      expect(svg, contains('data-layout-index="0"'));
+      expect(svg, contains('data-layout-index="1"'));
+      expect(svg, contains('data-dimension-label="3,00 m"'));
+      expect(svg, contains('data-dimension-label="2,00 m"'));
     });
 
-    test('repositions coincident dimensions instead of stacking them', () {
+    test('includes opening, wall and total dimensions without stacking', () {
       final room = rectangularRoom(
         features: [
           WallFeature(
