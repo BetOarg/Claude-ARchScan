@@ -150,7 +150,13 @@ class DimensionLayout {
     final a = '${d.x1.toStringAsFixed(2)},${d.y1.toStringAsFixed(2)}';
     final b = '${d.x2.toStringAsFixed(2)},${d.y2.toStringAsFixed(2)}';
     final points = [a, b]..sort();
-    return '${points[0]}|${points[1]}';
+
+    // Overall dimensions are a distinct semantic measure from wall/opening
+    // dimensions. They must remain visible even when their endpoints coincide
+    // with the bounding wall; reversed duplicates of the same total still
+    // collapse because the kind remains part of the key.
+    final kind = d.kind == DimensionKind.total ? 'total:' : '';
+    return '$kind${points[0]}|${points[1]}';
   }
 
   static _Vector _tangent(DimensionSegment d) {
