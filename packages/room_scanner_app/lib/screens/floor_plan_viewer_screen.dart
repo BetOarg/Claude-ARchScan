@@ -4520,6 +4520,98 @@ class FloorPlanPainter
     return 1.0;
   }
 
+  Rect _boundsForPoints(List<Offset> points) {
+    var minX = double.infinity;
+    var minY = double.infinity;
+    var maxX = double.negativeInfinity;
+    var maxY = double.negativeInfinity;
+    for (final point in points) {
+      minX = math.min(minX, point.dx);
+      minY = math.min(minY, point.dy);
+      maxX = math.max(maxX, point.dx);
+      maxY = math.max(maxY, point.dy);
+    }
+    return Rect.fromLTRB(minX, minY, maxX, maxY);
+  }
+
+  bool _isLabelAreaAvailable(Rect bounds) {
+    return !_occupiedLabelRects.any(
+      (occupied) => occupied.overlaps(bounds.inflate(2)),
+    );
+  }
+
+  TextPainter? _adaptiveTextPainter({
+    required String text,
+    required Color color,
+    required double preferredFontSize,
+    required double minimumFontSize,
+    required double availableWidth,
+    int maxLines = 1,
+  }) {
+    if (availableWidth < 12) {
+      return null;
+    }
+    var fontSize = preferredFontSize;
+    while (fontSize >= minimumFontSize - 0.001) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(
+            color: color,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+        maxLines: maxLines,
+      )..layout(maxWidth: availableWidth);
+      if (!painter.didExceedMaxLines &&
+          painter.width <= availableWidth + 0.001) {
+        return painter;
+      }
+      fontSize -= 0.5;
+    }
+    return null;
+  }
+
+  Rect _rotatedLabelBounds({
+    required Offset center,
+    required double angle,
+    required double width,
+    required double height,
+  }) {
+    final cosine = math.cos(angle).abs();
+    final sine = math.sin(angle).abs();
+    return Rect.fromCenter(
+      center: center,
+      width: width * cosine + height * sine,
+      height: width * sine + height * cosine,
+    );
+  }
+
+  Offset? _findAvailableLabelCenter({
+    required Offset preferredCenter,
+    required Offset normal,
+    required double angle,
+    required double width,
+    required double height,
+  }) {
+    for (final offset in const [0.0, 12.0, 24.0]) {
+      final center = preferredCenter + normal * offset;
+      final bounds = _rotatedLabelBounds(
+        center: center,
+        angle: angle,
+        width: width,
+        height: height,
+      );
+      if (_isLabelAreaAvailable(bounds)) {
+        return center;
+      }
+    }
+    return null;
+  }
+
   // ===========================================================================
   // PUERTAS Y VENTANAS
   // ===========================================================================
