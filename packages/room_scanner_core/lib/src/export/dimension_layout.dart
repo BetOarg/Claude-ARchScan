@@ -314,14 +314,19 @@ class _DimensionCorridor {
     final y1 = d.y1 + normal.y * offset;
     final x2 = d.x2 + normal.x * offset;
     final y2 = d.y2 + normal.y * offset;
-    final margin = halfLabelWidth + 4.0;
+    final longitudinalMargin = halfLabelWidth + 4.0;
+    final transverseMargin = textHeight / 2.0 + 4.0;
     final points = <List<double>>[
       [x1, y1],
       [x2, y2],
-      [x1 + tangent.x * margin, y1 + tangent.y * margin],
-      [x1 - tangent.x * margin, y1 - tangent.y * margin],
-      [x2 + tangent.x * margin, y2 + tangent.y * margin],
-      [x2 - tangent.x * margin, y2 - tangent.y * margin],
+      [x1 + tangent.x * longitudinalMargin + normal.x * transverseMargin,
+       y1 + tangent.y * longitudinalMargin + normal.y * transverseMargin],
+      [x1 - tangent.x * longitudinalMargin - normal.x * transverseMargin,
+       y1 - tangent.y * longitudinalMargin - normal.y * transverseMargin],
+      [x2 + tangent.x * longitudinalMargin + normal.x * transverseMargin,
+       y2 + tangent.y * longitudinalMargin + normal.y * transverseMargin],
+      [x2 - tangent.x * longitudinalMargin - normal.x * transverseMargin,
+       y2 - tangent.y * longitudinalMargin - normal.y * transverseMargin],
     ];
     final minX = points.map((p) => p[0]).reduce((a, b) => math.min(a, b));
     final minY = points.map((p) => p[1]).reduce((a, b) => math.min(a, b));
