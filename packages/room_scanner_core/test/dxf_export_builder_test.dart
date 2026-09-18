@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:test/test.dart';
 
