@@ -3918,8 +3918,7 @@ class FloorPlanPainter
         ..color = const Color(0xFF00C853)
         ..strokeWidth = 9.0;
     }
-    final dimensionedFeatureIds =
-        <String>{};
+    final dimensionedFeatureIds = <String>{};
     final featureOwnerRoomIds = <String, String>{};
     final sharedWalls = SharedWallService.detect(rooms: rooms);
     final hiddenWallIntervals =
@@ -3982,16 +3981,11 @@ class FloorPlanPainter
         referencePaint,
         featureOwnerRoomIds,
       );
-      _drawWallDimensions(
-        canvas,
-        room,
-        hiddenDimensionWalls,
-      );
-
-      _drawOpeningDimensions(
-        canvas,
-        room,
-        dimensionedFeatureIds,
+      _drawCadDimensions(
+        canvas: canvas,
+        room: room,
+        hiddenDimensionWalls: hiddenDimensionWalls,
+        dimensionedFeatureIds: dimensionedFeatureIds,
       );
     }
 
@@ -4313,7 +4307,221 @@ class FloorPlanPainter
     );
   }
 
-  // ===========================================================================  // COTAS DE PAREDES
+  // ===========================================================================
+  // COTAS CAD COMPARTIDAS
+  // ===========================================================================
+
+  void _drawCadDimensions({
+    required Canvas canvas,
+    required RoomModel room,
+    required Set<_WallIdentity> hiddenDimensionWalls,
+    required Set<String> dimensionedFeatureIds,
+  }) {
+    if (room.points.length < 2) {
+      return;
+    }
+
+    final hiddenIndexes = <int>{
+      for (final identity in hiddenDimensionWalls)
+        if (identity.roomId == room.id) identity.wallIndex,
+    };
+
+    final dimensions = TechnicalDimensionLayout.forRoom(
+      room: room,
+      x: (point) => transform(point).dx,
+      y: (point) => transform(point).dy,
+      includeTotals: true,
+      hiddenWallIndexes: hiddenIndexes,
+    );
+
+    final placements = DimensionLayout.layout(
+      dimensions.map(
+        (dimension) {
+          if (dimension.kind == DimensionKind.opening) {
+            dimensionedFeatureIds.add(dimension.id);
+          }
+          return dimension;
+        },
+      ),
+    );
+
+    final dimensionPaint = Paint()
+      ..color = const Color(0xFF174EA6)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
+
+    for (final placement in placements) {
+      final dimension = placement.segment;
+      final start = Offset(dimension.x1, dimension.y1);
+      final end = Offset(dimension.x2, dimension.y2);
+      final direction = end - start;
+      final screenLength = direction.distance;
+      if (screenLength < 8.0) {
+        continue;
+      }
+
+      final tangent = direction / screenLength;
+      final normal = Offset(-tangent.dy, tangent.dx) *
+          (dimension.normalDirection >= 0 ? 1.0 : -1.0);
+      final dimensionStart = start + normal * placement.offset;
+      final dimensionEnd = end + normal * placement.offset;
+
+      canvas.drawLine(
+        start + normal * 5.0,
+        start + normal * placement.offset,
+        dimensionPaint,
+      );
+      canvas.drawLine(
+        end + normal * 5.0,
+        end + normal * placement.offset,
+        dimensionPaint,
+      );
+      canvas.drawLine(dimensionStart, dimensionEnd, dimensionPaint);
+
+      const endMarkHalfLength = 4.0;
+      canvas.drawLine(
+        dimensionStart - normal * endMarkHalfLength,
+        dimensionStart + normal * endMarkHalfLength,
+        dimensionPaint,
+      );
+      canvas.drawLine(
+        dimensionEnd - normal * endMarkHalfLength,
+        dimensionEnd + normal * endMarkHalfLength,
+        dimensionPaint,
+      );
+
+      final label = switch (dimension.kind) {
+        DimensionKind.opening => _openingDimensionLabelForId(
+            room,
+            dimension.id,
+          ),
+        DimensionKind.wall => formatLength(
+            _dimensionLengthMeters(room, dimension),
+          ),
+        DimensionKind.total => formatLength(
+            _dimensionLengthMeters(room, dimension),
+          ),
+      };
+      if (label.isEmpty) {
+        continue;
+      }
+
+      final textPainter = _adaptiveTextPainter(
+        text: label,
+        color: const Color(0xFF174EA6),
+        preferredFontSize: dimension.kind == DimensionKind.opening ? 9 : 10,
+        minimumFontSize: 7,
+        availableWidth: math.max(20.0, screenLength - 8.0),
+        maxLines: dimension.kind == DimensionKind.opening ? 2 : 1,
+      );
+      if (textPainter == null) {
+        continue;
+      }
+
+      var angle = math.atan2(tangent.dy, tangent.dx);
+      if (angle > math.pi / 2 || angle < -math.pi / 2) {
+        angle += math.pi;
+      }
+
+      final labelCenter = _findAvailableLabelCenter(
+        preferredCenter: Offset(
+          (dimensionStart.dx + dimensionEnd.dx) / 2.0,
+          (dimensionStart.dy + dimensionEnd.dy) / 2.0,
+        ),
+        normal: normal,
+        angle: angle,
+        width: textPainter.width + 8,
+        height: textPainter.height + 4,
+      );
+      if (labelCenter == null) {
+        continue;
+      }
+
+      _occupiedLabelRects.add(
+        _rotatedLabelBounds(
+          center: labelCenter,
+          angle: angle,
+          width: textPainter.width + 8,
+          height: textPainter.height + 4,
+        ).inflate(2),
+      );
+
+      canvas.save();
+      canvas.translate(labelCenter.dx, labelCenter.dy);
+      canvas.rotate(angle);
+      textPainter.paint(
+        canvas,
+        Offset(-textPainter.width / 2.0, -textPainter.height / 2.0),
+      );
+      canvas.restore();
+    }
+  }
+
+  String _openingDimensionLabelForId(
+    RoomModel room,
+    String dimensionId,
+  ) {
+    final marker = ':opening:';
+    final markerIndex = dimensionId.indexOf(marker);
+    if (markerIndex < 0) {
+      return '';
+    }
+    final featureId = dimensionId.substring(markerIndex + marker.length);
+    for (final feature in room.features) {
+      if (feature.id == featureId) {
+        return formatOpeningDimensions(feature);
+      }
+    }
+    return '';
+  }
+
+  double _dimensionLengthMeters(
+    RoomModel room,
+    DimensionSegment dimension,
+  ) {
+    final pointByScreen = <ARPoint>[];
+    for (final point in room.points) {
+      final screen = transform(point);
+      if ((screen.dx - dimension.x1).abs() < 0.01 &&
+          (screen.dy - dimension.y1).abs() < 0.01) {
+        pointByScreen.add(point);
+      }
+      if ((screen.dx - dimension.x2).abs() < 0.01 &&
+          (screen.dy - dimension.y2).abs() < 0.01) {
+        pointByScreen.add(point);
+      }
+    }
+
+    if (pointByScreen.length >= 2) {
+      return GeometryService.calculateDistance(
+        pointByScreen.first,
+        pointByScreen.last,
+      );
+    }
+
+    final scale = _screenMetersScale(room);
+    return dimension.length / math.max(scale, 0.000001);
+  }
+
+  double _screenMetersScale(RoomModel room) {
+    for (var index = 0; index < room.points.length - 1; index++) {
+      final first = transform(room.points[index]);
+      final second = transform(room.points[index + 1]);
+      final meters = GeometryService.calculateDistance(
+        room.points[index],
+        room.points[index + 1],
+      );
+      final pixels = (second - first).distance;
+      if (meters > 0.000001 && pixels > 0.000001) {
+        return pixels / meters;
+      }
+    }
+    return 1.0;
+  }
+
+  // ===========================================================================
+  // COTAS DE PAREDES
   // ===========================================================================
 
   void _drawWallDimensions(
