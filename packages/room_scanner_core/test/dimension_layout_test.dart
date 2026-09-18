@@ -58,6 +58,30 @@ void main() {
     expect(DimensionLayout.deduplicate([original, reversed]), hasLength(1));
   });
 
+  test('prefers opening over a redundant wall dimension on the same axis', () {
+    const wall = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 0.8,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'wall',
+    );
+    const opening = DimensionSegment(
+      x1: 0.8,
+      y1: 0,
+      x2: 0,
+      y2: 0,
+      kind: DimensionKind.opening,
+      id: 'opening',
+    );
+
+    final result = DimensionLayout.sort([wall, opening]);
+
+    expect(result, hasLength(1));
+    expect(result.single.kind, DimensionKind.opening);
+  });
+
   test('moves a colliding parallel dimension to the next level', () {
     const first = DimensionSegment(
       x1: 0,
