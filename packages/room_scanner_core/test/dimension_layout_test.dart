@@ -172,22 +172,18 @@ void main() {
     const first = DimensionSegment(
       x1: 0,
       y1: 0,
-      x2: 4,
-      y2: 4,
-      kind: DimensionKind.wall,
+      x2: 10,
+      y2: 10,
+      kind: DimensionKind.opening,
       id: 'diagonal-a',
-      centerX: 0,
-      centerY: 0,
     );
     const second = DimensionSegment(
       x1: 0,
-      y1: 6,
-      x2: 4,
-      y2: 2,
-      kind: DimensionKind.wall,
+      y1: 5,
+      x2: 10,
+      y2: 15,
+      kind: DimensionKind.opening,
       id: 'diagonal-b',
-      centerX: 0,
-      centerY: 10,
     );
 
     final placements = DimensionLayout.layout(
