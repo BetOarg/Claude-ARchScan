@@ -243,7 +243,6 @@ class PlanExportBuilder {
 
     final drawnFeatureIds = <String>{};
     for (final room in drawingRooms) {
-      final roomCenter = _roomCenter(room.points.map(transform).toList());
       for (final feature in room.features) {
         if (!drawnFeatureIds.add(feature.id)) continue;
         final start = transform(feature.start);
