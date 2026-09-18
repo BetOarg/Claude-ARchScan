@@ -140,4 +140,69 @@ void main() {
     expect(placements.last.segment.id, 'total');
     expect(placements.last.offset, greaterThan(placements.first.offset));
   });
+
+  test('keeps a total dimension distinct from coincident wall geometry', () {
+    const wall = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'wall',
+    );
+    const total = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.total,
+      id: 'total',
+    );
+
+    final result = DimensionLayout.deduplicate([wall, total]);
+
+    expect(result, hasLength(2));
+    expect(result.map((d) => d.kind), containsAll([
+      DimensionKind.wall,
+      DimensionKind.total,
+    ]));
+  });
+
+  test('moves a dimension outward when its corridor crosses another wall', () {
+    const dimension = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 2,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'dimension',
+      centerX: 1,
+      centerY: 1,
+    );
+    const crossingWall = DimensionSegment(
+      x1: 1,
+      y1: -25,
+      x2: 1,
+      y2: -15,
+      kind: DimensionKind.wall,
+      id: 'crossing-wall',
+      centerX: 1,
+      centerY: 1,
+    );
+
+    final placements = DimensionLayout.layout(
+      [dimension, crossingWall],
+      baseOffset: 22,
+      gap: 12,
+      textHeight: 14,
+    );
+
+    final placement = placements.firstWhere(
+      (item) => item.segment.id == 'dimension',
+    );
+
+    expect(placement.level, greaterThan(0));
+    expect(placement.offset, greaterThan(22));
+  });
+
 }

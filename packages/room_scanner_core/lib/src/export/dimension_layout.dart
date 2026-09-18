@@ -82,17 +82,22 @@ class DimensionLayout {
     double gap = defaultGap,
     double textHeight = defaultTextHeight,
     double? labelHalfWidth,
+    int maxLevels = 64,
   }) {
     final ordered = sort(input);
     final occupied = <_DimensionCorridor>[];
+    final walls = ordered
+        .where((dimension) => dimension.kind == DimensionKind.wall)
+        .toList(growable: false);
     final spacing = math.max(gap, textHeight + gap).toDouble();
     final result = <DimensionPlacement>[];
 
     for (final dimension in ordered) {
       final normal = _outwardNormal(dimension);
       final tangent = _tangent(dimension);
-      var level = 0;
-      while (true) {
+      var placed = false;
+
+      for (var level = 0; level < maxLevels; level++) {
         final offset = baseOffset + level * spacing;
         final corridor = _DimensionCorridor.from(
           dimension,
@@ -102,19 +107,115 @@ class DimensionLayout {
           labelHalfWidth ?? dimension.labelHalfWidth,
           textHeight,
         );
-        if (occupied.every((other) => !other.overlaps(corridor))) {
-          occupied.add(corridor);
-          result.add(DimensionPlacement(
-            segment: dimension,
-            offset: offset,
-            level: level,
-          ));
-          break;
+
+        if (occupied.any((other) => other.overlaps(corridor))) {
+          continue;
         }
-        level++;
+
+        if (_crossesAnotherWall(
+          dimension,
+          normal,
+          offset,
+          walls,
+        )) {
+          continue;
+        }
+
+        occupied.add(corridor);
+        result.add(DimensionPlacement(
+          segment: dimension,
+          offset: offset,
+          level: level,
+        ));
+        placed = true;
+        break;
       }
+
+      // A pathological geometry must not make the painter/exporter loop
+      // forever. The dimension is omitted rather than producing an invalid
+      // placement.
+      if (!placed) continue;
     }
     return result;
+  }
+
+  static bool _crossesAnotherWall(
+    DimensionSegment dimension,
+    _Vector normal,
+    double offset,
+    List<DimensionSegment> walls,
+  ) {
+    final start = _Point(
+      dimension.x1 + normal.x * offset,
+      dimension.y1 + normal.y * offset,
+    );
+    final end = _Point(
+      dimension.x2 + normal.x * offset,
+      dimension.y2 + normal.y * offset,
+    );
+
+    for (final wall in walls) {
+      if (_sameGeometry(dimension, wall)) continue;
+      if (_segmentsIntersect(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        wall.x1,
+        wall.y1,
+        wall.x2,
+        wall.y2,
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static bool _sameGeometry(
+    DimensionSegment a,
+    DimensionSegment b,
+  ) {
+    const epsilon = 0.00001;
+    bool same(double x1, double y1, double x2, double y2) =>
+        (x1 - x2).abs() < epsilon && (y1 - y2).abs() < epsilon;
+    return same(a.x1, a.y1, b.x1, b.y1) &&
+            same(a.x2, a.y2, b.x2, b.y2) ||
+        same(a.x1, a.y1, b.x2, b.y2) &&
+            same(a.x2, a.y2, b.x1, b.y1);
+  }
+
+  static bool _segmentsIntersect(
+    double ax,
+    double ay,
+    double bx,
+    double by,
+    double cx,
+    double cy,
+    double dx,
+    double dy,
+  ) {
+    const epsilon = 0.000000001;
+
+    final abx = bx - ax;
+    final aby = by - ay;
+    final acx = cx - ax;
+    final acy = cy - ay;
+    final adx = dx - ax;
+    final ady = dy - ay;
+    final cdx = dx - cx;
+    final cdy = dy - cy;
+    final cax = ax - cx;
+    final cay = ay - cy;
+    final cbx = bx - cx;
+    final cby = by - cy;
+
+    final abAc = abx * acy - aby * acx;
+    final abAd = abx * ady - aby * adx;
+    final cdCa = cdx * cay - cdy * cax;
+    final cdCb = cdx * cby - cdy * cbx;
+
+    return abAc * abAd < -epsilon && cdCa * cdCb < -epsilon;
   }
 
   static int _comparePriority(DimensionSegment a, DimensionSegment b) {
@@ -180,6 +281,11 @@ class DimensionLayout {
       normal.y * d.normalDirection,
     );
   }
+}
+
+class _Point {
+  final double x, y;
+  const _Point(this.x, this.y);
 }
 
 class _Vector {
