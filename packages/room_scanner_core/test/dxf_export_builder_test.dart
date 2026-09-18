@@ -40,7 +40,7 @@ void main() {
     expect(measurements, hasLength(18));
     final wallY = double.parse(walls.first[20]!);
     final dimensionY = double.parse(measurements[2][20]!);
-    expect((dimensionY - wallY).abs(), closeTo(0.35, 1e-8));
+    expect((dimensionY - wallY).abs(), closeTo(22.0, 1e-8));
   });
 
   test('imperial labels use feet and inches', () {
