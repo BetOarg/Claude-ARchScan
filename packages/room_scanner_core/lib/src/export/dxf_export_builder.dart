@@ -141,7 +141,13 @@ class DxfExportBuilder {
       );
     }
 
-    final placements = DimensionLayout.layout(cadDimensions);
+    final placements = DimensionLayout.layout(
+      cadDimensions,
+      baseOffset: 0.35,
+      gap: 0.12,
+      textHeight: 0.12,
+      labelHalfWidth: 0.19,
+    );
     for (final placement in placements) {
       final segment = placement.segment;
       if (segment.length <= 0.000001) continue;

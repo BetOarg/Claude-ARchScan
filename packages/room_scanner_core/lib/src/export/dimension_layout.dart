@@ -81,6 +81,7 @@ class DimensionLayout {
     double baseOffset = defaultBaseOffset,
     double gap = defaultGap,
     double textHeight = defaultTextHeight,
+    double? labelHalfWidth,
   }) {
     final ordered = sort(input);
     final occupied = <_DimensionCorridor>[];
@@ -98,7 +99,7 @@ class DimensionLayout {
           normal,
           tangent,
           offset,
-          dimension.labelHalfWidth,
+          labelHalfWidth ?? dimension.labelHalfWidth,
           textHeight,
         );
         if (occupied.every((other) => !other.overlaps(corridor))) {
