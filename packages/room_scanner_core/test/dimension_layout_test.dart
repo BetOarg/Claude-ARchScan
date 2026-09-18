@@ -168,6 +168,36 @@ void main() {
     ]));
   });
 
+  test('does not collide only because rotated corridor bounding boxes overlap', () {
+    const first = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 10,
+      y2: 10,
+      kind: DimensionKind.opening,
+      id: 'diagonal-a',
+    );
+    const second = DimensionSegment(
+      x1: 0,
+      y1: 8,
+      x2: 10,
+      y2: 18,
+      kind: DimensionKind.opening,
+      id: 'diagonal-b',
+    );
+
+    final placements = DimensionLayout.layout(
+      [first, second],
+      baseOffset: 0,
+      gap: 1,
+      textHeight: 1,
+      labelHalfWidth: 0.5,
+    );
+
+    expect(placements, hasLength(2));
+    expect(placements.map((p) => p.level), [0, 0]);
+  });
+
   test('moves a dimension outward when its corridor crosses another wall', () {
     const dimension = DimensionSegment(
       x1: 0,
@@ -204,5 +234,4 @@ void main() {
     expect(placement.level, greaterThan(0));
     expect(placement.offset, greaterThan(22));
   });
-
 }

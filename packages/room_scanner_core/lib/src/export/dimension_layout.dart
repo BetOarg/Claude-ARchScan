@@ -294,12 +294,18 @@ class _Vector {
 }
 
 class _DimensionCorridor {
-  final double minX, minY, maxX, maxY;
+  final _Point center;
+  final _Vector tangent;
+  final _Vector normal;
+  final double halfTangent;
+  final double halfNormal;
+
   const _DimensionCorridor({
-    required this.minX,
-    required this.minY,
-    required this.maxX,
-    required this.maxY,
+    required this.center,
+    required this.tangent,
+    required this.normal,
+    required this.halfTangent,
+    required this.halfNormal,
   });
 
   factory _DimensionCorridor.from(
@@ -310,34 +316,49 @@ class _DimensionCorridor {
     double halfLabelWidth,
     double textHeight,
   ) {
-    final x1 = d.x1 + normal.x * offset;
-    final y1 = d.y1 + normal.y * offset;
-    final x2 = d.x2 + normal.x * offset;
-    final y2 = d.y2 + normal.y * offset;
+    final midpoint = _Point(
+      (d.x1 + d.x2) / 2.0 + normal.x * offset,
+      (d.y1 + d.y2) / 2.0 + normal.y * offset,
+    );
     final margin = halfLabelWidth + 4.0;
-    final points = <List<double>>[
-      [x1, y1],
-      [x2, y2],
-      [x1 + tangent.x * margin, y1 + tangent.y * margin],
-      [x1 - tangent.x * margin, y1 - tangent.y * margin],
-      [x2 + tangent.x * margin, y2 + tangent.y * margin],
-      [x2 - tangent.x * margin, y2 - tangent.y * margin],
-    ];
-    final minX = points.map((p) => p[0]).reduce((a, b) => math.min(a, b));
-    final minY = points.map((p) => p[1]).reduce((a, b) => math.min(a, b));
-    final maxX = points.map((p) => p[0]).reduce((a, b) => math.max(a, b));
-    final maxY = points.map((p) => p[1]).reduce((a, b) => math.max(a, b));
     return _DimensionCorridor(
-      minX: minX - 2.0,
-      minY: minY - textHeight / 2.0,
-      maxX: maxX + 2.0,
-      maxY: maxY + textHeight / 2.0,
+      center: midpoint,
+      tangent: tangent,
+      normal: normal,
+      halfTangent: d.length / 2.0 + margin + 2.0,
+      halfNormal: textHeight / 2.0 + 2.0,
     );
   }
 
-  bool overlaps(_DimensionCorridor other) =>
-      minX < other.maxX &&
-      maxX > other.minX &&
-      minY < other.maxY &&
-      maxY > other.minY;
+  bool overlaps(_DimensionCorridor other) {
+    final axes = <_Vector>[
+      tangent,
+      normal,
+      other.tangent,
+      other.normal,
+    ];
+
+    for (final axis in axes) {
+      final thisRadius =
+          halfTangent * _dot(tangent, axis).abs() +
+          halfNormal * _dot(normal, axis).abs();
+      final otherRadius =
+          other.halfTangent * _dot(other.tangent, axis).abs() +
+          other.halfNormal * _dot(other.normal, axis).abs();
+      final centerDistance = _dot(
+        _Vector(
+          center.x - other.center.x,
+          center.y - other.center.y,
+        ),
+        axis,
+      ).abs();
+
+      if (centerDistance >= thisRadius + otherRadius) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static double _dot(_Vector a, _Vector b) => a.x * b.x + a.y * b.y;
 }
