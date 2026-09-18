@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import '../models/room_model.dart';
 import 'technical_drawing_geometry.dart';
+import 'dimension_layout.dart';
+import 'technical_dimension_layout.dart';
 
 /// AutoCAD 2000 ASCII DXF. Spanish uses metres; English uses inches.
 /// The visible drawing contains the plan, room names, openings and dimensions.
@@ -36,7 +38,6 @@ class DxfExportBuilder {
     }
 
     final drawn = <String>{};
-    final dimensioned = <String>{};
     for (final wall in walls) {
       final cuts = <double>[0, 1];
       for (final other in walls) {
@@ -65,15 +66,6 @@ class DxfExportBuilder {
         if (drawn.add(part.key)) drawing.line('WALLS', part.a, part.b);
       }
 
-      if (dimensioned.add(wall.key)) {
-        drawing.dimension(
-          wall.a,
-          wall.b,
-          _formatLength(wall.length, imperial),
-          offset: 0.35,
-          center: _roomCenter(drawingRooms, wall),
-        );
-      }
     }
 
     for (final room in drawingRooms) {
@@ -95,8 +87,6 @@ class DxfExportBuilder {
     for (final feature in openings.values) {
       final segment = _Segment(feature.start, feature.end);
       if (segment.length <= 0.000001) continue;
-      final roomCenter = _openingRoomCenter(drawingRooms, feature);
-
       if (feature.type == FeatureType.window) {
         for (final offset in [-0.03, 0.0, 0.03]) {
           final dx = -segment.dz / segment.length * offset;
@@ -135,16 +125,69 @@ class DxfExportBuilder {
         );
       }
 
+    }
+
+    // Use the same CAD dimension engine as the on-screen painter.
+    // Geometry remains in metres; _DxfWriter applies the final unit scale.
+    final cadDimensions = <DimensionSegment>[];
+    for (final room in drawingRooms) {
+      cadDimensions.addAll(
+        TechnicalDimensionLayout.forRoom(
+          room: room,
+          x: (point) => point.x,
+          y: (point) => point.z,
+          includeTotals: true,
+        ),
+      );
+    }
+
+    final placements = DimensionLayout.layout(cadDimensions);
+    for (final placement in placements) {
+      final segment = placement.segment;
+      if (segment.length <= 0.000001) continue;
+
+      String? label;
+      if (segment.kind == DimensionKind.opening) {
+        final marker = ':opening:';
+        final markerIndex = segment.id.indexOf(marker);
+        if (markerIndex >= 0) {
+          final featureId =
+              segment.id.substring(markerIndex + marker.length);
+          final feature = openings[featureId];
+          if (feature != null) {
+            label = _formatLength(
+              GeometryService.calculateDistance(
+                feature.start,
+                feature.end,
+              ),
+              imperial,
+            );
+          }
+        }
+      } else {
+        label = _formatLength(
+          _segmentLengthMeters(segment),
+          imperial,
+        );
+      }
+
+      if (label == null || label.isEmpty) continue;
       drawing.dimension(
-        segment.a,
-        segment.b,
-        _formatLength(segment.length, imperial),
-        offset: 0.22,
-        center: roomCenter,
+        ARPoint(x: segment.x1, y: 0, z: segment.y1),
+        ARPoint(x: segment.x2, y: 0, z: segment.y2),
+        label,
+        offset: placement.offset,
+        normalDirection: segment.normalDirection,
       );
     }
 
     return drawing.finish();
+  }
+
+  static double _segmentLengthMeters(DimensionSegment segment) {
+    final dx = segment.x2 - segment.x1;
+    final dz = segment.y2 - segment.y1;
+    return math.sqrt(dx * dx + dz * dz);
   }
 
   static ARPoint? _roomCenter(
@@ -281,6 +324,7 @@ class _DxfWriter {
     String value, {
     required double offset,
     ARPoint? center,
+    double normalDirection = 1.0,
   }) {
     final dx = b.x - a.x;
     final dz = b.z - a.z;
@@ -289,6 +333,8 @@ class _DxfWriter {
 
     var normalX = -dz / length;
     var normalZ = dx / length;
+    normalX *= normalDirection;
+    normalZ *= normalDirection;
     final middleX = (a.x + b.x) / 2;
     final middleZ = (a.z + b.z) / 2;
     if (center != null) {
