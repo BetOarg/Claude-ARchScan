@@ -359,8 +359,6 @@ class PlanExportBuilder {
     required String label,
   }) {
     final segment = placement.segment;
-    final tangentX = placement.tangentX;
-    final tangentY = placement.tangentY;
     final normalX = placement.normalX;
     final normalY = placement.normalY;
     final middleX = (segment.x1 + segment.x2) / 2.0;
