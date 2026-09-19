@@ -4378,15 +4378,16 @@ class FloorPlanPainter
       );
       canvas.drawLine(dimensionStart, dimensionEnd, dimensionPaint);
 
-      const endMarkHalfLength = 4.0;
-      canvas.drawLine(
-        dimensionStart - normal * endMarkHalfLength,
-        dimensionStart + normal * endMarkHalfLength,
+      _drawIsoDimensionArrow(
+        canvas,
+        dimensionStart,
+        tangent,
         dimensionPaint,
       );
-      canvas.drawLine(
-        dimensionEnd - normal * endMarkHalfLength,
-        dimensionEnd + normal * endMarkHalfLength,
+      _drawIsoDimensionArrow(
+        canvas,
+        dimensionEnd,
+        tangent * -1,
         dimensionPaint,
       );
 
@@ -4455,6 +4456,31 @@ class FloorPlanPainter
       );
       canvas.restore();
     }
+  }
+
+  void _drawIsoDimensionArrow(
+    Canvas canvas,
+    Offset tip,
+    Offset direction,
+    Paint paint,
+  ) {
+    final length = direction.distance;
+    if (length < 0.000001) return;
+    final unit = direction / length;
+    final normal = Offset(-unit.dy, unit.dx);
+    const arrowLength = 7.0;
+    const arrowHalfWidth = 2.4;
+    final base = tip + unit * arrowLength;
+    canvas.drawLine(
+      tip,
+      base + normal * arrowHalfWidth,
+      paint,
+    );
+    canvas.drawLine(
+      tip,
+      base - normal * arrowHalfWidth,
+      paint,
+    );
   }
 
   String _openingDimensionLabelForId(
