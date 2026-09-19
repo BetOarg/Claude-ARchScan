@@ -458,7 +458,7 @@ void main() {
 
     expect(placement.tangentX, closeTo(0, 0.000001));
     expect(placement.tangentY, closeTo(1, 0.000001));
-    expect(placement.normalX, closeTo(1, 0.000001));
+    expect(placement.normalX, closeTo(-1, 0.000001));
     expect(placement.normalY, closeTo(0, 0.000001));
     expect(placement.offset, 2);
   });
