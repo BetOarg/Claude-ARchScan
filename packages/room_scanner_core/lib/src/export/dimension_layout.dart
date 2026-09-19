@@ -114,8 +114,7 @@ class DimensionLayout {
 
         if (_crossesAnotherWall(
           dimension,
-          normal,
-          offset,
+          corridor,
           walls,
         )) {
           continue;
@@ -141,31 +140,12 @@ class DimensionLayout {
 
   static bool _crossesAnotherWall(
     DimensionSegment dimension,
-    _Vector normal,
-    double offset,
+    _DimensionCorridor corridor,
     List<DimensionSegment> walls,
   ) {
-    final start = _Point(
-      dimension.x1 + normal.x * offset,
-      dimension.y1 + normal.y * offset,
-    );
-    final end = _Point(
-      dimension.x2 + normal.x * offset,
-      dimension.y2 + normal.y * offset,
-    );
-
     for (final wall in walls) {
       if (_sameGeometry(dimension, wall)) continue;
-      if (_segmentsIntersect(
-        start.x,
-        start.y,
-        end.x,
-        end.y,
-        wall.x1,
-        wall.y1,
-        wall.x2,
-        wall.y2,
-      )) {
+      if (corridor.intersectsSegment(wall.x1, wall.y1, wall.x2, wall.y2)) {
         return true;
       }
     }
@@ -358,6 +338,54 @@ class _DimensionCorridor {
       }
     }
     return true;
+  }
+
+  bool intersectsSegment(
+    double x1,
+    double y1,
+    double x2,
+    double y2,
+  ) {
+    final corners = <_Point>[
+      _Point(
+        center.x + tangent.x * halfTangent + normal.x * halfNormal,
+        center.y + tangent.y * halfTangent + normal.y * halfNormal,
+      ),
+      _Point(
+        center.x - tangent.x * halfTangent + normal.x * halfNormal,
+        center.y - tangent.y * halfTangent + normal.y * halfNormal,
+      ),
+      _Point(
+        center.x - tangent.x * halfTangent - normal.x * halfNormal,
+        center.y - tangent.y * halfTangent - normal.y * halfNormal,
+      ),
+      _Point(
+        center.x + tangent.x * halfTangent - normal.x * halfNormal,
+        center.y + tangent.y * halfTangent - normal.y * halfNormal,
+      ),
+    ];
+
+    for (var i = 0; i < corners.length; i++) {
+      final a = corners[i];
+      final b = corners[(i + 1) % corners.length];
+      if (DimensionLayout._segmentsIntersect(
+        x1, y1, x2, y2, a.x, a.y, b.x, b.y,
+      )) {
+        return true;
+      }
+    }
+
+    final midpoint = _Point((x1 + x2) / 2.0, (y1 + y2) / 2.0);
+    final localX = _dot(
+      _Vector(midpoint.x - center.x, midpoint.y - center.y),
+      tangent,
+    );
+    final localY = _dot(
+      _Vector(midpoint.x - center.x, midpoint.y - center.y),
+      normal,
+    );
+    return localX.abs() <= halfTangent &&
+        localY.abs() <= halfNormal;
   }
 
   static double _dot(_Vector a, _Vector b) => a.x * b.x + a.y * b.y;

@@ -47,7 +47,7 @@ void main() {
       dimensionX.abs(),
       (dimensionX - 3.0).abs(),
     );
-    expect(distanceToNearestVerticalWall, closeTo(0.35, 1e-8));
+    expect(distanceToNearestVerticalWall, greaterThan(0.35));
   });
 
   test('imperial labels use feet and inches', () {

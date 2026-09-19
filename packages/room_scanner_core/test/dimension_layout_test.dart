@@ -234,4 +234,37 @@ void main() {
     expect(placement.level, greaterThan(0));
     expect(placement.offset, greaterThan(22));
   });
+  test('moves a dimension when its text corridor intersects another wall', () {
+    const dimension = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.opening,
+      id: 'dimension',
+    );
+    const nearbyWall = DimensionSegment(
+      x1: 1.5,
+      y1: 2.5,
+      x2: 2.5,
+      y2: 2.5,
+      kind: DimensionKind.wall,
+      id: 'nearby-wall',
+    );
+
+    final placements = DimensionLayout.layout(
+      [dimension, nearbyWall],
+      baseOffset: 0,
+      gap: 1,
+      textHeight: 2,
+      labelHalfWidth: 0.5,
+    );
+
+    final placement = placements.firstWhere(
+      (item) => item.segment.id == 'dimension',
+    );
+
+    expect(placement.level, greaterThan(0));
+  });
+
 }
