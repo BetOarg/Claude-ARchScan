@@ -183,7 +183,8 @@ class DxfExportBuilder {
         ARPoint(x: segment.x2, y: 0, z: segment.y2),
         label,
         offset: placement.offset,
-        normalDirection: segment.normalDirection,
+        normalX: placement.normalX,
+        normalZ: placement.normalY,
       );
     }
 
@@ -291,29 +292,9 @@ class _DxfWriter {
     ARPoint b,
     String value, {
     required double offset,
-    ARPoint? center,
-    double normalDirection = 1.0,
+    required double normalX,
+    required double normalZ,
   }) {
-    final dx = b.x - a.x;
-    final dz = b.z - a.z;
-    final length = math.sqrt(dx * dx + dz * dz);
-    if (length < 0.000001) return;
-
-    var normalX = -dz / length;
-    var normalZ = dx / length;
-    normalX *= normalDirection;
-    normalZ *= normalDirection;
-    final middleX = (a.x + b.x) / 2;
-    final middleZ = (a.z + b.z) / 2;
-    if (center != null) {
-      final towardCenterX = center.x - middleX;
-      final towardCenterZ = center.z - middleZ;
-      if ((normalX * towardCenterX) + (normalZ * towardCenterZ) > 0) {
-        normalX = -normalX;
-        normalZ = -normalZ;
-      }
-    }
-
     final dimensionStart = ARPoint(
       x: a.x + normalX * offset,
       y: 0,
