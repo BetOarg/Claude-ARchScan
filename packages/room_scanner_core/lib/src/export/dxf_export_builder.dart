@@ -309,6 +309,37 @@ class _DxfWriter {
     line('MEASUREMENTS', a, dimensionStart);
     line('MEASUREMENTS', b, dimensionEnd);
     line('MEASUREMENTS', dimensionStart, dimensionEnd);
+
+    final dx = dimensionEnd.x - dimensionStart.x;
+    final dz = dimensionEnd.z - dimensionStart.z;
+    final length = math.sqrt(dx * dx + dz * dz);
+    if (length > 0.000001) {
+      final tx = dx / length;
+      final tz = dz / length;
+      const arrowLength = 0.07;
+      const arrowHalfWidth = 0.024;
+
+      void arrow(ARPoint tip, double directionX, double directionZ) {
+        final baseX = tip.x + directionX * arrowLength;
+        final baseZ = tip.z + directionZ * arrowLength;
+        final perpX = -directionZ * arrowHalfWidth;
+        final perpZ = directionX * arrowHalfWidth;
+        line(
+          'MEASUREMENTS',
+          tip,
+          ARPoint(x: baseX + perpX, y: 0, z: baseZ + perpZ),
+        );
+        line(
+          'MEASUREMENTS',
+          tip,
+          ARPoint(x: baseX - perpX, y: 0, z: baseZ - perpZ),
+        );
+      }
+
+      arrow(dimensionStart, tx, tz);
+      arrow(dimensionEnd, -tx, -tz);
+    }
+
     text(
       'MEASUREMENTS',
       (dimensionStart.x + dimensionEnd.x) / 2,
