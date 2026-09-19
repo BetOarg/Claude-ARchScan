@@ -78,7 +78,7 @@ void main() {
     final dxfEntities = _entities(dxf);
     expect(dxfEntities.where((e) => e[0] == 'ARC'), hasLength(1));
     expect(dxfEntities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'), hasLength(2));
-    expect(dxfEntities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'), hasLength(7));
+    expect(dxfEntities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'), hasLength(8));
   });
 
   test('technical export remains stable for multiple rooms and openings', () {
