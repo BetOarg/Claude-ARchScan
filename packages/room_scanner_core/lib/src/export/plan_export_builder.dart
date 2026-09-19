@@ -332,47 +332,33 @@ class PlanExportBuilder {
     final openEnd = _SvgPoint(hinge.x + direction * -dy, hinge.y + direction * dx);
     final radius = math.sqrt(dx * dx + dy * dy);
     final sweep = direction > 0 ? 1 : 0;
-    svg
-      ..writeln('<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" stroke="white" stroke-width="8"/>')
-      ..writeln('<line x1="${_svgNumber(hinge.x)}" y1="${_svgNumber(hinge.y)}" x2="${_svgNumber(openEnd.x)}" y2="${_svgNumber(openEnd.y)}" stroke="#000000" stroke-width="1.4"/>')
-      ..writeln('<path d="M ${_svgNumber(closedEnd.x)} ${_svgNumber(closedEnd.y)} A ${_svgNumber(radius)} ${_svgNumber(radius)} 0 0 $sweep ${_svgNumber(openEnd.x)} ${_svgNumber(openEnd.y)}" fill="none" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<circle cx="${_svgNumber(hinge.x)}" cy="${_svgNumber(hinge.y)}" r="2" fill="#000000"/>');
-  }
+    final tangentX = placement.tangentX;
+    final tangentY = placement.tangentY;
+    final tangentLength = math.sqrt(tangentX * tangentX + tangentY * tangentY);
+    final tx = tangentLength > 0.000001 ? tangentX / tangentLength : 1.0;
+    final ty = tangentLength > 0.000001 ? tangentY / tangentLength : 0.0;
+    final arrowLength = 7.0;
+    final arrowHalfWidth = 2.4;
+    final startX = segment.x1 + normalX * actualOffset;
+    final startY = segment.y1 + normalY * actualOffset;
+    final endX = segment.x2 + normalX * actualOffset;
+    final endY = segment.y2 + normalY * actualOffset;
 
-  static void _writeWindowSvg(StringBuffer svg, _SvgPoint start, _SvgPoint end) {
-    final dx = end.x - start.x;
-    final dy = end.y - start.y;
-    final length = math.max(math.sqrt(dx * dx + dy * dy), 0.01);
-    final normalX = (-dy / length) * 2.4;
-    final normalY = (dx / length) * 2.4;
-    svg
-      ..writeln('<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" stroke="white" stroke-width="8"/>')
-      ..writeln('<line x1="${_svgNumber(start.x + normalX)}" y1="${_svgNumber(start.y + normalY)}" x2="${_svgNumber(end.x + normalX)}" y2="${_svgNumber(end.y + normalY)}" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<line x1="${_svgNumber(start.x - normalX)}" y1="${_svgNumber(start.y - normalY)}" x2="${_svgNumber(end.x - normalX)}" y2="${_svgNumber(end.y - normalY)}" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<line x1="${_svgNumber(start.x + normalX)}" y1="${_svgNumber(start.y + normalY)}" x2="${_svgNumber(start.x - normalX)}" y2="${_svgNumber(start.y - normalY)}" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<line x1="${_svgNumber(end.x + normalX)}" y1="${_svgNumber(end.y + normalY)}" x2="${_svgNumber(end.x - normalX)}" y2="${_svgNumber(end.y - normalY)}" stroke="#000000" stroke-width="1"/>');
-  }
-
-  static void _writeDimensionSvg({
-    required StringBuffer svg,
-    required DimensionPlacement placement,
-    required String label,
-  }) {
-    final segment = placement.segment;
-    final normalX = placement.normalX;
-    final normalY = placement.normalY;
-    final middleX = (segment.x1 + segment.x2) / 2.0;
-    final middleY = (segment.y1 + segment.y2) / 2.0;
-    final actualOffset = placement.offset;
-    final labelWidth = math.max(38.0, segment.labelHalfWidth * 2.0);
-    final labelX = middleX + normalX * actualOffset;
-    final labelY = middleY + normalY * actualOffset;
-    final extensionOffset = math.max(actualOffset - 3.0, 4.0);
+    String arrow(double tipX, double tipY, double dirX, double dirY) {
+      final baseX = tipX + dirX * arrowLength;
+      final baseY = tipY + dirY * arrowLength;
+      final px = -dirY * arrowHalfWidth;
+      final py = dirX * arrowHalfWidth;
+      return '<line x1="${_svgNumber(tipX)}" y1="${_svgNumber(tipY)}" x2="${_svgNumber(baseX + px)}" y2="${_svgNumber(baseY + py)}" stroke="#000000" stroke-width="0.7"/>'
+          '<line x1="${_svgNumber(tipX)}" y1="${_svgNumber(tipY)}" x2="${_svgNumber(baseX - px)}" y2="${_svgNumber(baseY - py)}" stroke="#000000" stroke-width="0.7"/>';
+    }
 
     svg
       ..writeln('<line x1="${_svgNumber(segment.x1)}" y1="${_svgNumber(segment.y1)}" x2="${_svgNumber(segment.x1 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y1 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
       ..writeln('<line x1="${_svgNumber(segment.x2)}" y1="${_svgNumber(segment.y2)}" x2="${_svgNumber(segment.x2 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y2 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
-      ..writeln('<line x1="${_svgNumber(segment.x1 + normalX * actualOffset)}" y1="${_svgNumber(segment.y1 + normalY * actualOffset)}" x2="${_svgNumber(segment.x2 + normalX * actualOffset)}" y2="${_svgNumber(segment.y2 + normalY * actualOffset)}" stroke="#000000" stroke-width="0.7"/>')
+      ..writeln('<line x1="${_svgNumber(startX)}" y1="${_svgNumber(startY)}" x2="${_svgNumber(endX)}" y2="${_svgNumber(endY)}" stroke="#000000" stroke-width="0.7"/>')
+      ..writeln(arrow(startX, startY, tx, ty))
+      ..writeln(arrow(endX, endY, -tx, -ty))
       ..writeln('<rect x="${_svgNumber(labelX - labelWidth / 2)}" y="${_svgNumber(labelY - 8)}" width="${_svgNumber(labelWidth)}" height="14" fill="white" fill-opacity="0.96"/>')
       ..writeln('<text data-dimension-label="${_escapeSvg(label)}" data-layout-index="${placement.level}" x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 3)}" text-anchor="middle" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="#000000">${_escapeSvg(label)}</text>');
   }
