@@ -267,4 +267,59 @@ void main() {
     expect(placement.level, greaterThan(0));
   });
 
+  test('geometry matrix preserves rectangular perimeter dimensions', () {
+    const rectangle = [
+      DimensionSegment(x1: 0, y1: 0, x2: 6, y2: 0, kind: DimensionKind.wall, id: 'bottom'),
+      DimensionSegment(x1: 6, y1: 0, x2: 6, y2: 4, kind: DimensionKind.wall, id: 'right'),
+      DimensionSegment(x1: 6, y1: 4, x2: 0, y2: 4, kind: DimensionKind.wall, id: 'top'),
+      DimensionSegment(x1: 0, y1: 4, x2: 0, y2: 0, kind: DimensionKind.wall, id: 'left'),
+    ];
+    final result = DimensionLayout.deduplicate(rectangle);
+    expect(result, hasLength(4));
+    expect(result.map((d) => d.id), containsAll(['bottom', 'right', 'top', 'left']));
+  });
+
+  test('geometry matrix preserves an L-shaped perimeter', () {
+    const lShape = [
+      DimensionSegment(x1: 0, y1: 0, x2: 5, y2: 0, kind: DimensionKind.wall, id: 'bottom'),
+      DimensionSegment(x1: 5, y1: 0, x2: 5, y2: 3, kind: DimensionKind.wall, id: 'right'),
+      DimensionSegment(x1: 5, y1: 3, x2: 2, y2: 3, kind: DimensionKind.wall, id: 'step'),
+      DimensionSegment(x1: 2, y1: 3, x2: 2, y2: 6, kind: DimensionKind.wall, id: 'inner'),
+      DimensionSegment(x1: 2, y1: 6, x2: 0, y2: 6, kind: DimensionKind.wall, id: 'top'),
+      DimensionSegment(x1: 0, y1: 6, x2: 0, y2: 0, kind: DimensionKind.wall, id: 'left'),
+    ];
+    final result = DimensionLayout.sort(lShape);
+    expect(result, hasLength(6));
+    expect(result.every((d) => d.kind == DimensionKind.wall), isTrue);
+  });
+
+  test('geometry matrix keeps slanted wall dimensions distinct', () {
+    const slanted = [
+      DimensionSegment(x1: 0, y1: 0, x2: 4, y2: 3, kind: DimensionKind.wall, id: 'diagonal-a'),
+      DimensionSegment(x1: 0, y1: 4, x2: 4, y2: 7, kind: DimensionKind.wall, id: 'diagonal-b'),
+    ];
+    final result = DimensionLayout.deduplicate(slanted);
+    expect(result, hasLength(2));
+    expect(result.every((d) => (d.length - 5).abs() < 0.000001), isTrue);
+  });
+
+  test('geometry matrix preserves opening, wall and total semantics', () {
+    const opening = DimensionSegment(x1: 1, y1: 0, x2: 2, y2: 0, kind: DimensionKind.opening, id: 'door');
+    const wall = DimensionSegment(x1: 0, y1: 0, x2: 4, y2: 0, kind: DimensionKind.wall, id: 'wall');
+    const total = DimensionSegment(x1: 0, y1: 0, x2: 4, y2: 0, kind: DimensionKind.total, id: 'total');
+    final result = DimensionLayout.sort([total, wall, opening]);
+    expect(result.map((d) => d.kind), [
+      DimensionKind.opening,
+      DimensionKind.wall,
+      DimensionKind.total,
+    ]);
+  });
+
+  test('geometry matrix deduplicates a shared wall between adjacent rooms', () {
+    const roomA = DimensionSegment(x1: 4, y1: 0, x2: 4, y2: 4, kind: DimensionKind.wall, id: 'room-a-shared');
+    const roomB = DimensionSegment(x1: 4, y1: 4, x2: 4, y2: 0, kind: DimensionKind.wall, id: 'room-b-shared');
+    final result = DimensionLayout.deduplicate([roomA, roomB]);
+    expect(result, hasLength(1));
+  });
+
 }
