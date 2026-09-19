@@ -267,6 +267,72 @@ void main() {
     expect(placement.level, greaterThan(0));
   });
 
+  test('moves a dimension when a wall only touches the corridor corner', () {
+    const dimension = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.opening,
+      id: 'dimension',
+    );
+    const cornerWall = DimensionSegment(
+      x1: 8.5,
+      y1: 3,
+      x2: 9.5,
+      y2: 3,
+      kind: DimensionKind.wall,
+      id: 'corner-wall',
+    );
+
+    final placements = DimensionLayout.layout(
+      [dimension, cornerWall],
+      baseOffset: 0,
+      gap: 1,
+      textHeight: 2,
+      labelHalfWidth: 0.5,
+    );
+
+    final placement = placements.firstWhere(
+      (item) => item.segment.id == 'dimension',
+    );
+
+    expect(placement.level, greaterThan(0));
+  });
+
+  test('detects collinear wall contact with a corridor edge', () {
+    const dimension = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.opening,
+      id: 'dimension',
+    );
+    const edgeWall = DimensionSegment(
+      x1: -3,
+      y1: 3,
+      x2: 7,
+      y2: 3,
+      kind: DimensionKind.wall,
+      id: 'edge-wall',
+    );
+
+    final placements = DimensionLayout.layout(
+      [dimension, edgeWall],
+      baseOffset: 0,
+      gap: 1,
+      textHeight: 2,
+      labelHalfWidth: 0.5,
+    );
+
+    final placement = placements.firstWhere(
+      (item) => item.segment.id == 'dimension',
+    );
+
+    expect(placement.level, greaterThan(0));
+  });
+
   test('geometry matrix preserves rectangular perimeter dimensions', () {
     const rectangle = [
       DimensionSegment(x1: 0, y1: 0, x2: 6, y2: 0, kind: DimensionKind.wall, id: 'bottom'),
