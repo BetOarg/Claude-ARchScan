@@ -24,8 +24,8 @@ void main() {
     final room = RoomModel(
       id: 'l',
       name: 'L',
-      type: RoomType.sala,
-      points: const [
+      type: RoomType.living,
+      points: [
         ARPoint(x: 0, y: 0, z: 0),
         ARPoint(x: 4, y: 0, z: 0),
         ARPoint(x: 4, y: 0, z: 1),
@@ -50,15 +50,15 @@ void main() {
     final sharedDoor = WallFeature(
       id: 'shared-door',
       type: FeatureType.door,
-      start: const ARPoint(x: 3, y: 0, z: 0.7),
-      end: const ARPoint(x: 3, y: 0, z: 1.6),
+      start: ARPoint(x: 3, y: 0, z: 0.7),
+      end: ARPoint(x: 3, y: 0, z: 1.6),
     );
     final first = _rectangle('a', 'A', 3, 2).copyWith(features: [sharedDoor]);
     final second = RoomModel(
       id: 'b',
       name: 'B',
       type: RoomType.cocina,
-      points: const [
+      points: [
         ARPoint(x: 3, y: 0, z: 0),
         ARPoint(x: 5, y: 0, z: 0),
         ARPoint(x: 5, y: 0, z: 2),
@@ -87,15 +87,15 @@ void main() {
         WallFeature(
           id: 'door-a',
           type: FeatureType.door,
-          start: const ARPoint(x: 0.8, y: 0, z: 0),
-          end: const ARPoint(x: 1.6, y: 0, z: 0),
+          start: ARPoint(x: 0.8, y: 0, z: 0),
+          end: ARPoint(x: 1.6, y: 0, z: 0),
         ),
       ]),
       RoomModel(
         id: 'b',
         name: 'B',
-        type: RoomType.sala,
-        points: const [
+        type: RoomType.living,
+        points: [
           ARPoint(x: 4, y: 0, z: 0),
           ARPoint(x: 6, y: 0, z: 0),
           ARPoint(x: 6, y: 0, z: 2),
@@ -105,8 +105,8 @@ void main() {
           WallFeature(
             id: 'window-b',
             type: FeatureType.window,
-            start: const ARPoint(x: 6, y: 0, z: 0.4),
-            end: const ARPoint(x: 6, y: 0, z: 1.6),
+            start: ARPoint(x: 6, y: 0, z: 0.4),
+            end: ARPoint(x: 6, y: 0, z: 1.6),
           ),
         ],
         isClosed: true,
@@ -130,7 +130,7 @@ RoomModel _rectangle(String id, String name, double width, double height) {
   return RoomModel(
     id: id,
     name: name,
-    type: RoomType.sala,
+    type: RoomType.living,
     points: [
       ARPoint(x: 0, y: 0, z: 0),
       ARPoint(x: width, y: 0, z: 0),
