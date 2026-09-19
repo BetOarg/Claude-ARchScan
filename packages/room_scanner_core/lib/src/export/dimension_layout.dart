@@ -195,6 +195,26 @@ class DimensionLayout {
     final cdCa = cdx * cay - cdy * cax;
     final cdCb = cdx * cby - cdy * cbx;
 
+    bool nearZero(double value) => value.abs() <= epsilon;
+    bool onSegment(
+      double px,
+      double py,
+      double sx,
+      double sy,
+      double ex,
+      double ey,
+    ) {
+      return px >= math.min(sx, ex) - epsilon &&
+          px <= math.max(sx, ex) + epsilon &&
+          py >= math.min(sy, ey) - epsilon &&
+          py <= math.max(sy, ey) + epsilon;
+    }
+
+    if (nearZero(abAc) && onSegment(cx, cy, ax, ay, bx, by)) return true;
+    if (nearZero(abAd) && onSegment(dx, dy, ax, ay, bx, by)) return true;
+    if (nearZero(cdCa) && onSegment(ax, ay, cx, cy, dx, dy)) return true;
+    if (nearZero(cdCb) && onSegment(bx, by, cx, cy, dx, dy)) return true;
+
     return abAc * abAd < -epsilon && cdCa * cdCb < -epsilon;
   }
 
