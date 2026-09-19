@@ -245,9 +245,9 @@ void main() {
     );
     const nearbyWall = DimensionSegment(
       x1: 1.5,
-      y1: 5,
+      y1: 2.5,
       x2: 2.5,
-      y2: 5,
+      y2: 2.5,
       kind: DimensionKind.wall,
       id: 'nearby-wall',
     );
