@@ -54,7 +54,7 @@ class DimensionLayout {
   static List<DimensionSegment> deduplicate(Iterable<DimensionSegment> input) {
     final byGeometry = <String, DimensionSegment>{};
     for (final dimension in input) {
-      if (dimension.length < 0.000001) continue;
+      if (!_isFiniteGeometry(dimension) || dimension.length < 0.000001) continue;
       final key = _canonicalGeometryKey(dimension);
       final current = byGeometry[key];
       if (current == null || _comparePriority(dimension, current) < 0) {
@@ -249,8 +249,8 @@ class DimensionLayout {
   }
 
   static String _canonicalGeometryKey(DimensionSegment d) {
-    final a = '${d.x1.toStringAsFixed(2)},${d.y1.toStringAsFixed(2)}';
-    final b = '${d.x2.toStringAsFixed(2)},${d.y2.toStringAsFixed(2)}';
+    final a = '${d.x1.toStringAsFixed(6)},${d.y1.toStringAsFixed(6)}';
+    final b = '${d.x2.toStringAsFixed(6)},${d.y2.toStringAsFixed(6)}';
     final points = [a, b]..sort();
 
     // Overall dimensions are a distinct semantic measure from wall/opening
@@ -259,6 +259,17 @@ class DimensionLayout {
     // collapse because the kind remains part of the key.
     final kind = d.kind == DimensionKind.total ? 'total:' : '';
     return '$kind${points[0]}|${points[1]}';
+  }
+
+  static bool _isFiniteGeometry(DimensionSegment d) {
+    return d.x1.isFinite &&
+        d.y1.isFinite &&
+        d.x2.isFinite &&
+        d.y2.isFinite &&
+        (d.centerX == null || d.centerX!.isFinite) &&
+        (d.centerY == null || d.centerY!.isFinite) &&
+        d.normalDirection.isFinite &&
+        d.labelHalfWidth.isFinite;
   }
 
   static _Vector _tangent(DimensionSegment d) {
