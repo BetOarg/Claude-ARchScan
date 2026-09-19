@@ -388,4 +388,52 @@ void main() {
     expect(result, hasLength(1));
   });
 
+
+  test('geometry integrity keeps distinct segments closer than one centimeter', () {
+    const first = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 1,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'first',
+    );
+    const second = DimensionSegment(
+      x1: 0,
+      y1: 0.004,
+      x2: 1,
+      y2: 0.004,
+      kind: DimensionKind.wall,
+      id: 'second',
+    );
+
+    final result = DimensionLayout.deduplicate([first, second]);
+
+    expect(result, hasLength(2));
+  });
+
+  test('geometry integrity ignores non-finite segments without poisoning layout', () {
+    const invalid = DimensionSegment(
+      x1: double.nan,
+      y1: 0,
+      x2: 1,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'invalid',
+    );
+    const valid = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 2,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'valid',
+    );
+
+    final result = DimensionLayout.layout([invalid, valid]);
+
+    expect(result, hasLength(1));
+    expect(result.single.segment.id, 'valid');
+  });
+
 }
