@@ -65,4 +65,23 @@ void main() {
     expect(svg, isNot(contains('>Puerta<')));
     expect(svg, isNot(contains('>Ventana<')));
   });
+  test('renders ISO 128 dimension linework with extension lines and arrowheads', () {
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      [roomWithFeatures()],
+      MeasurementSystem.metric,
+    );
+
+    expect(svg, contains('stroke-width="0.7"'));
+    expect(svg, contains('data-dimension-label="0,80 m"'));
+    final dimensionSectionStart = svg.indexOf('<g id="cotas">');
+    expect(dimensionSectionStart, greaterThanOrEqualTo(0));
+    final dimensionSection = svg.substring(dimensionSectionStart);
+    expect(
+      RegExp(r'<line x1="[^"]+" y1="[^"]+" x2="[^"]+" y2="[^"]+"')
+          .allMatches(dimensionSection)
+          .length,
+      greaterThan(8),
+    );
+  });
+
 }
