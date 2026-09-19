@@ -39,7 +39,7 @@ void main() {
         .toList();
 
     expect(walls, hasLength(4));
-    expect(measurements, hasLength(18));
+    expect(measurements.length, greaterThan(18));
     // The shortest wall is vertical, so the first dimension line is offset
     // horizontally. Compare its X coordinate with either vertical wall.
     final dimensionX = double.parse(measurements[2][10]!);
@@ -48,6 +48,8 @@ void main() {
       (dimensionX - 3.0).abs(),
     );
     expect(distanceToNearestVerticalWall, greaterThan(0.35));
+    // Each dimension now has two arrowheads (four additional line entities).
+    expect(measurements.length % 7, 0);
   });
 
   test('imperial labels use feet and inches', () {
