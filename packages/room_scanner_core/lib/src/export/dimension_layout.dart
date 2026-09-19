@@ -33,11 +33,19 @@ class DimensionPlacement {
   final DimensionSegment segment;
   final double offset;
   final int level;
+  final double normalX;
+  final double normalY;
+  final double tangentX;
+  final double tangentY;
 
   const DimensionPlacement({
     required this.segment,
     required this.offset,
     required this.level,
+    required this.normalX,
+    required this.normalY,
+    required this.tangentX,
+    required this.tangentY,
   });
 }
 
@@ -125,6 +133,10 @@ class DimensionLayout {
           segment: dimension,
           offset: offset,
           level: level,
+          normalX: normal.x,
+          normalY: normal.y,
+          tangentX: tangent.x,
+          tangentY: tangent.y,
         ));
         placed = true;
         break;

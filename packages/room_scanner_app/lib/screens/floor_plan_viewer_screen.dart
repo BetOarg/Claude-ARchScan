@@ -4361,9 +4361,8 @@ class FloorPlanPainter
         continue;
       }
 
-      final tangent = direction / screenLength;
-      final normal = Offset(-tangent.dy, tangent.dx) *
-          (dimension.normalDirection >= 0 ? 1.0 : -1.0);
+      final tangent = Offset(placement.tangentX, placement.tangentY);
+      final normal = Offset(placement.normalX, placement.normalY);
       final dimensionStart = start + normal * placement.offset;
       final dimensionEnd = end + normal * placement.offset;
 

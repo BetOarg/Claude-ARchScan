@@ -359,24 +359,10 @@ class PlanExportBuilder {
     required String label,
   }) {
     final segment = placement.segment;
-    final length = math.max(segment.length, 0.000001);
-    final tangentX = segment.dx / length;
-    final tangentY = segment.dy / length;
-    var normalX = -tangentY;
-    var normalY = tangentX;
+    final normalX = placement.normalX;
+    final normalY = placement.normalY;
     final middleX = (segment.x1 + segment.x2) / 2.0;
     final middleY = (segment.y1 + segment.y2) / 2.0;
-    if (segment.centerX != null && segment.centerY != null) {
-      final towardCenterX = segment.centerX! - middleX;
-      final towardCenterY = segment.centerY! - middleY;
-      if (normalX * towardCenterX + normalY * towardCenterY > 0) {
-        normalX = -normalX;
-        normalY = -normalY;
-      }
-    }
-    normalX *= segment.normalDirection;
-    normalY *= segment.normalDirection;
-
     final actualOffset = placement.offset;
     final labelWidth = math.max(38.0, segment.labelHalfWidth * 2.0);
     final labelX = middleX + normalX * actualOffset;

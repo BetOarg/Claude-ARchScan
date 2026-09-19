@@ -436,4 +436,32 @@ void main() {
     expect(result.single.segment.id, 'valid');
   });
 
+  test('renderer placement exposes the resolved tangent and outward normal', () {
+    const segment = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 4,
+      kind: DimensionKind.wall,
+      id: 'vertical',
+      centerX: 1,
+      centerY: 2,
+    );
+
+    final placement = DimensionLayout.layout(
+      [segment],
+      baseOffset: 2,
+      gap: 1,
+      textHeight: 1,
+      labelHalfWidth: 0.5,
+    ).single;
+
+    expect(placement.tangentX, closeTo(0, 0.000001));
+    expect(placement.tangentY, closeTo(1, 0.000001));
+    expect(placement.normalX, closeTo(-1, 0.000001));
+    expect(placement.normalY, closeTo(0, 0.000001));
+    expect(placement.offset, 2);
+  });
+
+
 }
