@@ -32,6 +32,17 @@ enum BasicAppMode {
   window,
 }
 
+enum _CameraInitializationFailure {
+  permissionDenied,
+  unavailable,
+}
+
+class _CameraInitializationException implements Exception {
+  const _CameraInitializationException(this.failure);
+
+  final _CameraInitializationFailure failure;
+}
+
 class BasicScannerScreen extends StatefulWidget {
   final String projectUuid;
   final String projectName;
@@ -143,9 +154,8 @@ class _BasicScannerScreenState
       );
 
       if (!permissionGranted) {
-        throw StateError(
-          AppLocalizations.of(context)!
-              .cameraPermissionRequired,
+        throw const _CameraInitializationException(
+          _CameraInitializationFailure.permissionDenied,
         );
       }
 
@@ -177,9 +187,8 @@ class _BasicScannerScreenState
           throw lastError;
         }
 
-        throw StateError(
-          AppLocalizations.of(context)!
-              .cameraStartFailed,
+        throw const _CameraInitializationException(
+          _CameraInitializationFailure.unavailable,
         );
       }
 
@@ -418,9 +427,8 @@ class _BasicScannerScreenState
     );
 
     if (cameras.isEmpty) {
-      throw StateError(
-        AppLocalizations.of(context)!
-            .cameraUnavailable,
+      throw const _CameraInitializationException(
+        _CameraInitializationFailure.unavailable,
       );
     }
 
@@ -453,25 +461,22 @@ class _BasicScannerScreenState
   String _cameraErrorMessage(
     Object? error,
   ) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (error is TimeoutException) {
-      return AppLocalizations.of(context)!
-          .cameraTimeoutMessage;
+      return l10n.cameraTimeoutMessage;
     }
 
-    if (error is StateError) {
-      return error.message;
+    if (error is _CameraInitializationException) {
+      switch (error.failure) {
+        case _CameraInitializationFailure.permissionDenied:
+          return l10n.cameraPermissionRequired;
+        case _CameraInitializationFailure.unavailable:
+          return l10n.cameraUnavailable;
+      }
     }
 
-    final message =
-        error?.toString();
-
-    if (message == null ||
-        message.isEmpty) {
-      return AppLocalizations.of(context)!
-          .cameraStartFailed;
-    }
-
-    return message;
+    return l10n.cameraStartFailed;
   }
 
   void _startScannerRoom(
