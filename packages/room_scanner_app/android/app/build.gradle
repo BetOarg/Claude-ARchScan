@@ -107,9 +107,14 @@ android {
                 signingConfig signingConfigs.release
             }
 
-            minifyEnabled false
-
-            shrinkResources false
+            // Validamos R8 en el AAB de release antes de publicar.
+            // Las reglas del proyecto mantienen únicamente lo que necesita
+            // reflexión/serialización y el stack de plugins nativos.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile(
+                    'proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
         }
     }
 }
