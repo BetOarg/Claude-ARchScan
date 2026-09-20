@@ -30,6 +30,12 @@ jobs:
           channel: "stable"
           cache: true
 
+      - name: Verify Dart formatting
+        continue-on-error: true
+        run: |
+          echo "Format audit (baseline):"
+          dart format -o none --set-exit-if-changed packages/room_scanner_core packages/room_scanner_app
+
       - name: Verify publication structure
         run: dart run packages/room_scanner_app/tool/verify_store_readiness.dart --strict
 
@@ -162,9 +168,17 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
         working-directory: packages/room_scanner_app
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
         working-directory: packages/room_scanner_app
+
+      - name: Upload app coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: archscan-app-coverage
+          path: packages/room_scanner_app/coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Verify Android Release App Bundle
         working-directory: packages/room_scanner_app
