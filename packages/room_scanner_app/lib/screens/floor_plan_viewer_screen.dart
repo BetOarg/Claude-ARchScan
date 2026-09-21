@@ -4344,6 +4344,7 @@ class FloorPlanPainter
         },
       ),
       suppressRedundantOverallSegments: true,
+      strictHierarchy: true,
     );
 
     final dimensionPaint = Paint()
