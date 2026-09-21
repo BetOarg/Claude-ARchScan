@@ -92,6 +92,7 @@ class DimensionLayout {
     double? labelHalfWidth,
     int maxLevels = 64,
     bool suppressRedundantOverallSegments = false,
+    bool strictHierarchy = false,
   }) {
     var ordered = sort(input);
     if (suppressRedundantOverallSegments) {
@@ -122,7 +123,7 @@ class DimensionLayout {
         final normal = _outwardNormal(dimension);
         final tangent = _tangent(dimension);
         var placed = false;
-        final minimumLevel = _minimumLevel(dimension.kind);
+        final minimumLevel = strictHierarchy ? _minimumLevel(dimension.kind) : 0;
 
         for (var level = minimumLevel; level < maxLevels; level++) {
           final offset = baseOffset + level * spacing;
