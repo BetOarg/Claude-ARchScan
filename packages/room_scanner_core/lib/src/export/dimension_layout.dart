@@ -111,13 +111,13 @@ class DimensionLayout {
 
     final spacing = math.max(gap, textHeight + gap).toDouble();
     final result = <DimensionPlacement>[];
+    final allWalls = ordered
+        .where((dimension) => dimension.kind == DimensionKind.wall)
+        .toList(growable: false);
 
     for (final dimensions in bySide.values) {
       dimensions.sort(_compareLayoutOrder);
       final occupied = <_DimensionCorridor>[];
-      final walls = dimensions
-          .where((dimension) => dimension.kind == DimensionKind.wall)
-          .toList(growable: false);
 
       for (final dimension in dimensions) {
         final normal = _outwardNormal(dimension);
@@ -143,7 +143,7 @@ class DimensionLayout {
           if (_crossesAnotherWall(
             dimension,
             corridor,
-            walls,
+            allWalls,
           )) {
             continue;
           }
@@ -169,6 +169,15 @@ class DimensionLayout {
       }
     }
 
+    // Preserve the deterministic global dimension order for renderers and
+    // tests while keeping collision resolution isolated per facade.
+    result.sort((a, b) {
+      final length = a.segment.length.compareTo(b.segment.length);
+      if (length != 0) return length;
+      final kind = _kindOrder(a.segment.kind).compareTo(_kindOrder(b.segment.kind));
+      if (kind != 0) return kind;
+      return a.segment.id.compareTo(b.segment.id);
+    });
     return result;
   }
 
