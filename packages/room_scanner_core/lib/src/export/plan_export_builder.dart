@@ -207,10 +207,8 @@ class PlanExportBuilder {
           offsetY + (point.z - minZ) * scale,
         );
 
-    final svg = StringBuffer()
-      ..writeln('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $canvasWidth $canvasHeight">')
-      ..writeln(_projectSvgMetadata(rooms, projectName))
-      ..writeln('<rect width="$canvasWidth" height="$canvasHeight" fill="white"/>');
+    final contentSvg = StringBuffer();
+    final exportBounds = _SvgBounds();
     final wallsSvg = StringBuffer();
     final carpentrySvg = StringBuffer();
     final roomNamesSvg = StringBuffer();
