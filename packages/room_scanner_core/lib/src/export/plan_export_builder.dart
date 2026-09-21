@@ -309,6 +309,23 @@ class PlanExportBuilder {
     for (final placement in placements) {
       final label = dimensionLabels[placement.segment.id];
       if (label == null) continue;
+      final segment = placement.segment;
+      final dimensionX1 = segment.x1 + placement.normalX * placement.offset;
+      final dimensionY1 = segment.y1 + placement.normalY * placement.offset;
+      final dimensionX2 = segment.x2 + placement.normalX * placement.offset;
+      final dimensionY2 = segment.y2 + placement.normalY * placement.offset;
+      final labelWidth = math.max(38.0, segment.labelHalfWidth * 2.0);
+      final labelX = (dimensionX1 + dimensionX2) / 2.0;
+      final labelY = (dimensionY1 + dimensionY2) / 2.0;
+      exportBounds.includeSegment(segment.x1, segment.y1, dimensionX1, dimensionY1);
+      exportBounds.includeSegment(segment.x2, segment.y2, dimensionX2, dimensionY2);
+      exportBounds.includeSegment(dimensionX1, dimensionY1, dimensionX2, dimensionY2);
+      exportBounds.includeRect(
+        labelX - labelWidth / 2.0 - 8.0,
+        labelY - 10.0,
+        labelX + labelWidth / 2.0 + 8.0,
+        labelY + 10.0,
+      );
       _writeDimensionSvg(
         svg: dimensionsSvg,
         placement: placement,
