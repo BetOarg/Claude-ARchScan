@@ -252,7 +252,12 @@ class PlanExportBuilder {
             math.max(start.y, end.y) + radius,
           );
         } else {
-          exportBounds.inflate(6.0);
+          exportBounds.includeRect(
+            math.min(start.x, end.x) - 4.0,
+            math.min(start.y, end.y) - 4.0,
+            math.max(start.x, end.x) + 4.0,
+            math.max(start.y, end.y) + 4.0,
+          );
         }
         carpentrySvg.writeln('<g data-feature-id="${_escapeSvg(feature.id)}">');
         if (feature.type == FeatureType.door) {
