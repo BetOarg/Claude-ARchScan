@@ -267,7 +267,12 @@ void main() {
         [room],
         MeasurementSystem.metric,
       );
-      expect(svg, contains('points="108.04,72.00 791.96,72.00 791.96,528.00 108.04,528.00"'));
+      expect(
+        svg,
+        contains(
+          'points="108.04,72.00 791.96,72.00 791.96,528.00 108.04,528.00"',
+        ),
+      );
       expect(room.points[2].x, 3.03);
     });
   });
