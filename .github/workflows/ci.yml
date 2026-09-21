@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -35,8 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
-            base_ref="FETCH_HEAD"
+            base_ref="origin/${{ github.base_ref }}"
             files="$(git diff --name-only "$base_ref"...HEAD -- '*.dart')"
           else
             files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
