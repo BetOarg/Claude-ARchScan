@@ -4343,6 +4343,7 @@ class FloorPlanPainter
           return dimension;
         },
       ),
+      suppressRedundantOverallSegments: true,
     );
 
     final dimensionPaint = Paint()
