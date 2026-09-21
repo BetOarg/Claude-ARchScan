@@ -35,7 +35,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            base_ref="origin/${{ github.base_ref }}"
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            base_ref="FETCH_HEAD"
             files="$(git diff --name-only "$base_ref"...HEAD -- '*.dart')"
           else
             files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
