@@ -14,7 +14,7 @@ dependencies:
   # Localización oficial de Flutter
   flutter_localizations:
     sdk: flutter
-  intl: any
+  intl: 0.20.3
 
   # Núcleo de dominio: modelos, geometría, Isar y construcción de
   # exportaciones. Durante la fase de monorepo se resuelve por path; tras
