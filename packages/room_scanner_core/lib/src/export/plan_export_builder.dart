@@ -333,7 +333,7 @@ class PlanExportBuilder {
       );
     }
 
-    svg
+    contentSvg
       ..writeln('<g id="paredes">')
       ..write(wallsSvg)
       ..writeln('</g>')
@@ -345,7 +345,27 @@ class PlanExportBuilder {
       ..writeln('</g>')
       ..writeln('<g id="cotas">')
       ..write(dimensionsSvg)
-      ..writeln('</g>')
+      ..writeln('</g>');
+
+    exportBounds.inflate(18.0);
+    final viewMinX = exportBounds.minX;
+    final viewMinY = exportBounds.minY;
+    final viewWidth = math.max(exportBounds.width, 1.0);
+    final viewHeight = math.max(exportBounds.height, 1.0);
+    final svg = StringBuffer()
+      ..writeln(
+        '<svg xmlns="http://www.w3.org/2000/svg" '
+        'viewBox="\${_svgNumber(viewMinX)} \${_svgNumber(viewMinY)} '
+        '\${_svgNumber(viewWidth)} \${_svgNumber(viewHeight)}" '
+        'preserveAspectRatio="xMidYMid meet">',
+      )
+      ..writeln(_projectSvgMetadata(rooms, projectName))
+      ..writeln(
+        '<rect x="\${_svgNumber(viewMinX)}" y="\${_svgNumber(viewMinY)}" '
+        'width="\${_svgNumber(viewWidth)}" height="\${_svgNumber(viewHeight)}" '
+        'fill="white"/>',
+      )
+      ..write(contentSvg)
       ..writeln('</svg>');
     return svg.toString();
   }
