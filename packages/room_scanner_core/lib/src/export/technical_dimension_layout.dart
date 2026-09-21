@@ -49,7 +49,7 @@ class TechnicalDimensionLayout {
         id: '${room.id}:opening:${feature.id}',
         centerX: center.x,
         centerY: center.y,
-        normalDirection: -1.0,
+        normalDirection: 1.0,
       ));
     }
 
