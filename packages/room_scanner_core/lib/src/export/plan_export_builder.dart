@@ -310,6 +310,7 @@ class PlanExportBuilder {
     final placements = DimensionLayout.layout(
       dimensionSegments,
       suppressRedundantOverallSegments: true,
+      strictHierarchy: true,
     );
     for (final placement in placements) {
       final label = dimensionLabels[placement.segment.id];
