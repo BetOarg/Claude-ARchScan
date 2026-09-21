@@ -20,6 +20,23 @@ void main() {
     expect(entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'), isNotEmpty);
   });
 
+  test('technical SVG auto-fits the complete drawing instead of a fixed viewport', () {
+    final room = _rectangle('fit', 'Fit', 3, 2);
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      [room],
+      MeasurementSystem.metric,
+    );
+
+    final match = RegExp(r'viewBox="([^"]+)"').firstMatch(svg);
+    expect(match, isNotNull);
+    final viewBox = match!.group(1)!.split(RegExp(r'\\s+')).map(double.parse).toList();
+
+    expect(viewBox, hasLength(4));
+    expect(viewBox[2], isNot(900));
+    expect(viewBox[3], isNot(600));
+    expect(svg, contains('id="cotas"'));
+  });
+
   test('L-shaped plan preserves all perimeter edges and technical dimensions', () {
     final room = RoomModel(
       id: 'l',
