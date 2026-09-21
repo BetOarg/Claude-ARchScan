@@ -44,11 +44,11 @@ void main() {
 
     test('rejects excess point count', () {
       final source = jsonEncode({
-        'rooms': List.generate(
+        'rooms': List<Map<String, dynamic>>.generate(
           21,
-          (_) => {
-            'points': List<dynamic>.filled(500, <String, dynamic>{'x': 0, 'y': 0, 'z': 0}),
-            'features': [],
+          (_) => <String, dynamic>{
+            'points': List<Map<String, dynamic>>.filled(500, <String, dynamic>{'x': 0, 'y': 0, 'z': 0}),
+            'features': <dynamic>[],
           },
         ),
       });
@@ -57,10 +57,10 @@ void main() {
 
     test('rejects excess feature count', () {
       final source = jsonEncode({
-        'rooms': [
-          {
-            'points': [],
-            'features': List<dynamic>.filled(PlanExportBuilder.maxImportFeatures + 1, <String, dynamic>{}),
+        'rooms': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'points': <dynamic>[],
+            'features': List<Map<String, dynamic>>.filled(PlanExportBuilder.maxImportFeatures + 1, <String, dynamic>{}),
           },
         ],
       });
