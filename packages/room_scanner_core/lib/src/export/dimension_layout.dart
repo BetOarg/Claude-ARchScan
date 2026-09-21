@@ -91,63 +91,147 @@ class DimensionLayout {
     double textHeight = defaultTextHeight,
     double? labelHalfWidth,
     int maxLevels = 64,
+    bool suppressRedundantOverallSegments = false,
   }) {
-    final ordered = sort(input);
-    final occupied = <_DimensionCorridor>[];
-    final walls = ordered
-        .where((dimension) => dimension.kind == DimensionKind.wall)
-        .toList(growable: false);
+    var ordered = sort(input);
+    if (suppressRedundantOverallSegments) {
+      ordered = _removeRedundantOverallSegments(ordered);
+    }
+
+    // Dimension strings are laid out independently per facade/normal.
+    // This prevents a top string from forcing a right-side string outward and
+    // makes the visual hierarchy deterministic: openings, wall segments,
+    // then overall dimensions.
+    final bySide = <String, List<DimensionSegment>>{};
+    for (final dimension in ordered) {
+      final side = _sideKey(dimension);
+      (bySide[side] ??= <DimensionSegment>[]).add(dimension);
+    }
+
     final spacing = math.max(gap, textHeight + gap).toDouble();
     final result = <DimensionPlacement>[];
 
-    for (final dimension in ordered) {
-      final normal = _outwardNormal(dimension);
-      final tangent = _tangent(dimension);
-      var placed = false;
+    for (final dimensions in bySide.values) {
+      dimensions.sort(_compareLayoutOrder);
+      final occupied = <_DimensionCorridor>[];
+      final walls = dimensions
+          .where((dimension) => dimension.kind == DimensionKind.wall)
+          .toList(growable: false);
 
-      for (var level = 0; level < maxLevels; level++) {
-        final offset = baseOffset + level * spacing;
-        final corridor = _DimensionCorridor.from(
-          dimension,
-          normal,
-          tangent,
-          offset,
-          labelHalfWidth ?? dimension.labelHalfWidth,
-          textHeight,
-        );
+      for (final dimension in dimensions) {
+        final normal = _outwardNormal(dimension);
+        final tangent = _tangent(dimension);
+        var placed = false;
+        final minimumLevel = _minimumLevel(dimension.kind);
 
-        if (occupied.any((other) => other.overlaps(corridor))) {
-          continue;
+        for (var level = minimumLevel; level < maxLevels; level++) {
+          final offset = baseOffset + level * spacing;
+          final corridor = _DimensionCorridor.from(
+            dimension,
+            normal,
+            tangent,
+            offset,
+            labelHalfWidth ?? dimension.labelHalfWidth,
+            textHeight,
+          );
+
+          if (occupied.any((other) => other.overlaps(corridor))) {
+            continue;
+          }
+
+          if (_crossesAnotherWall(
+            dimension,
+            corridor,
+            walls,
+          )) {
+            continue;
+          }
+
+          occupied.add(corridor);
+          result.add(DimensionPlacement(
+            segment: dimension,
+            offset: offset,
+            level: level,
+            normalX: normal.x,
+            normalY: normal.y,
+            tangentX: tangent.x,
+            tangentY: tangent.y,
+          ));
+          placed = true;
+          break;
         }
 
-        if (_crossesAnotherWall(
-          dimension,
-          corridor,
-          walls,
-        )) {
-          continue;
-        }
-
-        occupied.add(corridor);
-        result.add(DimensionPlacement(
-          segment: dimension,
-          offset: offset,
-          level: level,
-          normalX: normal.x,
-          normalY: normal.y,
-          tangentX: tangent.x,
-          tangentY: tangent.y,
-        ));
-        placed = true;
-        break;
+        // A pathological geometry must not make the painter/exporter loop
+        // forever. The dimension is omitted rather than producing an invalid
+        // placement.
+        if (!placed) continue;
       }
-
-      // A pathological geometry must not make the painter/exporter loop
-      // forever. The dimension is omitted rather than producing an invalid
-      // placement.
-      if (!placed) continue;
     }
+
     return result;
+  }
+
+  static int _minimumLevel(DimensionKind kind) {
+    switch (kind) {
+      case DimensionKind.opening:
+        return 0;
+      case DimensionKind.wall:
+        return 1;
+      case DimensionKind.total:
+        return 2;
+    }
+  }
+
+  static String _sideKey(DimensionSegment dimension) {
+    final normal = _outwardNormal(dimension);
+    final x = normal.x.abs() < 0.0005 ? 0.0 : normal.x;
+    final y = normal.y.abs() < 0.0005 ? 0.0 : normal.y;
+    return '\${x.toStringAsFixed(3)},\${y.toStringAsFixed(3)}';
+  }
+
+  static int _compareLayoutOrder(
+    DimensionSegment a,
+    DimensionSegment b,
+  ) {
+    final kind = _kindOrder(a.kind).compareTo(_kindOrder(b.kind));
+    if (kind != 0) return kind;
+
+    final tangentA = _tangent(a);
+    final tangentB = _tangent(b);
+    final positionA =
+        ((a.x1 + a.x2) / 2.0) * tangentA.x +
+        ((a.y1 + a.y2) / 2.0) * tangentA.y;
+    final positionB =
+        ((b.x1 + b.x2) / 2.0) * tangentB.x +
+        ((b.y1 + b.y2) / 2.0) * tangentB.y;
+    final position = positionA.compareTo(positionB);
+    if (position != 0) return position;
+
+    final length = a.length.compareTo(b.length);
+    if (length != 0) return length;
+    return a.id.compareTo(b.id);
+  }
+
+  static List<DimensionSegment> _removeRedundantOverallSegments(
+    List<DimensionSegment> dimensions,
+  ) {
+    final totals = dimensions
+        .where((dimension) => dimension.kind == DimensionKind.total)
+        .toList(growable: false);
+    if (totals.isEmpty) return dimensions;
+
+    return dimensions.where((dimension) {
+      if (dimension.kind != DimensionKind.wall) return true;
+      final tangent = _tangent(dimension);
+      return !totals.any((total) {
+        final totalTangent = _tangent(total);
+        final parallel =
+            (tangent.x * totalTangent.x + tangent.y * totalTangent.y).abs() >
+            0.9999;
+        final sameLength = (dimension.length - total.length).abs() < 0.000001;
+        return parallel && sameLength;
+      });
+    }).toList(growable: false);
   }
 
   static bool _crossesAnotherWall(
