@@ -436,6 +436,79 @@ void main() {
     expect(result.single.segment.id, 'valid');
   });
 
+  test('strict hierarchy creates separate facade bands', () {
+    const opening = DimensionSegment(
+      x1: 0.5,
+      y1: 0,
+      x2: 1.5,
+      y2: 0,
+      kind: DimensionKind.opening,
+      id: 'opening',
+      centerX: 2,
+      centerY: 2,
+    );
+    const wall = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'wall',
+      centerX: 2,
+      centerY: 2,
+    );
+    const total = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.total,
+      id: 'total',
+      centerX: 2,
+      centerY: 2,
+    );
+
+    final placements = DimensionLayout.layout(
+      [total, wall, opening],
+      strictHierarchy: true,
+    );
+
+    final byId = <String, DimensionPlacement>{
+      for (final placement in placements) placement.segment.id: placement,
+    };
+    expect(byId['opening']!.level, 0);
+    expect(byId['wall']!.level, greaterThan(byId['opening']!.level));
+    expect(byId['total']!.level, greaterThan(byId['wall']!.level));
+  });
+
+  test('optional redundancy suppression removes wall segments equal to overall size', () {
+    const wall = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'wall',
+    );
+    const total = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.total,
+      id: 'total',
+    );
+
+    final placements = DimensionLayout.layout(
+      [wall, total],
+      suppressRedundantOverallSegments: true,
+      strictHierarchy: true,
+    );
+
+    expect(placements, hasLength(1));
+    expect(placements.single.segment.kind, DimensionKind.total);
+  });
+
   test('renderer placement exposes the resolved tangent and outward normal', () {
     const segment = DimensionSegment(
       x1: 0,
