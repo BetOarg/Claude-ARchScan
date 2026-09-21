@@ -29,7 +29,7 @@ void main() {
 
     final match = RegExp(r'viewBox="([^"]+)"').firstMatch(svg);
     expect(match, isNotNull);
-    final viewBox = match!.group(1)!.split(RegExp(r'\\s+')).map(double.parse).toList();
+    final viewBox = match!.group(1)!.split(RegExp(r'\s+')).map(double.parse).toList();
 
     expect(viewBox, hasLength(4));
     expect(viewBox[2], isNot(900));
