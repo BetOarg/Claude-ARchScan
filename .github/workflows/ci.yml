@@ -30,9 +30,21 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Verify Dart formatting
+      - name: Verify Dart formatting on changed files
+        shell: bash
         run: |
-          dart format --set-exit-if-changed packages/room_scanner_core packages/room_scanner_app
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base_ref="origin/${{ github.base_ref }}"
+            files="$(git diff --name-only "$base_ref"...HEAD -- '*.dart')"
+          else
+            files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
+          fi
+          if [ -z "$files" ]; then
+            echo "No changed Dart files to format-check."
+            exit 0
+          fi
+          printf '%s\n' "$files" | xargs dart format -o none --set-exit-if-changed
 
       - name: Verify publication structure
         run: dart run packages/room_scanner_app/tool/verify_store_readiness.dart --strict
