@@ -229,6 +229,7 @@ class PlanExportBuilder {
         wallsSvg.writeln('<polyline points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>');
       }
       final center = _roomCenter(transformed);
+      exportBounds.includeRect(center.x - 40.0, center.y - 10.0, center.x + 40.0, center.y + 10.0);
       if (room.name.trim().isNotEmpty) {
         roomNamesSvg.writeln('<text x="${_svgNumber(center.x)}" y="${_svgNumber(center.y + 3)}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="bold" fill="#000000">${_escapeSvg(room.name.trim())}</text>');
       }
