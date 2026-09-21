@@ -36,7 +36,7 @@ void main() {
       final source = jsonEncode({
         'rooms': List.generate(
           PlanExportBuilder.maxImportRooms + 1,
-          (_) => {'points': [], 'features': []},
+          (_) => <String, dynamic>{'points': <dynamic>[], 'features': <dynamic>[]},
         ),
       });
       expect(PlanExportBuilder.parseProjectJson(source), isNull);
@@ -47,7 +47,7 @@ void main() {
         'rooms': List.generate(
           21,
           (_) => {
-            'points': List.filled(500, {'x': 0, 'y': 0, 'z': 0}),
+            'points': List<dynamic>.filled(500, <String, dynamic>{'x': 0, 'y': 0, 'z': 0}),
             'features': [],
           },
         ),
@@ -60,7 +60,7 @@ void main() {
         'rooms': [
           {
             'points': [],
-            'features': List.filled(PlanExportBuilder.maxImportFeatures + 1, {}),
+            'features': List<dynamic>.filled(PlanExportBuilder.maxImportFeatures + 1, <String, dynamic>{}),
           },
         ],
       });
