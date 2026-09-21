@@ -187,7 +187,7 @@ class DimensionLayout {
     final normal = _outwardNormal(dimension);
     final x = normal.x.abs() < 0.0005 ? 0.0 : normal.x;
     final y = normal.y.abs() < 0.0005 ? 0.0 : normal.y;
-    return '\${x.toStringAsFixed(3)},\${y.toStringAsFixed(3)}';
+    return '${x.toStringAsFixed(3)},${y.toStringAsFixed(3)}';
   }
 
   static int _compareLayoutOrder(
