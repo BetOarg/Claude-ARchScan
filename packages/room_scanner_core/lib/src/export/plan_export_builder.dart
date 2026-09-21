@@ -241,6 +241,19 @@ class PlanExportBuilder {
         if (!drawnFeatureIds.add(feature.id)) continue;
         final start = transform(feature.start);
         final end = transform(feature.end);
+        exportBounds.includePoint(start.x, start.y);
+        exportBounds.includePoint(end.x, end.y);
+        if (feature.type == FeatureType.door) {
+          final radius = math.max(math.sqrt(math.pow(end.x - start.x, 2) + math.pow(end.y - start.y, 2)), 8.0);
+          exportBounds.includeRect(
+            math.min(start.x, end.x) - radius,
+            math.min(start.y, end.y) - radius,
+            math.max(start.x, end.x) + radius,
+            math.max(start.y, end.y) + radius,
+          );
+        } else {
+          exportBounds.inflate(6.0);
+        }
         carpentrySvg.writeln('<g data-feature-id="${_escapeSvg(feature.id)}">');
         if (feature.type == FeatureType.door) {
           _writeDoorSvg(carpentrySvg, feature, start, end);
