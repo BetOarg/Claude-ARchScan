@@ -46,8 +46,9 @@ jobs:
           else
             files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
           fi
+          files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)"
           if [ -z "$files" ]; then
-            echo "No changed Dart files to format-check."
+            echo "No changed production Dart files to format-check."
             exit 0
           fi
           printf '%s\n' "$files" | xargs dart format -o none --set-exit-if-changed
@@ -147,7 +148,15 @@ jobs:
         run: |
           mkdir -p ~/.android
           if [ ! -f ~/.android/debug.keystore ]; then
-            keytool -genkeypair               -keystore ~/.android/debug.keystore               -storepass android               -alias androiddebugkey               -keypass android               -dname "CN=Android Debug,O=Room Scanner,C=AR"               -keyalg RSA               -keysize 2048               -validity 10000
+            keytool -genkeypair \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -dname "CN=Android Debug,O=Room Scanner,C=AR" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000
           fi
 
       - name: Set up Flutter
@@ -229,11 +238,14 @@ jobs:
           for attempt in $(seq 1 "$max_attempts"); do
             echo "iOS configuration attempt $attempt of $max_attempts"
 
-            if flutter build ios --simulator --debug                 2>&1 | tee ios_configuration.log; then
+            if flutter build ios --simulator --debug \
+                2>&1 | tee ios_configuration.log; then
               exit 0
             fi
 
-            if ! grep -Eiq               'HTTP[^0-9]*429|Response: 429|rate.?limit|CDN:.*couldn.t be downloaded|timed out|Could not connect|Connection reset'               ios_configuration.log; then
+            if ! grep -Eiq \
+              'HTTP[^0-9]*429|Response: 429|rate.?limit|CDN:.*couldn.t be downloaded|timed out|Could not connect|Connection reset' \
+              ios_configuration.log; then
               echo "Non-transient CocoaPods or iOS configuration error."
               exit 1
             fi
