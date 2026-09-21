@@ -302,7 +302,10 @@ class PlanExportBuilder {
       }
     }
 
-    final placements = DimensionLayout.layout(dimensionSegments);
+    final placements = DimensionLayout.layout(
+      dimensionSegments,
+      suppressRedundantOverallSegments: true,
+    );
     for (final placement in placements) {
       final label = dimensionLabels[placement.segment.id];
       if (label == null) continue;
