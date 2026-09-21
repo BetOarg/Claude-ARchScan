@@ -36,7 +36,10 @@ void main() {
       final source = jsonEncode({
         'rooms': List.generate(
           PlanExportBuilder.maxImportRooms + 1,
-          (_) => <String, dynamic>{'points': <dynamic>[], 'features': <dynamic>[]},
+          (_) => <String, dynamic>{
+            'points': <dynamic>[],
+            'features': <dynamic>[],
+          },
         ),
       });
       expect(PlanExportBuilder.parseProjectJson(source), isNull);
@@ -47,7 +50,10 @@ void main() {
         'rooms': List<Map<String, dynamic>>.generate(
           21,
           (_) => <String, dynamic>{
-            'points': List<Map<String, dynamic>>.filled(500, <String, dynamic>{'x': 0, 'y': 0, 'z': 0}),
+            'points': List<Map<String, dynamic>>.filled(
+              500,
+              <String, dynamic>{'x': 0, 'y': 0, 'z': 0},
+            ),
             'features': <dynamic>[],
           },
         ),
@@ -60,7 +66,10 @@ void main() {
         'rooms': <Map<String, dynamic>>[
           <String, dynamic>{
             'points': <dynamic>[],
-            'features': List<Map<String, dynamic>>.filled(PlanExportBuilder.maxImportFeatures + 1, <String, dynamic>{}),
+            'features': List<Map<String, dynamic>>.filled(
+              PlanExportBuilder.maxImportFeatures + 1,
+              <String, dynamic>{},
+            ),
           },
         ],
       });
@@ -234,7 +243,10 @@ void main() {
         [first, second],
         MeasurementSystem.metric,
       );
-      expect(RegExp('data-feature-id="shared-window"').allMatches(svg), hasLength(1));
+      expect(
+        RegExp('data-feature-id="shared-window"').allMatches(svg),
+        hasLength(1),
+      );
     });
 
     test('preserves near-right-angle technical geometry without altering persisted data', () {
