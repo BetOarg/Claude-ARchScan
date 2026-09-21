@@ -219,6 +219,9 @@ class PlanExportBuilder {
     for (final room in drawingRooms) {
       if (room.points.length < 2) continue;
       final transformed = room.points.map(transform).toList();
+      for (final point in transformed) {
+        exportBounds.includePoint(point.x, point.y);
+      }
       final outlinePoints = transformed.map((point) => '${_svgNumber(point.x)},${_svgNumber(point.y)}').join(' ');
       if (room.isClosed) {
         wallsSvg.writeln('<polygon points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round"/>');
