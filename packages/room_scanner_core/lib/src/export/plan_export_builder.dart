@@ -487,6 +487,44 @@ class PlanExportBuilder {
       .replaceAll("'", '&apos;');
 }
 
+class _SvgBounds {
+  double minX = double.infinity;
+  double minY = double.infinity;
+  double maxX = double.negativeInfinity;
+  double maxY = double.negativeInfinity;
+
+  void includePoint(double x, double y) {
+    if (!x.isFinite || !y.isFinite) return;
+    minX = math.min(minX, x);
+    minY = math.min(minY, y);
+    maxX = math.max(maxX, x);
+    maxY = math.max(maxY, y);
+  }
+
+  void includeSegment(double x1, double y1, double x2, double y2) {
+    includePoint(x1, y1);
+    includePoint(x2, y2);
+  }
+
+  void includeRect(double x1, double y1, double x2, double y2) {
+    includePoint(math.min(x1, x2), math.min(y1, y2));
+    includePoint(math.max(x1, x2), math.max(y1, y2));
+  }
+
+  void inflate(double amount) {
+    if (!minX.isFinite || !minY.isFinite || !maxX.isFinite || !maxY.isFinite) {
+      return;
+    }
+    minX -= amount;
+    minY -= amount;
+    maxX += amount;
+    maxY += amount;
+  }
+
+  double get width => maxX - minX;
+  double get height => maxY - minY;
+}
+
 class _SvgPoint {
   final double x;
   final double y;
