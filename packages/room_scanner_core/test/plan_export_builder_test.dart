@@ -152,8 +152,7 @@ void main() {
         [room],
         MeasurementSystem.metric,
       );
-      expect(svg, contains('data-layout-index="0"'));
-      expect(svg, contains('data-layout-index="1"'));
+      expect(svg, contains('data-layout-index="2"'));
       expect(svg, contains('data-dimension-label="3,00 m"'));
       expect(svg, contains('data-dimension-label="2,00 m"'));
     });
@@ -174,7 +173,7 @@ void main() {
         MeasurementSystem.metric,
       );
       expect(svg, contains('data-layout-index="0"'));
-      expect(svg, contains('data-layout-index="1"'));
+      expect(svg, contains('data-layout-index="2"'));
     });
 
     test('keeps imperial dimension symbols', () {

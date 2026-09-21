@@ -207,10 +207,8 @@ class PlanExportBuilder {
           offsetY + (point.z - minZ) * scale,
         );
 
-    final svg = StringBuffer()
-      ..writeln('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $canvasWidth $canvasHeight">')
-      ..writeln(_projectSvgMetadata(rooms, projectName))
-      ..writeln('<rect width="$canvasWidth" height="$canvasHeight" fill="white"/>');
+    final contentSvg = StringBuffer();
+    final exportBounds = _SvgBounds();
     final wallsSvg = StringBuffer();
     final carpentrySvg = StringBuffer();
     final roomNamesSvg = StringBuffer();
@@ -221,6 +219,9 @@ class PlanExportBuilder {
     for (final room in drawingRooms) {
       if (room.points.length < 2) continue;
       final transformed = room.points.map(transform).toList();
+      for (final point in transformed) {
+        exportBounds.includePoint(point.x, point.y);
+      }
       final outlinePoints = transformed.map((point) => '${_svgNumber(point.x)},${_svgNumber(point.y)}').join(' ');
       if (room.isClosed) {
         wallsSvg.writeln('<polygon points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round"/>');
@@ -228,6 +229,7 @@ class PlanExportBuilder {
         wallsSvg.writeln('<polyline points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>');
       }
       final center = _roomCenter(transformed);
+      exportBounds.includeRect(center.x - 40.0, center.y - 10.0, center.x + 40.0, center.y + 10.0);
       if (room.name.trim().isNotEmpty) {
         roomNamesSvg.writeln('<text x="${_svgNumber(center.x)}" y="${_svgNumber(center.y + 3)}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="bold" fill="#000000">${_escapeSvg(room.name.trim())}</text>');
       }
@@ -239,6 +241,24 @@ class PlanExportBuilder {
         if (!drawnFeatureIds.add(feature.id)) continue;
         final start = transform(feature.start);
         final end = transform(feature.end);
+        exportBounds.includePoint(start.x, start.y);
+        exportBounds.includePoint(end.x, end.y);
+        if (feature.type == FeatureType.door) {
+          final radius = math.max(math.sqrt(math.pow(end.x - start.x, 2) + math.pow(end.y - start.y, 2)), 8.0);
+          exportBounds.includeRect(
+            math.min(start.x, end.x) - radius,
+            math.min(start.y, end.y) - radius,
+            math.max(start.x, end.x) + radius,
+            math.max(start.y, end.y) + radius,
+          );
+        } else {
+          exportBounds.includeRect(
+            math.min(start.x, end.x) - 4.0,
+            math.min(start.y, end.y) - 4.0,
+            math.max(start.x, end.x) + 4.0,
+            math.max(start.y, end.y) + 4.0,
+          );
+        }
         carpentrySvg.writeln('<g data-feature-id="${_escapeSvg(feature.id)}">');
         if (feature.type == FeatureType.door) {
           _writeDoorSvg(carpentrySvg, feature, start, end);
@@ -287,10 +307,31 @@ class PlanExportBuilder {
       }
     }
 
-    final placements = DimensionLayout.layout(dimensionSegments);
+    final placements = DimensionLayout.layout(
+      dimensionSegments,
+      suppressRedundantOverallSegments: true,
+      strictHierarchy: true,
+    );
     for (final placement in placements) {
       final label = dimensionLabels[placement.segment.id];
       if (label == null) continue;
+      final segment = placement.segment;
+      final dimensionX1 = segment.x1 + placement.normalX * placement.offset;
+      final dimensionY1 = segment.y1 + placement.normalY * placement.offset;
+      final dimensionX2 = segment.x2 + placement.normalX * placement.offset;
+      final dimensionY2 = segment.y2 + placement.normalY * placement.offset;
+      final labelWidth = math.max(38.0, segment.labelHalfWidth * 2.0);
+      final labelX = (dimensionX1 + dimensionX2) / 2.0;
+      final labelY = (dimensionY1 + dimensionY2) / 2.0;
+      exportBounds.includeSegment(segment.x1, segment.y1, dimensionX1, dimensionY1);
+      exportBounds.includeSegment(segment.x2, segment.y2, dimensionX2, dimensionY2);
+      exportBounds.includeSegment(dimensionX1, dimensionY1, dimensionX2, dimensionY2);
+      exportBounds.includeRect(
+        labelX - labelWidth / 2.0 - 8.0,
+        labelY - 10.0,
+        labelX + labelWidth / 2.0 + 8.0,
+        labelY + 10.0,
+      );
       _writeDimensionSvg(
         svg: dimensionsSvg,
         placement: placement,
@@ -298,7 +339,7 @@ class PlanExportBuilder {
       );
     }
 
-    svg
+    contentSvg
       ..writeln('<g id="paredes">')
       ..write(wallsSvg)
       ..writeln('</g>')
@@ -310,7 +351,27 @@ class PlanExportBuilder {
       ..writeln('</g>')
       ..writeln('<g id="cotas">')
       ..write(dimensionsSvg)
-      ..writeln('</g>')
+      ..writeln('</g>');
+
+    exportBounds.inflate(18.0);
+    final viewMinX = exportBounds.minX;
+    final viewMinY = exportBounds.minY;
+    final viewWidth = math.max(exportBounds.width, 1.0);
+    final viewHeight = math.max(exportBounds.height, 1.0);
+    final svg = StringBuffer()
+      ..writeln(
+        '<svg xmlns="http://www.w3.org/2000/svg" '
+        'viewBox="${_svgNumber(viewMinX)} ${_svgNumber(viewMinY)} '
+        '${_svgNumber(viewWidth)} ${_svgNumber(viewHeight)}" '
+        'preserveAspectRatio="xMidYMid meet">',
+      )
+      ..writeln(_projectSvgMetadata(rooms, projectName))
+      ..writeln(
+        '<rect x="${_svgNumber(viewMinX)}" y="${_svgNumber(viewMinY)}" '
+        'width="${_svgNumber(viewWidth)}" height="${_svgNumber(viewHeight)}" '
+        'fill="white"/>',
+      )
+      ..write(contentSvg)
       ..writeln('</svg>');
     return svg.toString();
   }
@@ -430,6 +491,44 @@ class PlanExportBuilder {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&apos;');
+}
+
+class _SvgBounds {
+  double minX = double.infinity;
+  double minY = double.infinity;
+  double maxX = double.negativeInfinity;
+  double maxY = double.negativeInfinity;
+
+  void includePoint(double x, double y) {
+    if (!x.isFinite || !y.isFinite) return;
+    minX = math.min(minX, x);
+    minY = math.min(minY, y);
+    maxX = math.max(maxX, x);
+    maxY = math.max(maxY, y);
+  }
+
+  void includeSegment(double x1, double y1, double x2, double y2) {
+    includePoint(x1, y1);
+    includePoint(x2, y2);
+  }
+
+  void includeRect(double x1, double y1, double x2, double y2) {
+    includePoint(math.min(x1, x2), math.min(y1, y2));
+    includePoint(math.max(x1, x2), math.max(y1, y2));
+  }
+
+  void inflate(double amount) {
+    if (!minX.isFinite || !minY.isFinite || !maxX.isFinite || !maxY.isFinite) {
+      return;
+    }
+    minX -= amount;
+    minY -= amount;
+    maxX += amount;
+    maxY += amount;
+  }
+
+  double get width => maxX - minX;
+  double get height => maxY - minY;
 }
 
 class _SvgPoint {
