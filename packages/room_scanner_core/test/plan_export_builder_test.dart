@@ -36,7 +36,10 @@ void main() {
       final source = jsonEncode({
         'rooms': List.generate(
           PlanExportBuilder.maxImportRooms + 1,
-          (_) => {'points': [], 'features': []},
+          (_) => <String, dynamic>{
+            'points': <dynamic>[],
+            'features': <dynamic>[],
+          },
         ),
       });
       expect(PlanExportBuilder.parseProjectJson(source), isNull);
@@ -44,11 +47,14 @@ void main() {
 
     test('rejects excess point count', () {
       final source = jsonEncode({
-        'rooms': List.generate(
+        'rooms': List<Map<String, dynamic>>.generate(
           21,
-          (_) => {
-            'points': List.filled(500, {'x': 0, 'y': 0, 'z': 0}),
-            'features': [],
+          (_) => <String, dynamic>{
+            'points': List<Map<String, dynamic>>.filled(
+              500,
+              <String, dynamic>{'x': 0, 'y': 0, 'z': 0},
+            ),
+            'features': <dynamic>[],
           },
         ),
       });
@@ -57,10 +63,13 @@ void main() {
 
     test('rejects excess feature count', () {
       final source = jsonEncode({
-        'rooms': [
-          {
-            'points': [],
-            'features': List.filled(PlanExportBuilder.maxImportFeatures + 1, {}),
+        'rooms': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'points': <dynamic>[],
+            'features': List<Map<String, dynamic>>.filled(
+              PlanExportBuilder.maxImportFeatures + 1,
+              <String, dynamic>{},
+            ),
           },
         ],
       });
@@ -234,10 +243,15 @@ void main() {
         [first, second],
         MeasurementSystem.metric,
       );
-      expect(RegExp('data-feature-id="shared-window"').allMatches(svg), hasLength(1));
+      expect(
+        RegExp('data-feature-id="shared-window"').allMatches(svg),
+        hasLength(1),
+      );
     });
 
-    test('preserves near-right-angle technical geometry without altering persisted data', () {
+    test(
+      'preserves near-right-angle technical geometry without altering persisted data',
+      () {
       final room = RoomModel(
         id: 'angled',
         name: 'Angulado',
@@ -255,9 +269,15 @@ void main() {
         [room],
         MeasurementSystem.metric,
       );
-      expect(svg, contains('points="108.04,72.00 791.96,72.00 791.96,528.00 108.04,528.00"'));
-      expect(room.points[2].x, 3.03);
-    });
+      expect(
+        svg,
+        contains(
+          'points="108.04,72.00 791.96,72.00 791.96,528.00 108.04,528.00"',
+        ),
+      );
+        expect(room.points[2].x, 3.03);
+      },
+    );
   });
 
   test('PDF contains a technical drawing page without report sections', () {

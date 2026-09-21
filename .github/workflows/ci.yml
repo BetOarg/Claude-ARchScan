@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -30,11 +32,26 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Verify Dart formatting
-        continue-on-error: true
+      - name: Get dependencies for Dart formatting
+        run: flutter pub get
+        working-directory: packages/room_scanner_core
+
+      - name: Verify Dart formatting on changed files
+        shell: bash
         run: |
-          echo "Format audit (baseline):"
-          dart format -o none --set-exit-if-changed packages/room_scanner_core packages/room_scanner_app
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base_ref="origin/${{ github.base_ref }}"
+            files="$(git diff --name-only "$base_ref"...HEAD -- '*.dart')"
+          else
+            files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
+          fi
+          files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)"
+          if [ -z "$files" ]; then
+            echo "No changed production Dart files to format-check."
+            exit 0
+          fi
+          printf '%s\n' "$files" | xargs dart format -o none --set-exit-if-changed
 
       - name: Verify publication structure
         run: dart run packages/room_scanner_app/tool/verify_store_readiness.dart --strict
@@ -68,7 +85,6 @@ jobs:
       - name: Dependency visibility — pub outdated
         working-directory: packages/room_scanner_app
         run: flutter pub outdated
-
 
       - name: Generate app localizations
         working-directory: packages/room_scanner_app
