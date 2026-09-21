@@ -249,7 +249,9 @@ void main() {
       );
     });
 
-    test('preserves near-right-angle technical geometry without altering persisted data', () {
+    test(
+      'preserves near-right-angle technical geometry without altering persisted data',
+      () {
       final room = RoomModel(
         id: 'angled',
         name: 'Angulado',
@@ -273,8 +275,9 @@ void main() {
           'points="108.04,72.00 791.96,72.00 791.96,528.00 108.04,528.00"',
         ),
       );
-      expect(room.points[2].x, 3.03);
-    });
+        expect(room.points[2].x, 3.03);
+      },
+    );
   });
 
   test('PDF contains a technical drawing page without report sections', () {
