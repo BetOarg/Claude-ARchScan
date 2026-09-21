@@ -147,6 +147,7 @@ class DxfExportBuilder {
       gap: 0.12,
       textHeight: 0.12,
       labelHalfWidth: 0.19,
+      suppressRedundantOverallSegments: true,
     );
     for (final placement in placements) {
       final segment = placement.segment;
