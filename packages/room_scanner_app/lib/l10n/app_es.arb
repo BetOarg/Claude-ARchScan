@@ -570,7 +570,6 @@
   "directionBack": "↓ Atrás · 180°",
   "directionLeftPreview": "← Izquierda · 270°",
   "customDirection": "Dirección personalizada · {angle}°",
-  "referenceOpeningMissing": "La abertura de referencia ya no existe.",
   "referenceOpeningConnected": "La abertura ya conecta otro ambiente.",
   "needThreeCornersToCloseMessage": "Necesitás al menos 3 esquinas para cerrar el ambiente.",
   "closeRoomFailedFallback": "No se pudo cerrar el ambiente."
