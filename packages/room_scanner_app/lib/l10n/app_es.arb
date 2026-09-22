@@ -545,4 +545,10 @@
   "validationInsufficientCorners": "Se necesitan al menos 3 esquinas.",
   "validationInsufficientArea": "La superficie del ambiente es demasiado pequeña.",
   "validationInvalidGeometry": "La geometría no es válida.",
+  "validationTooCloseToPreviousPoint": "El punto está demasiado cerca del punto anterior.",
+  "validationDuplicatePoint": "El punto está demasiado cerca de una esquina existente.",
+  "validationSelfIntersection": "El cambio generaría un cruce en el plano.",
+  "validationInsufficientCorners": "Se necesitan al menos 3 esquinas.",
+  "validationInsufficientArea": "La superficie del ambiente es demasiado pequeña.",
+  "validationInvalidGeometry": "La geometría no es válida."
 }
