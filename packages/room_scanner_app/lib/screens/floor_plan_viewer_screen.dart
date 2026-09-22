@@ -1054,11 +1054,7 @@ class _FloorPlanViewerScreenState
     _showMessage(
       result.isSuccess
           ? localizations.openingUpdated
-          : validationErrorMessage(
-              result,
-              localizations,
-              fallback: localizations.invalidOpeningMeasurement,
-            ),
+          : result.errorMessage ?? localizations.invalidOpeningMeasurement,
       error: !result.isSuccess,
     );
   }
@@ -3017,11 +3013,7 @@ class _FloorPlanViewerScreenState
     if (!mounted) return;
     _showMessage(result.isSuccess
         ? AppLocalizations.of(context)!.openingUpdated
-        : validationErrorMessage(
-          result,
-          AppLocalizations.of(context)!,
-          fallback: AppLocalizations.of(context)!.invalidOpeningMeasurement,
-        ),
+        : result.errorMessage ?? AppLocalizations.of(context)!.invalidOpeningMeasurement,
         error: !result.isSuccess);
   }
 
