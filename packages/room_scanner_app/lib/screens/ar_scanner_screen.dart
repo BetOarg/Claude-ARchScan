@@ -1432,8 +1432,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result.errorMessage ??
-                AppLocalizations.of(context)!.invalidCorner,
+            validationErrorMessage(result, AppLocalizations.of(context)!, fallback: AppLocalizations.of(context)!.invalidCorner),
           ),
           backgroundColor: Colors.redAccent,
         ),
@@ -1564,7 +1563,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
           content: Text(result.isValid ? l10n.openingUpdated
-              : result.errorMessage ?? l10n.couldNotAttachOpening),
+              : validationErrorMessage(result, l10n, fallback: l10n.couldNotAttachOpening)),
           backgroundColor: result.isValid ? null : Colors.redAccent,
         ));
     } finally {
