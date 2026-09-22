@@ -44,6 +44,7 @@ void _scanForSecrets(Directory root, List<String> errors) {
     'build',
     'Pods',
     '.symlinks',
+    'ephemeral',
   };
   const textExtensions = {
     '.dart',
