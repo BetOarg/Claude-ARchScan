@@ -759,7 +759,11 @@ class _MeasurementEditorScreenState
 
     if (!result.isValid) {
       _showMessage(
-        validationErrorMessage(result, AppLocalizations.of(context)!, fallback: AppLocalizations.of(context)!.invalidCorner),
+        validationErrorMessage(
+              result,
+              AppLocalizations.of(context)!,
+              fallback: AppLocalizations.of(context)!.invalidCorner,
+            ),
         error: true,
       );
 
