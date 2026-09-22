@@ -570,7 +570,6 @@
   "directionBack": "↓ Back · 180°",
   "directionLeftPreview": "← Left · 270°",
   "customDirection": "Custom direction · {angle}°",
-  "referenceOpeningMissing": "The reference opening no longer exists.",
   "referenceOpeningConnected": "The opening is already connected to another space.",
   "needThreeCornersToCloseMessage": "You need at least 3 corners to close the space.",
   "closeRoomFailedFallback": "The space could not be closed."
