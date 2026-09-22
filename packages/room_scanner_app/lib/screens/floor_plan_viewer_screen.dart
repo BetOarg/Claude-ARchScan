@@ -395,9 +395,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     });
 
     final feature = selection.feature;
-    final measurementSystem = context
-        .read<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.read<MeasurementSettingsProvider>().system;
     final localizations = AppLocalizations.of(context)!;
     final label = feature.type == FeatureType.door
         ? localizations.selectedDoor
@@ -519,8 +518,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                       onPressed: feature.isConnected
                           ? null
                           : () => selectAction(
-                              _FeatureMenuAction.continueScanning,
-                            ),
+                                _FeatureMenuAction.continueScanning,
+                              ),
                       icon: const Icon(Icons.add_road_rounded),
                       label: Text(
                         feature.isConnected
@@ -580,9 +579,9 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
       );
       if (!mounted || confirmed != true) return;
       if (!await context.read<FloorPlanProvider>().removeOpening(
-        selection.roomId,
-        feature.id,
-      )) {
+            selection.roomId,
+            feature.id,
+          )) {
         if (mounted) _planError(PlanEditError.invalid);
         return;
       }
@@ -594,14 +593,13 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     }
 
     if (action == _FeatureMenuAction.toggleHinge) {
-      final updated = await context
-          .read<FloorPlanProvider>()
-          .updateDoorOrientation(
-            featureId: feature.id,
-            hingeSide: feature.doorHingeSide == DoorHingeSide.start
-                ? DoorHingeSide.end
-                : DoorHingeSide.start,
-          );
+      final updated =
+          await context.read<FloorPlanProvider>().updateDoorOrientation(
+                featureId: feature.id,
+                hingeSide: feature.doorHingeSide == DoorHingeSide.start
+                    ? DoorHingeSide.end
+                    : DoorHingeSide.start,
+              );
 
       if (mounted && !updated) {
         _showMessage(
@@ -619,12 +617,11 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
         return;
       }
 
-      final updated = await context
-          .read<FloorPlanProvider>()
-          .updateDoorOrientation(
-            featureId: feature.id,
-            openingDirection: direction,
-          );
+      final updated =
+          await context.read<FloorPlanProvider>().updateDoorOrientation(
+                featureId: feature.id,
+                openingDirection: direction,
+              );
 
       if (mounted && !updated) {
         _showMessage(
@@ -726,9 +723,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
       featureId: selection.feature.id,
     );
     final localizations = AppLocalizations.of(context)!;
-    final measurementSystem = context
-        .read<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.read<MeasurementSettingsProvider>().system;
 
     if (placement == null) {
       _showMessage(
@@ -1067,8 +1063,7 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                 leading: const Icon(Icons.home_outlined),
                 title: Text(planDirectionLabel(DoorOpeningDirection.interior)),
                 subtitle: Text(localizations.doorOpensInterior),
-                trailing:
-                    feature.doorOpeningDirection ==
+                trailing: feature.doorOpeningDirection ==
                         DoorOpeningDirection.interior
                     ? const Icon(Icons.check_circle)
                     : null,
@@ -1082,8 +1077,7 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                 leading: const Icon(Icons.exit_to_app),
                 title: Text(planDirectionLabel(DoorOpeningDirection.exterior)),
                 subtitle: Text(localizations.doorOpensExterior),
-                trailing:
-                    feature.doorOpeningDirection ==
+                trailing: feature.doorOpeningDirection ==
                         DoorOpeningDirection.exterior
                     ? const Icon(Icons.check_circle)
                     : null,
@@ -1110,15 +1104,13 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     final firstSide = leftChoiceComesFirst
         ? OpeningConnectionSide.left
         : OpeningConnectionSide.right;
-    final firstDirection = leftChoiceComesFirst
-        ? leftDirection
-        : rightDirection;
+    final firstDirection =
+        leftChoiceComesFirst ? leftDirection : rightDirection;
     final secondSide = leftChoiceComesFirst
         ? OpeningConnectionSide.right
         : OpeningConnectionSide.left;
-    final secondDirection = leftChoiceComesFirst
-        ? rightDirection
-        : leftDirection;
+    final secondDirection =
+        leftChoiceComesFirst ? rightDirection : leftDirection;
 
     return showDialog<OpeningConnectionSide>(
       context: context,
@@ -1340,9 +1332,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
   Future<void> _showRoomTransformEditor() async {
     final provider = context.read<FloorPlanProvider>();
     final localizations = AppLocalizations.of(context)!;
-    final measurementSystem = context
-        .read<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.read<MeasurementSettingsProvider>().system;
     final rooms = provider.completedRooms;
 
     if (rooms.isEmpty) {
@@ -1450,13 +1441,12 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                               controller: horizontalController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                    signed: true,
-                                  ),
+                                decimal: true,
+                                signed: true,
+                              ),
                               decoration: InputDecoration(
                                 labelText: localizations.horizontalAdjustment,
-                                suffixText:
-                                    measurementSystem ==
+                                suffixText: measurementSystem ==
                                         MeasurementSystem.metric
                                     ? localizations.meters
                                     : localizations.inches,
@@ -1468,13 +1458,12 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                               controller: verticalController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                    signed: true,
-                                  ),
+                                decimal: true,
+                                signed: true,
+                              ),
                               decoration: InputDecoration(
                                 labelText: localizations.verticalAdjustment,
-                                suffixText:
-                                    measurementSystem ==
+                                suffixText: measurementSystem ==
                                         MeasurementSystem.metric
                                     ? localizations.meters
                                     : localizations.inches,
@@ -1486,9 +1475,9 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                               controller: rotationController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                    signed: true,
-                                  ),
+                                decimal: true,
+                                signed: true,
+                              ),
                               decoration: InputDecoration(
                                 labelText: localizations.rotationDegrees,
                                 suffixText: localizations.degrees,
@@ -1527,14 +1516,14 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                               });
                               return;
                             }
-                            final offsetX =
-                                measurementSystem == MeasurementSystem.metric
+                            final offsetX = measurementSystem ==
+                                    MeasurementSystem.metric
                                 ? horizontal
                                 : MeasurementUnits.inchesToMeters(horizontal);
                             final offsetZ =
                                 measurementSystem == MeasurementSystem.metric
-                                ? vertical
-                                : MeasurementUnits.inchesToMeters(vertical);
+                                    ? vertical
+                                    : MeasurementUnits.inchesToMeters(vertical);
                             Navigator.pop(
                               dialogContext,
                               _PreciseTransformInput(
@@ -1672,8 +1661,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                 result == WallAlignmentResult.aligned
                     ? localizations.wallAlignedSuccessfully
                     : result == WallAlignmentResult.stalePreview
-                    ? localizations.alignmentPreviewExpired
-                    : localizations.noSafeNearbyWall,
+                        ? localizations.alignmentPreviewExpired
+                        : localizations.noSafeNearbyWall,
                 error: result != WallAlignmentResult.aligned,
               );
             }
@@ -1745,8 +1734,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                 result == WallAlignmentResult.aligned
                     ? localizations.joinCompleted
                     : result == WallAlignmentResult.overlapPrevented
-                    ? localizations.joinOverlapPrevented
-                    : localizations.noSafeNearbyWall,
+                        ? localizations.joinOverlapPrevented
+                        : localizations.noSafeNearbyWall,
                 error: result != WallAlignmentResult.aligned,
               );
             }
@@ -1794,9 +1783,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: provider.canUndoTransform
-                              ? undoTransform
-                              : null,
+                          onPressed:
+                              provider.canUndoTransform ? undoTransform : null,
                           icon: const Icon(Icons.undo),
                           label: Text(localizations.undoLastTransform),
                         ),
@@ -1804,9 +1792,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                       const SizedBox(width: 10),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: provider.canRedoTransform
-                              ? redoTransform
-                              : null,
+                          onPressed:
+                              provider.canRedoTransform ? redoTransform : null,
                           icon: const Icon(Icons.redo),
                           label: Text(localizations.redoLastTransform),
                         ),
@@ -2065,9 +2052,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
 
   Future<void> _showAreaSummary() async {
     final provider = context.read<FloorPlanProvider>();
-    final measurementSystem = context
-        .read<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.read<MeasurementSettingsProvider>().system;
     final localizations = AppLocalizations.of(context)!;
     final rooms = provider.completedRooms;
 
@@ -2124,9 +2110,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
 
   @override
   Widget build(BuildContext context) {
-    final measurementSystem = context
-        .watch<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.watch<MeasurementSettingsProvider>().system;
     final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -2232,11 +2217,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                 ),
               ],
       ),
-
-      bottomNavigationBar: widget.selectContinuationOpening
-          ? null
-          : _buildPlanToolbar(),
-
+      bottomNavigationBar:
+          widget.selectContinuationOpening ? null : _buildPlanToolbar(),
       body: Consumer<FloorPlanProvider>(
         builder: (context, provider, child) {
           final rooms = _roomsForDisplay(provider.completedRooms);
@@ -2313,8 +2295,7 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                         if (await _selectPlanElement(
                           details.localPosition,
                           provider.completedRooms,
-                        ))
-                          return;
+                        )) return;
                         if (!mounted) return;
 
                         final planePoint = _inverseTransform(
@@ -2334,20 +2315,21 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                       },
                       onScaleStart: _wallGestureActive
                           ? (details) =>
-                                _startWallDrag(details, provider.completedRooms)
+                              _startWallDrag(details, provider.completedRooms)
                           : _touchTransformMode
-                          ? (details) => _startTouchTransform(details, rooms)
-                          : null,
+                              ? (details) =>
+                                  _startTouchTransform(details, rooms)
+                              : null,
                       onScaleUpdate: _wallGestureActive
                           ? _updateWallDrag
                           : _touchTransformMode
-                          ? _updateTouchTransform
-                          : null,
+                              ? _updateTouchTransform
+                              : null,
                       onScaleEnd: _wallGestureActive
                           ? (_) => _endWallDrag()
                           : _touchTransformMode
-                          ? (_) => _endTouchTransform()
-                          : null,
+                              ? (_) => _endTouchTransform()
+                              : null,
                       child: _trackPlanPointer(
                         SizedBox.expand(
                           child: CustomPaint(
@@ -2361,9 +2343,9 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                                   _formatLength(length, measurementSystem),
                               formatOpeningDimensions: (feature) =>
                                   _formatOpeningPlanDimensions(
-                                    feature,
-                                    measurementSystem,
-                                  ),
+                                feature,
+                                measurementSystem,
+                              ),
                               sharedWallLabel: localizations.sharedWall,
                               partialSharedWallLabel:
                                   localizations.partialSharedWall,
@@ -2376,7 +2358,6 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                       ),
                     ),
                   ),
-
                   if (_touchTransformMode)
                     Positioned(
                       left: 12,
@@ -2443,7 +2424,6 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                         ),
                       ),
                     ),
-
                   Positioned(
                     left: 12,
                     top: 12,
@@ -2490,8 +2470,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                                 color: hasAvailableOpenings
                                     ? Colors.white
                                     : Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer,
+                                        .colorScheme
+                                        .onErrorContainer,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -2777,9 +2757,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     ARPoint? initialLocation,
   }) async {
     final provider = context.read<FloorPlanProvider>();
-    final room = provider.completedRooms
-        .where((r) => r.id == roomId)
-        .firstOrNull;
+    final room =
+        provider.completedRooms.where((r) => r.id == roomId).firstOrNull;
     if (room == null || room.points.length < 2) return;
     final placement = await showOpeningPlacementDialog(
       context: context,
@@ -2792,9 +2771,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
       includeClosingWall: room.isClosed,
     );
     if (!mounted || placement == null) return;
-    final current = provider.completedRooms
-        .where((r) => r.id == roomId)
-        .firstOrNull;
+    final current =
+        provider.completedRooms.where((r) => r.id == roomId).firstOrNull;
     if (!identical(current, room)) return;
     final result = await provider.placeOpeningOnWall(
       roomId: roomId,
@@ -2811,7 +2789,7 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
       result.isSuccess
           ? AppLocalizations.of(context)!.openingUpdated
           : result.errorMessage ??
-                AppLocalizations.of(context)!.invalidOpeningMeasurement,
+              AppLocalizations.of(context)!.invalidOpeningMeasurement,
       error: !result.isSuccess,
     );
   }
@@ -2828,9 +2806,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
           builder: (context, provider, child) {
             final rooms = provider.completedRooms;
             final localizations = AppLocalizations.of(context)!;
-            final measurementSystem = context
-                .watch<MeasurementSettingsProvider>()
-                .system;
+            final measurementSystem =
+                context.watch<MeasurementSettingsProvider>().system;
 
             return SafeArea(
               child: Padding(
@@ -2860,7 +2837,6 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                       ],
                     ),
                     const SizedBox(height: 8),
-
                     if (rooms.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
@@ -2948,7 +2924,6 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                           },
                         ),
                       ),
-
                     if (rooms.length > 1) ...[
                       const SizedBox(height: 12),
                       SizedBox(
@@ -3068,9 +3043,9 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     }
 
     await context.read<FloorPlanProvider>().updateRoomName(
-      room.id,
-      newName.trim(),
-    );
+          room.id,
+          newName.trim(),
+        );
   }
 
   // ===========================================================================
@@ -3110,13 +3085,13 @@ enum _ExportFormat { json, svg, png, jpg, pdf, dxf }
 
 extension on _ExportFormat {
   String label(AppLocalizations localizations) => switch (this) {
-    _ExportFormat.json => localizations.exportJson,
-    _ExportFormat.svg => localizations.exportSvg,
-    _ExportFormat.png => localizations.exportPng,
-    _ExportFormat.jpg => localizations.exportJpg,
-    _ExportFormat.pdf => localizations.exportPdf,
-    _ExportFormat.dxf => localizations.exportDxf,
-  };
+        _ExportFormat.json => localizations.exportJson,
+        _ExportFormat.svg => localizations.exportSvg,
+        _ExportFormat.png => localizations.exportPng,
+        _ExportFormat.jpg => localizations.exportJpg,
+        _ExportFormat.pdf => localizations.exportPdf,
+        _ExportFormat.dxf => localizations.exportDxf,
+      };
 }
 
 enum _RoomListActionType { delete, editMeasurements, rename, organize }
@@ -3167,9 +3142,8 @@ class _OpeningDirectionPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final midpoint = Offset(size.width / 2.0, size.height / 2.0);
     final length = openingDirection.distance;
-    final tangent = length <= 0.000001
-        ? const Offset(1, 0)
-        : openingDirection / length;
+    final tangent =
+        length <= 0.000001 ? const Offset(1, 0) : openingDirection / length;
     final normal = Offset(-tangent.dy, tangent.dx);
     final halfOpening = size.shortestSide * 0.42;
     final arrowLength = size.shortestSide * 0.35;
@@ -3350,9 +3324,9 @@ class _AlignmentPreviewPainter extends CustomPainter {
     );
 
     Offset transform(ARPoint point) => Offset(
-      origin.dx + (point.x - minX) * scale,
-      origin.dy + (point.z - minZ) * scale,
-    );
+          origin.dx + (point.x - minX) * scale,
+          origin.dy + (point.z - minZ) * scale,
+        );
 
     void drawRoom(RoomModel room, Paint paint) {
       if (room.points.length < 2) {
@@ -3580,9 +3554,8 @@ class FloorPlanPainter extends CustomPainter {
       canvas.drawPath(path, roomFill);
     }
 
-    final wallCount = room.isClosed
-        ? room.points.length
-        : room.points.length - 1;
+    final wallCount =
+        room.isClosed ? room.points.length : room.points.length - 1;
     for (var wallIndex = 0; wallIndex < wallCount; wallIndex++) {
       final wallStart = transform(room.points[wallIndex]);
       final wallEnd = transform(
@@ -3877,15 +3850,15 @@ class FloorPlanPainter extends CustomPainter {
 
       final label = switch (dimension.kind) {
         DimensionKind.opening => _openingDimensionLabelForId(
-          room,
-          dimension.id,
-        ),
+            room,
+            dimension.id,
+          ),
         DimensionKind.wall => formatLength(
-          _dimensionLengthMeters(room, dimension),
-        ),
+            _dimensionLengthMeters(room, dimension),
+          ),
         DimensionKind.total => formatLength(
-          _dimensionLengthMeters(room, dimension),
-        ),
+            _dimensionLengthMeters(room, dimension),
+          ),
       };
       if (label.isEmpty) {
         continue;
@@ -4192,13 +4165,12 @@ class FloorPlanPainter extends CustomPainter {
 
     final tangent = opening / width;
     final leftNormal = Offset(-tangent.dy, tangent.dx);
-    final baseSwingNormal = feature.doorSwingSide == DoorSwingSide.left
-        ? leftNormal
-        : -leftNormal;
+    final baseSwingNormal =
+        feature.doorSwingSide == DoorSwingSide.left ? leftNormal : -leftNormal;
     final swingNormal =
         feature.doorOpeningDirection == DoorOpeningDirection.interior
-        ? baseSwingNormal
-        : -baseSwingNormal;
+            ? baseSwingNormal
+            : -baseSwingNormal;
     final hinge = feature.doorHingeSide == DoorHingeSide.start ? start : end;
     final latch = feature.doorHingeSide == DoorHingeSide.start ? end : start;
     final closedDirection = (latch - hinge) / width;

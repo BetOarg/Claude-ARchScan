@@ -37,11 +37,12 @@ class ValidationResult {
   static ValidationResult invalid(
     String message, {
     ValidationErrorCode? code,
-  }) => ValidationResult._(
-    isValid: false,
-    errorCode: code,
-    errorMessage: message,
-  );
+  }) =>
+      ValidationResult._(
+        isValid: false,
+        errorCode: code,
+        errorMessage: message,
+      );
 
   static ValidationResult warning(String message, {ARPoint? suggestion}) =>
       ValidationResult._(
@@ -302,8 +303,7 @@ class ScanValidator {
     double pz,
   ) {
     const double epsilon = 1e-9;
-    final bool withinBounds =
-        min(sx, ex) <= px &&
+    final bool withinBounds = min(sx, ex) <= px &&
         px <= max(sx, ex) &&
         min(sz, ez) <= pz &&
         pz <= max(sz, ez);
@@ -383,8 +383,7 @@ class ScanValidator {
         continue;
       }
 
-      final score =
-          perpendicularDeviation(previous, last, last, candidate) +
+      final score = perpendicularDeviation(previous, last, last, candidate) +
           perpendicularDeviation(candidate, first, first, second);
       if (score > maximumOrthogonalDeviation) {
         continue;

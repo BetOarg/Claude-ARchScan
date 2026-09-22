@@ -183,9 +183,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
   // ===========================================================================
 
   Widget _buildSummaryCard(RoomModel room, double area, double perimeter) {
-    final measurementSystem = context
-        .watch<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.watch<MeasurementSettingsProvider>().system;
 
     return Card(
       elevation: 0,
@@ -251,9 +250,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     int roomIndex,
     int wallIndex,
   ) {
-    final measurementSystem = context
-        .watch<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.watch<MeasurementSettingsProvider>().system;
     final length = provider.wallLength(room, wallIndex);
 
     final startIndex = wallIndex + 1;
@@ -295,9 +293,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     int wallIndex,
     double currentLength,
   ) async {
-    final measurementSystem = context
-        .read<MeasurementSettingsProvider>()
-        .system;
+    final measurementSystem =
+        context.read<MeasurementSettingsProvider>().system;
     final metricController = TextEditingController(
       text: _formatDecimal(currentLength),
     );
@@ -374,8 +371,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                               autofocus: true,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                decimal: true,
+                              ),
                               decoration: InputDecoration(
                                 labelText: AppLocalizations.of(context)!.feet,
                                 errorText: error,
@@ -389,8 +386,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                               controller: inchesController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                decimal: true,
+                              ),
                               decoration: InputDecoration(
                                 labelText: AppLocalizations.of(context)!.inches,
                                 border: const OutlineInputBorder(),
@@ -551,8 +548,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     for (int i = 0; i < room.points.length; i++) {
       final next = (i + 1) % room.points.length;
 
-      area +=
-          room.points[i].x * room.points[next].z -
+      area += room.points[i].x * room.points[next].z -
           room.points[next].x * room.points[i].z;
     }
 
