@@ -55,10 +55,14 @@ void main() {
       await tester.ensureVisible(edit);
       await tester.tap(edit);
       await tester.pumpAndSettle();
-      final field = find.byWidgetPredicate((w) => w is TextField &&
-          w.decoration?.labelText == 'Nueva longitud');
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(MeasurementEditorScreen)),
+      )!;
+      final field = find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.labelText == l10n.newLength,
+      );
       await tester.enterText(field, '5');
-      final action = find.text(save ? 'Guardar' : 'Cancelar');
+      final action = find.text(save ? l10n.save : l10n.cancel);
       await tester.ensureVisible(action);
       await tester.tap(action);
       await tester.pump();
