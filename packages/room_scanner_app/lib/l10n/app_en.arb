@@ -563,5 +563,15 @@
   "invalidNumber": "Enter a valid number.",
   "positiveLengthRequired": "The length must be greater than 0.",
   "measurementUpdated": "Measurement updated successfully.",
-  "invalidNewMeasurement": "The new measurement is not valid."
+  "invalidNewMeasurement": "The new measurement is not valid.",
+  "validAngleRequired": "Enter a valid angle",
+  "directionFront": "↑ Front · 0°",
+  "directionRightPreview": "→ Right · 90°",
+  "directionBack": "↓ Back · 180°",
+  "directionLeftPreview": "← Left · 270°",
+  "customDirection": "Custom direction · {angle}°",
+  "referenceOpeningMissing": "The reference opening no longer exists.",
+  "referenceOpeningConnected": "The opening is already connected to another space.",
+  "needThreeCornersToCloseMessage": "You need at least 3 corners to close the space.",
+  "closeRoomFailedFallback": "The space could not be closed."
 }
