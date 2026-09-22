@@ -209,8 +209,8 @@ class ScanValidator {
           )) {
         return ValidationResult.invalid(
           'Movimiento genera autointersección.',
-            code: ValidationErrorCode.selfIntersection,
-          );
+          code: ValidationErrorCode.selfIntersection,
+        );
       }
 
       // Segmento actualizado -> siguiente, si existe.
