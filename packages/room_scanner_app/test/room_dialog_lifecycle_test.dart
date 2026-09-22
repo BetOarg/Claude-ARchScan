@@ -58,8 +58,7 @@ void main() {
               ),
             ],
             child: MaterialApp(
-              localizationsDelegates:
-                  AppLocalizations.localizationsDelegates,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: const MeasurementEditorScreen(roomId: 'room'),
             ),
@@ -138,8 +137,7 @@ void main() {
             ],
             child: MaterialApp(
               locale: const Locale('en'),
-              localizationsDelegates:
-                  AppLocalizations.localizationsDelegates,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: const FloorPlanViewerScreen(),
             ),
@@ -207,8 +205,7 @@ void main() {
                   if (!context.mounted || action == null) return;
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute<void>(
-                      builder: (_) =>
-                          const Scaffold(body: Text('Finished')),
+                      builder: (_) => const Scaffold(body: Text('Finished')),
                     ),
                   );
                 },
