@@ -98,20 +98,17 @@ void _scanForSecrets(Directory root, List<String> errors) {
   for (final entity in root.listSync(recursive: true, followLinks: false)) {
     if (entity is! File) continue;
 
-    final relative = entity.path
-        .substring(root.path.length + 1)
-        .replaceAll('\\', '/');
+    final relative =
+        entity.path.substring(root.path.length + 1).replaceAll('\\', '/');
     final segments = relative.split('/');
     if (segments.any(ignoredSegments.contains)) continue;
 
     final lower = relative.toLowerCase();
-    final extension = lower.contains('.')
-        ? lower.substring(lower.lastIndexOf('.'))
-        : '';
+    final extension =
+        lower.contains('.') ? lower.substring(lower.lastIndexOf('.')) : '';
 
     if (forbiddenBinaryExtensions.contains(extension)) {
-      const allowedTestKey =
-          '.github/signing/room-scanner-test.keystore.b64';
+      const allowedTestKey = '.github/signing/room-scanner-test.keystore.b64';
       if (relative != allowedTestKey) {
         errors.add('Archivo sensible versionado: $relative.');
       }
@@ -119,8 +116,7 @@ void _scanForSecrets(Directory root, List<String> errors) {
     }
 
     if (relative.endsWith('.env') ||
-        (relative.contains('.env.') &&
-            !relative.endsWith('.example'))) {
+        (relative.contains('.env.') && !relative.endsWith('.example'))) {
       errors.add('Archivo de entorno real versionado: $relative.');
       continue;
     }
