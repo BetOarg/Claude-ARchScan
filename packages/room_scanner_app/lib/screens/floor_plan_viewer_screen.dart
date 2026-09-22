@@ -18,7 +18,8 @@ import '../services/room_plan_capture_coordinator.dart';
 import '../services/room_plan_service.dart';
 import '../services/scan_draft_service.dart';
 import '../widgets/plan_wall_length_dialog.dart';
-import '../widgets/opening_placement_dialog.dart' show showOpeningPlacementDialog;
+import '../widgets/opening_placement_dialog.dart'
+    show showOpeningPlacementDialog;
 import '../widgets/room_name_dialog.dart';
 
 part 'floor_plan_wall_editor.dart';
@@ -32,12 +33,11 @@ class FloorPlanViewerScreen extends StatefulWidget {
   });
 
   @override
-  State<FloorPlanViewerScreen> createState() =>
-      _FloorPlanViewerScreenState();
+  State<FloorPlanViewerScreen> createState() => _FloorPlanViewerScreenState();
 }
 
-class _FloorPlanViewerScreenState
-    extends State<FloorPlanViewerScreen> with _PlanWallEditing {
+class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
+    with _PlanWallEditing {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   PersistentBottomSheetController? _featureSheetController;
   double _minX = 0.0;
@@ -148,10 +148,7 @@ class _FloorPlanViewerScreenState
     _planViewport.value = Matrix4.identity();
   }
 
-  void _startTouchTransform(
-    ScaleStartDetails details,
-    List<RoomModel> rooms,
-  ) {
+  void _startTouchTransform(ScaleStartDetails details, List<RoomModel> rooms) {
     _touchNavigationFocalPoint = details.focalPoint;
     _touchNavigationScale = 1;
     _touchNavigating = false;
@@ -223,9 +220,9 @@ class _FloorPlanViewerScreenState
     if (roomId == null) return;
     _touchTransformRoomId = null;
     _touchSnapCount = 0;
-    final accepted = await context.read<FloorPlanProvider>().endTouchRoomTransform(
-          roomId: roomId,
-        );
+    final accepted = await context
+        .read<FloorPlanProvider>()
+        .endTouchRoomTransform(roomId: roomId);
     if (!mounted) return;
     if (!accepted) {
       _showMessage(
@@ -241,56 +238,33 @@ class _FloorPlanViewerScreenState
   // ===========================================================================
 
   @override
-  Offset _transformPoint(
-    ARPoint point,
-  ) {
-    final x =
-        _padding +
-        (point.x - _minX) * _scale;
+  Offset _transformPoint(ARPoint point) {
+    final x = _padding + (point.x - _minX) * _scale;
 
-    final z =
-        _padding +
-        (point.z - _minZ) * _scale;
+    final z = _padding + (point.z - _minZ) * _scale;
 
     return Offset(x, z);
   }
 
   @override
-  ARPoint _inverseTransform(
-    Offset screenPosition,
-  ) {
-    final x =
-        (screenPosition.dx - _padding) /
-                _scale +
-            _minX;
+  ARPoint _inverseTransform(Offset screenPosition) {
+    final x = (screenPosition.dx - _padding) / _scale + _minX;
 
-    final z =
-        (screenPosition.dy - _padding) /
-                _scale +
-            _minZ;
+    final z = (screenPosition.dy - _padding) / _scale + _minZ;
 
-    return ARPoint(
-      x: x,
-      y: 0.0,
-      z: z,
-    );
+    return ARPoint(x: x, y: 0.0, z: z);
   }
 
-  void _calculateTransform(
-    Size screenSize,
-    List<RoomModel> rooms,
-  ) {
+  void _calculateTransform(Size screenSize, List<RoomModel> rooms) {
     if (rooms.isEmpty) {
       return;
     }
 
     double minX = double.infinity;
-    double maxX =
-        double.negativeInfinity;
+    double maxX = double.negativeInfinity;
 
     double minZ = double.infinity;
-    double maxZ =
-        double.negativeInfinity;
+    double maxZ = double.negativeInfinity;
 
     bool hasPoints = false;
 
@@ -327,61 +301,34 @@ class _FloorPlanViewerScreenState
     _minX = minX;
     _minZ = minZ;
 
-    _padding =
-        screenSize.width * 0.08;
+    _padding = screenSize.width * 0.08;
 
-    final contentWidth =
-        (maxX - minX).abs();
+    final contentWidth = (maxX - minX).abs();
 
-    final contentHeight =
-        (maxZ - minZ).abs();
+    final contentHeight = (maxZ - minZ).abs();
 
-    final safeWidth =
-        contentWidth <= 0.0001
-            ? 1.0
-            : contentWidth;
+    final safeWidth = contentWidth <= 0.0001 ? 1.0 : contentWidth;
 
-    final safeHeight =
-        contentHeight <= 0.0001
-            ? 1.0
-            : contentHeight;
+    final safeHeight = contentHeight <= 0.0001 ? 1.0 : contentHeight;
 
-    final availableWidth =
-        screenSize.width -
-            (_padding * 2);
+    final availableWidth = screenSize.width - (_padding * 2);
 
-    final availableHeight =
-        screenSize.height -
-            (_padding * 2);
+    final availableHeight = screenSize.height - (_padding * 2);
 
-    final widthScale =
-        availableWidth / safeWidth;
+    final widthScale = availableWidth / safeWidth;
 
-    final heightScale =
-        availableHeight / safeHeight;
+    final heightScale = availableHeight / safeHeight;
 
-    _scale =
-        widthScale < heightScale
-            ? widthScale
-            : heightScale;
+    _scale = widthScale < heightScale ? widthScale : heightScale;
 
-    if (!_scale.isFinite ||
-        _scale <= 0) {
+    if (!_scale.isFinite || _scale <= 0) {
       _scale = 1.0;
     }
   }
 
-  String? _getRoomAtPosition(
-    ARPoint point,
-    List<RoomModel> rooms,
-  ) {
-    for (final room
-        in rooms.reversed) {
-      if (GeometryService
-          .isPointInPolygon(
-        point,
-        room.points,
-      )) {
+  String? _getRoomAtPosition(ARPoint point, List<RoomModel> rooms) {
+    for (final room in rooms.reversed) {
+      if (GeometryService.isPointInPolygon(point, room.points)) {
         return room.id;
       }
     }
@@ -406,13 +353,9 @@ class _FloorPlanViewerScreenState
           _transformPoint(feature.end),
         );
 
-        if (distance <= touchTolerance &&
-            distance < nearestDistance) {
+        if (distance <= touchTolerance && distance < nearestDistance) {
           nearestDistance = distance;
-          nearest = _FeatureSelection(
-            roomId: room.id,
-            feature: feature,
-          );
+          nearest = _FeatureSelection(roomId: room.id, feature: feature);
         }
       }
     }
@@ -420,14 +363,9 @@ class _FloorPlanViewerScreenState
     return nearest;
   }
 
-  double _distanceToSegment(
-    Offset point,
-    Offset start,
-    Offset end,
-  ) {
+  double _distanceToSegment(Offset point, Offset start, Offset end) {
     final segment = end - start;
-    final lengthSquared = segment.dx * segment.dx +
-        segment.dy * segment.dy;
+    final lengthSquared = segment.dx * segment.dx + segment.dy * segment.dy;
 
     if (lengthSquared <= 0.000001) {
       return (point - start).distance;
@@ -435,9 +373,7 @@ class _FloorPlanViewerScreenState
 
     final fromStart = point - start;
     final rawT =
-        (fromStart.dx * segment.dx +
-                fromStart.dy * segment.dy) /
-            lengthSquared;
+        (fromStart.dx * segment.dx + fromStart.dy * segment.dy) / lengthSquared;
     final t = rawT.clamp(0.0, 1.0).toDouble();
     final projection = Offset(
       start.dx + segment.dx * t,
@@ -447,9 +383,7 @@ class _FloorPlanViewerScreenState
     return (point - projection).distance;
   }
 
-  Future<void> _showFeatureMenu(
-    _FeatureSelection selection,
-  ) async {
+  Future<void> _showFeatureMenu(_FeatureSelection selection) async {
     if (widget.selectContinuationOpening) {
       await _continueFromOpening(selection, chooseSide: false);
       return;
@@ -481,120 +415,124 @@ class _FloorPlanViewerScreenState
       action = selected;
       controller.close();
     }
+
     controller = _scaffoldKey.currentState!.showBottomSheet(
       (bottomSheetContext) {
         return SafeArea(
-          child: SingleChildScrollView(child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    feature.type == FeatureType.door
-                        ? Icons.door_front_door
-                        : Icons.window,
-                    color: feature.type == FeatureType.door
-                        ? const Color(0xFFFF8A00)
-                        : const Color(0xFFD500F9),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      feature.type == FeatureType.door
+                          ? Icons.door_front_door
+                          : Icons.window,
+                      color: feature.type == FeatureType.door
+                          ? const Color(0xFFFF8A00)
+                          : const Color(0xFFD500F9),
+                    ),
+                    title: Text(label),
+                    subtitle: Text(
+                      '${feature.isConnected ? localizations.openingConnectedStatus : localizations.openingAvailableStatus} · '
+                      '${_formatLength(_featureWidth(feature), measurementSystem)}'
+                      '${feature.isConnected ? '' : ' · ${localizations.openingStartAtMarkedPoint}'}',
+                    ),
                   ),
-                  title: Text(label),
-                  subtitle: Text(
-                    '${feature.isConnected ? localizations.openingConnectedStatus : localizations.openingAvailableStatus} · '
-                    '${_formatLength(_featureWidth(feature), measurementSystem)}'
-                    '${feature.isConnected ? '' : ' · ${localizations.openingStartAtMarkedPoint}'}',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  mainAxisExtent: 52,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          selectAction(_FeatureMenuAction.editGeometry),
-                      icon: const Icon(Icons.straighten),
-                      label: Text(
-                        localizations.editOpeningDimensions,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.touch_app),
-                      label: Text(
-                        localizations.moveOpeningOnWall,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                      ),
-                      onPressed: () => selectAction(_FeatureMenuAction.move),
-                    ),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.delete_outline),
-                      label: Text(
-                        localizations.deleteOpening,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                      ),
-                      onPressed: () => selectAction(_FeatureMenuAction.delete),
-                    ),
-                    if (feature.type == FeatureType.door)
+                  const SizedBox(height: 8),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    mainAxisExtent: 52,
+                    children: [
                       OutlinedButton.icon(
                         onPressed: () =>
-                            selectAction(_FeatureMenuAction.toggleHinge),
-                        icon: const Icon(Icons.flip),
+                            selectAction(_FeatureMenuAction.editGeometry),
+                        icon: const Icon(Icons.straighten),
                         label: Text(
-                          localizations.changeDoorHingeSide,
+                          localizations.editOpeningDimensions,
                           maxLines: 2,
                           textAlign: TextAlign.center,
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (feature.type == FeatureType.door) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => selectAction(
-                        _FeatureMenuAction.chooseOpeningDirection,
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.touch_app),
+                        label: Text(
+                          localizations.moveOpeningOnWall,
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                        ),
+                        onPressed: () => selectAction(_FeatureMenuAction.move),
                       ),
-                      icon: const Icon(Icons.rotate_left),
-                      label: Text(
-                        feature.doorOpeningDirection ==
-                                DoorOpeningDirection.interior
-                            ? localizations.doorOpensInterior
-                            : localizations.doorOpensExterior,
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.delete_outline),
+                        label: Text(
+                          localizations.deleteOpening,
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                        ),
+                        onPressed: () =>
+                            selectAction(_FeatureMenuAction.delete),
                       ),
-                    ),
+                      if (feature.type == FeatureType.door)
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              selectAction(_FeatureMenuAction.toggleHinge),
+                          icon: const Icon(Icons.flip),
+                          label: Text(
+                            localizations.changeDoorHingeSide,
+                            maxLines: 2,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 8),
-                ],
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: feature.isConnected
-                        ? null
-                        : () => selectAction(
+                  if (feature.type == FeatureType.door) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => selectAction(
+                          _FeatureMenuAction.chooseOpeningDirection,
+                        ),
+                        icon: const Icon(Icons.rotate_left),
+                        label: Text(
+                          feature.doorOpeningDirection ==
+                                  DoorOpeningDirection.interior
+                              ? localizations.doorOpensInterior
+                              : localizations.doorOpensExterior,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: feature.isConnected
+                          ? null
+                          : () => selectAction(
                               _FeatureMenuAction.continueScanning,
                             ),
-                    icon: const Icon(Icons.add_road_rounded),
-                    label: Text(
-                      feature.isConnected
-                          ? localizations.openingAlreadyConnected
-                          : localizations.continueScanFromHere,
+                      icon: const Icon(Icons.add_road_rounded),
+                      label: Text(
+                        feature.isConnected
+                            ? localizations.openingAlreadyConnected
+                            : localizations.continueScanFromHere,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         );
       },
       enableDrag: true,
@@ -609,7 +547,11 @@ class _FloorPlanViewerScreenState
     if (!mounted) return;
 
     if (action == _FeatureMenuAction.move) {
-      await _placeOpeningOnWall(selection.roomId, feature.type, feature: feature);
+      await _placeOpeningOnWall(
+        selection.roomId,
+        feature.type,
+        feature: feature,
+      );
       return;
     }
 
@@ -619,20 +561,35 @@ class _FloorPlanViewerScreenState
     }
 
     if (action == _FeatureMenuAction.delete) {
-      final confirmed = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(
-        title: Text(localizations.deleteOpening),
-        content: Text(localizations.deleteOpeningConfirmation),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(localizations.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(localizations.deleteOpening)),
-        ],
-      ));
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(localizations.deleteOpening),
+          content: Text(localizations.deleteOpeningConfirmation),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(localizations.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(localizations.deleteOpening),
+            ),
+          ],
+        ),
+      );
       if (!mounted || confirmed != true) return;
-      if (!await context.read<FloorPlanProvider>().removeOpening(selection.roomId, feature.id)) {
+      if (!await context.read<FloorPlanProvider>().removeOpening(
+        selection.roomId,
+        feature.id,
+      )) {
         if (mounted) _planError(PlanEditError.invalid);
         return;
       }
-      if (mounted) setState(() { _selectedFeatureId = null; });
+      if (mounted)
+        setState(() {
+          _selectedFeatureId = null;
+        });
       return;
     }
 
@@ -641,10 +598,9 @@ class _FloorPlanViewerScreenState
           .read<FloorPlanProvider>()
           .updateDoorOrientation(
             featureId: feature.id,
-            hingeSide:
-                feature.doorHingeSide == DoorHingeSide.start
-                    ? DoorHingeSide.end
-                    : DoorHingeSide.start,
+            hingeSide: feature.doorHingeSide == DoorHingeSide.start
+                ? DoorHingeSide.end
+                : DoorHingeSide.start,
           );
 
       if (mounted && !updated) {
@@ -733,9 +689,7 @@ class _FloorPlanViewerScreenState
     );
   }
 
-  OpeningConnectionSide _availableSideFor(
-    _FeatureSelection selection,
-  ) {
+  OpeningConnectionSide _availableSideFor(_FeatureSelection selection) {
     final provider = context.read<FloorPlanProvider>();
     final room = provider.completedRooms.firstWhere(
       (candidate) => candidate.id == selection.roomId,
@@ -762,8 +716,10 @@ class _FloorPlanViewerScreenState
 
     return GeometryService.isPointInPolygon(leftProbe, room.points)
         ? OpeningConnectionSide.right
-        : OpeningConnectionSide.left;  }  Future<void> _showOpeningGeometryEditor(    _FeatureSelection selection,
-  ) async {
+        : OpeningConnectionSide.left;
+  }
+
+  Future<void> _showOpeningGeometryEditor(_FeatureSelection selection) async {
     final provider = context.read<FloorPlanProvider>();
     final placement = provider.getOpeningPlacement(
       roomId: selection.roomId,
@@ -786,9 +742,7 @@ class _FloorPlanViewerScreenState
       text: _formatDecimal(placement.widthMeters),
     );
     final positionMetricController = TextEditingController(
-      text: _formatDecimal(
-        placement.distanceFromWallStartMeters,
-      ),
+      text: _formatDecimal(placement.distanceFromWallStartMeters),
     );
     final heightMetricController = TextEditingController(
       text: _formatDecimal(placement.openingHeightMeters),
@@ -799,8 +753,7 @@ class _FloorPlanViewerScreenState
     final widthImperial = MeasurementUnits.metersToFeetAndInches(
       placement.widthMeters,
     );
-    final positionImperial =
-        MeasurementUnits.metersToFeetAndInches(
+    final positionImperial = MeasurementUnits.metersToFeetAndInches(
       placement.distanceFromWallStartMeters,
     );
     final heightImperial = MeasurementUnits.metersToFeetAndInches(
@@ -813,7 +766,8 @@ class _FloorPlanViewerScreenState
       text: widthImperial.feet.toString(),
     );
     final widthInchesController = TextEditingController(
-      text: _formatDecimal(widthImperial.inches),    );
+      text: _formatDecimal(widthImperial.inches),
+    );
     final positionFeetController = TextEditingController(
       text: positionImperial.feet.toString(),
     );
@@ -861,7 +815,12 @@ class _FloorPlanViewerScreenState
               required TextEditingController inches,
             }) {
               if (measurementSystem == MeasurementSystem.metric) {
-                return TextField(                  controller: metric,                  keyboardType: const TextInputType.numberWithOptions(                    decimal: true,                  ),                  decoration: InputDecoration(
+                return TextField(
+                  controller: metric,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
                     labelText: label,
                     suffixText: localizations.meters,
                     border: const OutlineInputBorder(),
@@ -879,8 +838,7 @@ class _FloorPlanViewerScreenState
                       Expanded(
                         child: TextField(
                           controller: feet,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(
+                          keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
                           decoration: InputDecoration(
@@ -893,8 +851,7 @@ class _FloorPlanViewerScreenState
                       Expanded(
                         child: TextField(
                           controller: inches,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(
+                          keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
                           decoration: InputDecoration(
@@ -914,7 +871,11 @@ class _FloorPlanViewerScreenState
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,                  children: [                    Text(                      '${localizations.wallLength}: '                      '${_formatLength(placement.wallLengthMeters, measurementSystem)}',
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${localizations.wallLength}: '
+                      '${_formatLength(placement.wallLengthMeters, measurementSystem)}',
                     ),
                     const SizedBox(height: 16),
                     lengthFields(
@@ -937,8 +898,7 @@ class _FloorPlanViewerScreenState
                       feet: heightFeetController,
                       inches: heightInchesController,
                     ),
-                    if (selection.feature.type ==
-                        FeatureType.window) ...[
+                    if (selection.feature.type == FeatureType.window) ...[
                       const SizedBox(height: 16),
                       lengthFields(
                         label: localizations.sillHeight,
@@ -953,7 +913,8 @@ class _FloorPlanViewerScreenState
                         validationMessage!,
                         style: TextStyle(color: Colors.red.shade700),
                       ),
-                    ],                  ],
+                    ],
+                  ],
                 ),
               ),
               actions: [
@@ -978,8 +939,7 @@ class _FloorPlanViewerScreenState
                       feet: heightFeetController,
                       inches: heightInchesController,
                     );
-                    final sill = selection.feature.type ==
-                            FeatureType.window
+                    final sill = selection.feature.type == FeatureType.window
                         ? readLength(
                             metric: sillMetricController,
                             feet: sillFeetController,
@@ -991,11 +951,16 @@ class _FloorPlanViewerScreenState
                         position == null ||
                         height == null ||
                         sill == null ||
-                        !width.isFinite || width < 0.20 ||
-                        !position.isFinite || position < 0 ||
-                        width + position > placement.wallLengthMeters + 0.000001 ||
-                        !height.isFinite || height < 0.20 ||
-                        !sill.isFinite || sill < 0) {
+                        !width.isFinite ||
+                        width < 0.20 ||
+                        !position.isFinite ||
+                        position < 0 ||
+                        width + position >
+                            placement.wallLengthMeters + 0.000001 ||
+                        !height.isFinite ||
+                        height < 0.20 ||
+                        !sill.isFinite ||
+                        sill < 0) {
                       setDialogState(() {
                         validationMessage =
                             localizations.invalidOpeningMeasurement;
@@ -1043,8 +1008,7 @@ class _FloorPlanViewerScreenState
       roomId: selection.roomId,
       featureId: selection.feature.id,
       widthMeters: input.widthMeters,
-      distanceFromWallStartMeters:
-          input.distanceFromWallStartMeters,
+      distanceFromWallStartMeters: input.distanceFromWallStartMeters,
       openingHeightMeters: input.openingHeightMeters,
       sillHeightMeters: input.sillHeightMeters,
     );
@@ -1053,8 +1017,7 @@ class _FloorPlanViewerScreenState
     _showMessage(
       result.isSuccess
           ? localizations.openingUpdated
-          : result.errorMessage ??
-              localizations.invalidOpeningMeasurement,
+          : result.errorMessage ?? localizations.invalidOpeningMeasurement,
       error: !result.isSuccess,
     );
   }
@@ -1094,41 +1057,33 @@ class _FloorPlanViewerScreenState
       context: context,
       builder: (dialogContext) {
         return SimpleDialog(
-          title: Text(
-            localizations.chooseDoorOpeningDirection,
-          ),
+          title: Text(localizations.chooseDoorOpeningDirection),
           children: [
             SimpleDialogOption(
-              onPressed: () => Navigator.pop(
-                dialogContext,
-                DoorOpeningDirection.interior,
-              ),
+              onPressed: () =>
+                  Navigator.pop(dialogContext, DoorOpeningDirection.interior),
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.home_outlined),
-                title: Text(
-                  planDirectionLabel(DoorOpeningDirection.interior),
-                ),
+                title: Text(planDirectionLabel(DoorOpeningDirection.interior)),
                 subtitle: Text(localizations.doorOpensInterior),
-                trailing: feature.doorOpeningDirection ==
+                trailing:
+                    feature.doorOpeningDirection ==
                         DoorOpeningDirection.interior
                     ? const Icon(Icons.check_circle)
                     : null,
               ),
             ),
             SimpleDialogOption(
-              onPressed: () => Navigator.pop(
-                dialogContext,
-                DoorOpeningDirection.exterior,
-              ),
+              onPressed: () =>
+                  Navigator.pop(dialogContext, DoorOpeningDirection.exterior),
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.exit_to_app),
-                title: Text(
-                  planDirectionLabel(DoorOpeningDirection.exterior),
-                ),
+                title: Text(planDirectionLabel(DoorOpeningDirection.exterior)),
                 subtitle: Text(localizations.doorOpensExterior),
-                trailing: feature.doorOpeningDirection ==
+                trailing:
+                    feature.doorOpeningDirection ==
                         DoorOpeningDirection.exterior
                     ? const Icon(Icons.check_circle)
                     : null,
@@ -1140,17 +1095,12 @@ class _FloorPlanViewerScreenState
     );
   }
 
-  Future<OpeningConnectionSide?> _chooseConnectionSide(
-    WallFeature feature,
-  ) {
+  Future<OpeningConnectionSide?> _chooseConnectionSide(WallFeature feature) {
     final localizations = AppLocalizations.of(context)!;
     final start = _transformPoint(feature.start);
     final end = _transformPoint(feature.end);
     final openingDirection = end - start;
-    final leftDirection = Offset(
-      -openingDirection.dy,
-      openingDirection.dx,
-    );
+    final leftDirection = Offset(-openingDirection.dy, openingDirection.dx);
     final rightDirection = -leftDirection;
     final directionsAreVertical =
         leftDirection.dy.abs() > leftDirection.dx.abs();
@@ -1160,13 +1110,15 @@ class _FloorPlanViewerScreenState
     final firstSide = leftChoiceComesFirst
         ? OpeningConnectionSide.left
         : OpeningConnectionSide.right;
-    final firstDirection =
-        leftChoiceComesFirst ? leftDirection : rightDirection;
+    final firstDirection = leftChoiceComesFirst
+        ? leftDirection
+        : rightDirection;
     final secondSide = leftChoiceComesFirst
         ? OpeningConnectionSide.right
         : OpeningConnectionSide.left;
-    final secondDirection =
-        leftChoiceComesFirst ? rightDirection : leftDirection;
+    final secondDirection = leftChoiceComesFirst
+        ? rightDirection
+        : leftDirection;
 
     return showDialog<OpeningConnectionSide>(
       context: context,
@@ -1176,9 +1128,7 @@ class _FloorPlanViewerScreenState
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                localizations.continuationDirectionExplanation,
-              ),
+              Text(localizations.continuationDirectionExplanation),
               const SizedBox(height: 16),
               SizedBox(
                 width: 240,
@@ -1193,10 +1143,7 @@ class _FloorPlanViewerScreenState
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(
-                    dialogContext,
-                    firstSide,
-                  ),
+                  onPressed: () => Navigator.pop(dialogContext, firstSide),
                   icon: Icon(_directionIcon(firstDirection)),
                   label: Text(
                     localizations.continueToward(
@@ -1209,10 +1156,7 @@ class _FloorPlanViewerScreenState
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () => Navigator.pop(
-                    dialogContext,
-                    secondSide,
-                  ),
+                  onPressed: () => Navigator.pop(dialogContext, secondSide),
                   icon: Icon(_directionIcon(secondDirection)),
                   label: Text(
                     localizations.continueToward(
@@ -1234,10 +1178,7 @@ class _FloorPlanViewerScreenState
     );
   }
 
-  String _directionLabel(
-    Offset direction,
-    AppLocalizations localizations,
-  ) {
+  String _directionLabel(Offset direction, AppLocalizations localizations) {
     if (direction.dx.abs() >= direction.dy.abs()) {
       return direction.dx >= 0
           ? localizations.directionRight
@@ -1251,36 +1192,22 @@ class _FloorPlanViewerScreenState
 
   IconData _directionIcon(Offset direction) {
     if (direction.dx.abs() >= direction.dy.abs()) {
-      return direction.dx >= 0
-          ? Icons.arrow_forward
-          : Icons.arrow_back;
+      return direction.dx >= 0 ? Icons.arrow_forward : Icons.arrow_back;
     }
 
-    return direction.dy >= 0
-        ? Icons.arrow_downward
-        : Icons.arrow_upward;
+    return direction.dy >= 0 ? Icons.arrow_downward : Icons.arrow_upward;
   }
 
   double _featureWidth(WallFeature feature) {
-    return GeometryService.calculateDistance(
-      feature.start,
-      feature.end,
-    );
+    return GeometryService.calculateDistance(feature.start, feature.end);
   }
 
-  String _formatLength(
-    double meters,
-    MeasurementSystem measurementSystem,
-  ) {
-    if (measurementSystem ==
-        MeasurementSystem.metric) {
+  String _formatLength(double meters, MeasurementSystem measurementSystem) {
+    if (measurementSystem == MeasurementSystem.metric) {
       return '${_formatDecimal(meters)} m';
     }
 
-    final imperial =
-        MeasurementUnits.metersToFeetAndInches(
-      meters,
-    );
+    final imperial = MeasurementUnits.metersToFeetAndInches(meters);
 
     return '${imperial.feet}′ '
         '${_formatDecimal(imperial.inches)}″';
@@ -1291,10 +1218,7 @@ class _FloorPlanViewerScreenState
     MeasurementSystem measurementSystem,
   ) {
     final localizations = AppLocalizations.of(context)!;
-    final width = _formatLength(
-      _featureWidth(feature),
-      measurementSystem,
-    );
+    final width = _formatLength(_featureWidth(feature), measurementSystem);
     final height = _formatLength(
       feature.openingHeightMeters,
       measurementSystem,
@@ -1304,48 +1228,31 @@ class _FloorPlanViewerScreenState
       return localizations.doorPlanDimensions(width, height);
     }
 
-    final sill = _formatLength(
-      feature.sillHeightMeters,
-      measurementSystem,
-    );
-    final orientation = _featureWidth(feature) >=
-            feature.openingHeightMeters        ? localizations.horizontalOrientation
+    final sill = _formatLength(feature.sillHeightMeters, measurementSystem);
+    final orientation = _featureWidth(feature) >= feature.openingHeightMeters
+        ? localizations.horizontalOrientation
         : localizations.verticalOrientation;
-    return localizations.windowPlanDimensions(
-      width,
-      height,
-      sill,      orientation,
-    );  }
-  String _formatArea(
-    double squareMeters,
-    MeasurementSystem measurementSystem,
-  ) {
-    final localizations =
-        AppLocalizations.of(context)!;
+    return localizations.windowPlanDimensions(width, height, sill, orientation);
+  }
 
-    if (measurementSystem ==
-        MeasurementSystem.metric) {
+  String _formatArea(double squareMeters, MeasurementSystem measurementSystem) {
+    final localizations = AppLocalizations.of(context)!;
+
+    if (measurementSystem == MeasurementSystem.metric) {
       return '${_formatDecimal(squareMeters)} '
           '${localizations.squareMeters}';
     }
 
-    final squareFeet =
-        MeasurementUnits.squareMetersToSquareFeet(
-      squareMeters,
-    );
+    final squareFeet = MeasurementUnits.squareMetersToSquareFeet(squareMeters);
 
     return '${_formatDecimal(squareFeet)} '
         '${localizations.squareFeet}';
   }
 
-  String _formatDecimal(
-    double value,
-  ) {
+  String _formatDecimal(double value) {
     var formatted = value.toStringAsFixed(2);
 
-    if (Localizations.localeOf(context)
-            .languageCode ==
-        'es') {
+    if (Localizations.localeOf(context).languageCode == 'es') {
       formatted = formatted.replaceAll('.', ',');
     }
 
@@ -1355,9 +1262,7 @@ class _FloorPlanViewerScreenState
   // ===========================================================================  // EDITOR DE MEDIDAS
   // ===========================================================================
 
-  Future<void>
-      _openMeasurementEditor({    String? roomId,
-  }) async {
+  Future<void> _openMeasurementEditor({String? roomId}) async {
     if (!mounted) {
       return;
     }
@@ -1375,69 +1280,45 @@ class _FloorPlanViewerScreenState
   // ===========================================================================
   Future<void> _organizeRooms() async {
     final localizations = AppLocalizations.of(context)!;
-    final provider =        context.read<            FloorPlanProvider>();
+    final provider = context.read<FloorPlanProvider>();
 
-    if (provider.completedRooms.length <=
-        1) {
-      _showMessage(
-        localizations.notEnoughRoomsToOrganize,
-      );
+    if (provider.completedRooms.length <= 1) {
+      _showMessage(localizations.notEnoughRoomsToOrganize);
       return;
     }
 
-    final confirmed =
-        await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(
-                Icons.grid_view_rounded,
-              ),
+              Icon(Icons.grid_view_rounded),
               SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  localizations.organizeRooms,
-                ),
-              ),
+              Expanded(child: Text(localizations.organizeRooms)),
             ],
           ),
-          content: Text(
-            localizations.organizeRoomsExplanation,
-          ),
+          content: Text(localizations.organizeRoomsExplanation),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
+                Navigator.pop(dialogContext, false);
               },
-              child: Text(
-                localizations.cancel,
-              ),
+              child: Text(localizations.cancel),
             ),
             FilledButton.icon(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  true,                );
+                Navigator.pop(dialogContext, true);
               },
-              icon: const Icon(
-                Icons.auto_awesome,
-              ),
-              label: Text(
-                localizations.organizeRooms,
-              ),
+              icon: const Icon(Icons.auto_awesome),
+              label: Text(localizations.organizeRooms),
             ),
           ],
         );
       },
     );
 
-    if (confirmed != true ||
-        !mounted) {
+    if (confirmed != true || !mounted) {
       return;
     }
 
@@ -1446,9 +1327,11 @@ class _FloorPlanViewerScreenState
     if (!mounted) {
       return;
     }
-    _showMessage(changed
-        ? localizations.roomsOrganizedSuccessfully
-        : localizations.roomsArrangementUnchanged);
+    _showMessage(
+      changed
+          ? localizations.roomsOrganizedSuccessfully
+          : localizations.roomsArrangementUnchanged,
+    );
   }
   // ===========================================================================
   // BUILD
@@ -1457,8 +1340,9 @@ class _FloorPlanViewerScreenState
   Future<void> _showRoomTransformEditor() async {
     final provider = context.read<FloorPlanProvider>();
     final localizations = AppLocalizations.of(context)!;
-    final measurementSystem =
-        context.read<MeasurementSettingsProvider>().system;
+    final measurementSystem = context
+        .read<MeasurementSettingsProvider>()
+        .system;
     final rooms = provider.completedRooms;
 
     if (rooms.isEmpty) {
@@ -1466,9 +1350,7 @@ class _FloorPlanViewerScreenState
       return;
     }
 
-    var selectedRoomId = rooms.any(
-      (room) => room.id == _selectedRoomId,
-    )
+    var selectedRoomId = rooms.any((room) => room.id == _selectedRoomId)
         ? _selectedRoomId!
         : rooms.first.id;
     String? targetRoomId = rooms
@@ -1494,8 +1376,10 @@ class _FloorPlanViewerScreenState
       isScrollControlled: true,
       useSafeArea: true,
       builder: (bottomSheetContext) {
-        return StatefulBuilder(          builder: (context, setModalState) {
-            Future<void> moveRoom({              required double offsetX,
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            Future<void> moveRoom({
+              required double offsetX,
               required double offsetZ,
             }) async {
               final result = await provider.translateRoomAutomatically(
@@ -1509,10 +1393,7 @@ class _FloorPlanViewerScreenState
               if (result.wasAdjusted && mounted) {
                 _showMessage(localizations.roomAdjustedAutomatically);
               } else if (result.wasRejected && mounted) {
-                _showMessage(
-                  localizations.unsafeMovementRejected,
-                  error: true,
-                );
+                _showMessage(localizations.unsafeMovementRejected, error: true);
               }
             }
 
@@ -1525,10 +1406,7 @@ class _FloorPlanViewerScreenState
                 setModalState(() {});
               }
               if (!rotated && mounted) {
-                _showMessage(
-                  localizations.unsafeRotationRejected,
-                  error: true,
-                );
+                _showMessage(localizations.unsafeRotationRejected, error: true);
               }
             }
 
@@ -1547,17 +1425,12 @@ class _FloorPlanViewerScreenState
             }
 
             Future<void> applyPreciseAdjustment() async {
-              final horizontalController =
-                  TextEditingController(text: '0');
-              final verticalController =
-                  TextEditingController(text: '0');
-              final rotationController =
-                  TextEditingController(text: '0');
+              final horizontalController = TextEditingController(text: '0');
+              final verticalController = TextEditingController(text: '0');
+              final rotationController = TextEditingController(text: '0');
 
               double? parseNumber(String value) {
-                return double.tryParse(
-                  value.trim().replaceAll(',', '.'),
-                );
+                return double.tryParse(value.trim().replaceAll(',', '.'));
               }
 
               final input = await showDialog<_PreciseTransformInput>(
@@ -1577,12 +1450,13 @@ class _FloorPlanViewerScreenState
                               controller: horizontalController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                decimal: true,
-                                signed: true,
-                              ),
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                               decoration: InputDecoration(
                                 labelText: localizations.horizontalAdjustment,
-                                suffixText: measurementSystem ==
+                                suffixText:
+                                    measurementSystem ==
                                         MeasurementSystem.metric
                                     ? localizations.meters
                                     : localizations.inches,
@@ -1594,12 +1468,13 @@ class _FloorPlanViewerScreenState
                               controller: verticalController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                decimal: true,
-                                signed: true,
-                              ),
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                               decoration: InputDecoration(
                                 labelText: localizations.verticalAdjustment,
-                                suffixText: measurementSystem ==
+                                suffixText:
+                                    measurementSystem ==
                                         MeasurementSystem.metric
                                     ? localizations.meters
                                     : localizations.inches,
@@ -1611,9 +1486,9 @@ class _FloorPlanViewerScreenState
                               controller: rotationController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                decimal: true,
-                                signed: true,
-                              ),
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                               decoration: InputDecoration(
                                 labelText: localizations.rotationDegrees,
                                 suffixText: localizations.degrees,
@@ -1626,18 +1501,20 @@ class _FloorPlanViewerScreenState
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () =>
-                              Navigator.pop(dialogContext),
+                          onPressed: () => Navigator.pop(dialogContext),
                           child: Text(localizations.cancel),
                         ),
                         FilledButton(
                           onPressed: () {
-                            final horizontal =
-                                parseNumber(horizontalController.text);
-                            final vertical =
-                                parseNumber(verticalController.text);
-                            final rotation =
-                                parseNumber(rotationController.text);
+                            final horizontal = parseNumber(
+                              horizontalController.text,
+                            );
+                            final vertical = parseNumber(
+                              verticalController.text,
+                            );
+                            final rotation = parseNumber(
+                              rotationController.text,
+                            );
                             if (horizontal == null ||
                                 vertical == null ||
                                 rotation == null ||
@@ -1650,12 +1527,12 @@ class _FloorPlanViewerScreenState
                               });
                               return;
                             }
-                            final offsetX = measurementSystem ==
-                                    MeasurementSystem.metric
+                            final offsetX =
+                                measurementSystem == MeasurementSystem.metric
                                 ? horizontal
                                 : MeasurementUnits.inchesToMeters(horizontal);
-                            final offsetZ = measurementSystem ==
-                                    MeasurementSystem.metric
+                            final offsetZ =
+                                measurementSystem == MeasurementSystem.metric
                                 ? vertical
                                 : MeasurementUnits.inchesToMeters(vertical);
                             Navigator.pop(
@@ -1784,8 +1661,7 @@ class _FloorPlanViewerScreenState
                 return;
               }
 
-              final result =
-                  await provider.applyWallAlignmentPreview(preview);
+              final result = await provider.applyWallAlignmentPreview(preview);
               if (context.mounted) {
                 setModalState(() {});
               }
@@ -1796,8 +1672,8 @@ class _FloorPlanViewerScreenState
                 result == WallAlignmentResult.aligned
                     ? localizations.wallAlignedSuccessfully
                     : result == WallAlignmentResult.stalePreview
-                        ? localizations.alignmentPreviewExpired
-                        : localizations.noSafeNearbyWall,
+                    ? localizations.alignmentPreviewExpired
+                    : localizations.noSafeNearbyWall,
                 error: result != WallAlignmentResult.aligned,
               );
             }
@@ -1869,8 +1745,8 @@ class _FloorPlanViewerScreenState
                 result == WallAlignmentResult.aligned
                     ? localizations.joinCompleted
                     : result == WallAlignmentResult.overlapPrevented
-                        ? localizations.joinOverlapPrevented
-                        : localizations.noSafeNearbyWall,
+                    ? localizations.joinOverlapPrevented
+                    : localizations.noSafeNearbyWall,
                 error: result != WallAlignmentResult.aligned,
               );
             }
@@ -1912,9 +1788,7 @@ class _FloorPlanViewerScreenState
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    localizations.connectedGroupTransformHint,
-                  ),
+                  Text(localizations.connectedGroupTransformHint),
                   const SizedBox(height: 14),
                   Row(
                     children: [
@@ -1924,9 +1798,7 @@ class _FloorPlanViewerScreenState
                               ? undoTransform
                               : null,
                           icon: const Icon(Icons.undo),
-                          label: Text(
-                            localizations.undoLastTransform,
-                          ),
+                          label: Text(localizations.undoLastTransform),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -1936,9 +1808,7 @@ class _FloorPlanViewerScreenState
                               ? redoTransform
                               : null,
                           icon: const Icon(Icons.redo),
-                          label: Text(
-                            localizations.redoLastTransform,
-                          ),
+                          label: Text(localizations.redoLastTransform),
                         ),
                       ),
                     ],
@@ -1951,9 +1821,7 @@ class _FloorPlanViewerScreenState
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
-                    onPressed: targetRoomId == null
-                        ? null
-                        : joinSelectedRooms,
+                    onPressed: targetRoomId == null ? null : joinSelectedRooms,
                     icon: const Icon(Icons.join_inner_rounded),
                     label: Text(localizations.joinRooms),
                   ),
@@ -2032,8 +1900,10 @@ class _FloorPlanViewerScreenState
                     value: movementStep,
                     decoration: InputDecoration(
                       labelText: localizations.movementDistance,
-                      border: const OutlineInputBorder(),                    ),
-                    items: measurementSystem == MeasurementSystem.metric                        ? [
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: measurementSystem == MeasurementSystem.metric
+                        ? [
                             DropdownMenuItem(
                               value: 0.05,
                               child: Text(localizations.fiveCentimeters),
@@ -2041,14 +1911,14 @@ class _FloorPlanViewerScreenState
                             DropdownMenuItem(
                               value: 0.10,
                               child: Text(localizations.tenCentimeters),
-                            ),                            DropdownMenuItem(
-                              value: 0.25,
-                              child: Text(
-                                localizations.twentyFiveCentimeters,
-                              ),
                             ),
                             DropdownMenuItem(
-                              value: 0.50,                              child: Text(localizations.fiftyCentimeters),
+                              value: 0.25,
+                              child: Text(localizations.twentyFiveCentimeters),
+                            ),
+                            DropdownMenuItem(
+                              value: 0.50,
+                              child: Text(localizations.fiftyCentimeters),
                             ),
                           ]
                         : [
@@ -2098,10 +1968,7 @@ class _FloorPlanViewerScreenState
                           icon: Icons.keyboard_arrow_up,
                           tooltip: localizations.moveUp,
                           onPressed: () async {
-                            await moveRoom(
-                              offsetX: 0,
-                              offsetZ: -movementStep,
-                            );
+                            await moveRoom(offsetX: 0, offsetZ: -movementStep);
                           },
                         ),
                         const SizedBox(height: 8),
@@ -2177,7 +2044,8 @@ class _FloorPlanViewerScreenState
                             localizations.rotateFifteenDegreesRight,
                             textAlign: TextAlign.center,
                           ),
-                        ),                      ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -2197,8 +2065,9 @@ class _FloorPlanViewerScreenState
 
   Future<void> _showAreaSummary() async {
     final provider = context.read<FloorPlanProvider>();
-    final measurementSystem =
-        context.read<MeasurementSettingsProvider>().system;
+    final measurementSystem = context
+        .read<MeasurementSettingsProvider>()
+        .system;
     final localizations = AppLocalizations.of(context)!;
     final rooms = provider.completedRooms;
 
@@ -2224,9 +2093,7 @@ class _FloorPlanViewerScreenState
                               measurementSystem,
                             )
                           : localizations.planOpenContour,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                 const Divider(),
@@ -2237,10 +2104,7 @@ class _FloorPlanViewerScreenState
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   trailing: Text(
-                    _formatArea(
-                      provider.totalProjectArea,
-                      measurementSystem,
-                    ),
+                    _formatArea(provider.totalProjectArea, measurementSystem),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -2258,9 +2122,8 @@ class _FloorPlanViewerScreenState
     );
   }
 
-  @override  Widget build(
-    BuildContext context,
-  ) {
+  @override
+  Widget build(BuildContext context) {
     final measurementSystem = context
         .watch<MeasurementSettingsProvider>()
         .system;
@@ -2275,113 +2138,105 @@ class _FloorPlanViewerScreenState
               : localizations.floorPlan2D,
         ),
         centerTitle: true,
-        actions: widget.selectContinuationOpening ? const [] : [
-          if (_roomPlanSupported)
-            IconButton(
-              icon: _roomPlanScanning
-                  ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.view_in_ar_outlined),
-              tooltip: localizations.scanWithRoomPlan,
-              onPressed: _roomPlanScanning ? null : _captureWithRoomPlan,
-            ),
-          PopupMenuButton<
-              _FloorPlanAction>(
-            tooltip: localizations.moreOptions,
-            onSelected: (action) {
-              switch (action) {
-                case _FloorPlanAction.transformRooms:
-                  _toggleTouchTransformMode();
-                  break;
-                case _FloorPlanAction.organizeRooms:
-                  _organizeRooms();
-                  break;
-                case _FloorPlanAction.areaSummary:
-                  _showAreaSummary();
-                  break;
-                case _FloorPlanAction.importProject:
-                  _importProject();
-                  break;
-                case _FloorPlanAction.exportProject:
-                  _showExportFlow();
-                  break;
-              }
-            },
-            itemBuilder: (context) {
-              return [
-                PopupMenuItem(
-                  value: _FloorPlanAction.transformRooms,
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(
-                      _touchTransformMode
-                          ? Icons.check
-                          : Icons.open_with_rounded,
-                    ),
-                    title: Text(
-                      _touchTransformMode
-                          ? localizations.finishEditing
-                          : localizations.touchTransformRooms,
-                    ),
+        actions: widget.selectContinuationOpening
+            ? const []
+            : [
+                if (_roomPlanSupported)
+                  IconButton(
+                    icon: _roomPlanScanning
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.view_in_ar_outlined),
+                    tooltip: localizations.scanWithRoomPlan,
+                    onPressed: _roomPlanScanning ? null : _captureWithRoomPlan,
                   ),
+                PopupMenuButton<_FloorPlanAction>(
+                  tooltip: localizations.moreOptions,
+                  onSelected: (action) {
+                    switch (action) {
+                      case _FloorPlanAction.transformRooms:
+                        _toggleTouchTransformMode();
+                        break;
+                      case _FloorPlanAction.organizeRooms:
+                        _organizeRooms();
+                        break;
+                      case _FloorPlanAction.areaSummary:
+                        _showAreaSummary();
+                        break;
+                      case _FloorPlanAction.importProject:
+                        _importProject();
+                        break;
+                      case _FloorPlanAction.exportProject:
+                        _showExportFlow();
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) {
+                    return [
+                      PopupMenuItem(
+                        value: _FloorPlanAction.transformRooms,
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(
+                            _touchTransformMode
+                                ? Icons.check
+                                : Icons.open_with_rounded,
+                          ),
+                          title: Text(
+                            _touchTransformMode
+                                ? localizations.finishEditing
+                                : localizations.touchTransformRooms,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: _FloorPlanAction.organizeRooms,
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.grid_view_rounded),
+                          title: Text(localizations.organizeRooms),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: _FloorPlanAction.areaSummary,
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.straighten_outlined),
+                          title: Text(localizations.areaSummaryTitle),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: _FloorPlanAction.exportProject,
+                        enabled: context
+                            .read<FloorPlanProvider>()
+                            .completedRooms
+                            .any((room) => room.points.length >= 2),
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.file_download_outlined),
+                          title: Text(localizations.exportProject),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: _FloorPlanAction.importProject,
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(Icons.file_upload),
+                          title: Text(localizations.importProject),
+                        ),
+                      ),
+                    ];
+                  },
                 ),
-                PopupMenuItem(
-                  value: _FloorPlanAction.organizeRooms,
-                  child: ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.grid_view_rounded),
-                    title: Text(localizations.organizeRooms),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: _FloorPlanAction.areaSummary,
-                  child: ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.straighten_outlined),
-                    title: Text(localizations.areaSummaryTitle),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: _FloorPlanAction.exportProject,
-                  enabled: context.read<FloorPlanProvider>().completedRooms
-                      .any((room) => room.points.length >= 2),
-                  child: ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.file_download_outlined),
-                    title: Text(localizations.exportProject),
-                  ),
-                ),
-                PopupMenuItem(
-                  value:
-                      _FloorPlanAction
-                          .importProject,
-                  child: ListTile(
-                    dense: true,
-                    leading: Icon(
-                      Icons.file_upload,
-                    ),
-                    title: Text(
-                      localizations.importProject,
-                    ),
-                  ),
-                ),
-              ];
-            },
-          ),
-        ],
+              ],
       ),
-
-      bottomNavigationBar: widget.selectContinuationOpening ? null : _buildPlanToolbar(),
-
-      body: Consumer<
-          FloorPlanProvider>(
-        builder: (
-          context,
-          provider,
-          child,
-        ) {
+      bottomNavigationBar: widget.selectContinuationOpening
+          ? null
+          : _buildPlanToolbar(),
+      body: Consumer<FloorPlanProvider>(
+        builder: (context, provider, child) {
           final rooms = _roomsForDisplay(provider.completedRooms);
           final hasAvailableOpenings = rooms.any(
             (room) => room.features.any((feature) => !feature.isConnected),
@@ -2391,42 +2246,35 @@ class _FloorPlanViewerScreenState
             return const _EmptyPlanView();
           }
           return LayoutBuilder(
-            builder: (              context,
-              constraints,
-            ) {
-              final size =
-                  constraints.biggest;
+            builder: (context, constraints) {
+              final size = constraints.biggest;
 
               if (!_touchTransformMode && !_freezePlanTransform) {
                 _calculateTransform(size, rooms);
               }
 
-              return Stack(                children: [
+              return Stack(
+                children: [
                   InteractiveViewer(
                     transformationController: _planViewport,
                     panEnabled: !_touchTransformMode && !_wallGestureActive,
                     scaleEnabled: !_touchTransformMode && !_wallGestureActive,
                     constrained: true,
-                    boundaryMargin:
-                        const EdgeInsets.all(
-                      200,
-                    ),
+                    boundaryMargin: const EdgeInsets.all(200),
                     minScale: 0.2,
                     maxScale: 6.0,
-                    child:
-                        GestureDetector(
+                    child: GestureDetector(
                       dragStartBehavior: DragStartBehavior.down,
-                      behavior:
-                          HitTestBehavior
-                              .opaque,
-                      onTapUp: (
-                        details,
-                      ) async {
+                      behavior: HitTestBehavior.opaque,
+                      onTapUp: (details) async {
                         if (_choosingContinuationClosing ||
                             _addOpeningType != null ||
                             _wallEditMode ||
                             _pendingPlanEdit != null) {
-                          await _selectPlanElement(details.localPosition, provider.completedRooms);
+                          await _selectPlanElement(
+                            details.localPosition,
+                            provider.completedRooms,
+                          );
                           return;
                         }
                         if (_touchTransformMode) {
@@ -2442,8 +2290,7 @@ class _FloorPlanViewerScreenState
                           }
                           return;
                         }
-                        final featureSelection =
-                            _getFeatureAtPosition(
+                        final featureSelection = _getFeatureAtPosition(
                           details.localPosition,
                           rooms,
                         );
@@ -2453,9 +2300,7 @@ class _FloorPlanViewerScreenState
                               featureSelection.feature.isConnected) {
                             return;
                           }
-                          _showFeatureMenu(
-                            featureSelection,
-                          );
+                          _showFeatureMenu(featureSelection);
                           return;
                         }
 
@@ -2463,81 +2308,72 @@ class _FloorPlanViewerScreenState
                           return;
                         }
 
-                        if (await _selectPlanElement(details.localPosition, provider.completedRooms)) return;
+                        if (await _selectPlanElement(
+                          details.localPosition,
+                          provider.completedRooms,
+                        ))
+                          return;
                         if (!mounted) return;
 
-                        final planePoint =
-                            _inverseTransform(
-                          details                              .localPosition,                        );
-                        final roomId =
-                            _getRoomAtPosition(
-                          planePoint,
-                          rooms,
+                        final planePoint = _inverseTransform(
+                          details.localPosition,
                         );
+                        final roomId = _getRoomAtPosition(planePoint, rooms);
 
-                        if (roomId ==
-                            null) {
-                          _showMessage(
-                            localizations.tapRoomToAddOpening,
-                          );
+                        if (roomId == null) {
+                          _showMessage(localizations.tapRoomToAddOpening);
                           return;
                         }
 
                         _showAddFeatureMenu(
-                          roomId:
-                              roomId,
-                          location:
-                              planePoint,
+                          roomId: roomId,
+                          location: planePoint,
                         );
                       },
                       onScaleStart: _wallGestureActive
-                          ? (details) => _startWallDrag(details, provider.completedRooms)
+                          ? (details) =>
+                                _startWallDrag(details, provider.completedRooms)
                           : _touchTransformMode
                           ? (details) => _startTouchTransform(details, rooms)
                           : null,
-                      onScaleUpdate: _wallGestureActive ? _updateWallDrag :
-                          _touchTransformMode ? _updateTouchTransform : null,
-                      onScaleEnd: _wallGestureActive ? (_) => _endWallDrag() : _touchTransformMode
+                      onScaleUpdate: _wallGestureActive
+                          ? _updateWallDrag
+                          : _touchTransformMode
+                          ? _updateTouchTransform
+                          : null,
+                      onScaleEnd: _wallGestureActive
+                          ? (_) => _endWallDrag()
+                          : _touchTransformMode
                           ? (_) => _endTouchTransform()
                           : null,
-                      child:
-                          _trackPlanPointer(SizedBox.expand(
-                        child:
-                            CustomPaint(
-                          foregroundPainter: _planSelectionPainter(rooms),
-                          painter:
-                              FloorPlanPainter(
-                            rooms:
-                                rooms,
-                            transform:
-                                _transformPoint,
-                            selectedRoomId:
-                                _selectedRoomId,
-                            selectedFeatureId:
-                                _selectedFeatureId,
-                            formatLength: (length) =>
-                                _formatLength(
-                              length,
-                              measurementSystem,
+                      child: _trackPlanPointer(
+                        SizedBox.expand(
+                          child: CustomPaint(
+                            foregroundPainter: _planSelectionPainter(rooms),
+                            painter: FloorPlanPainter(
+                              rooms: rooms,
+                              transform: _transformPoint,
+                              selectedRoomId: _selectedRoomId,
+                              selectedFeatureId: _selectedFeatureId,
+                              formatLength: (length) =>
+                                  _formatLength(length, measurementSystem),
+                              formatOpeningDimensions: (feature) =>
+                                  _formatOpeningPlanDimensions(
+                                    feature,
+                                    measurementSystem,
+                                  ),
+                              sharedWallLabel: localizations.sharedWall,
+                              partialSharedWallLabel:
+                                  localizations.partialSharedWall,
+                              openRoomLabel: localizations.planOpenContour,
+                              continuationSelectionMode:
+                                  widget.selectContinuationOpening,
                             ),
-                            formatOpeningDimensions: (feature) =>
-                                _formatOpeningPlanDimensions(
-                              feature,
-                              measurementSystem,
-                            ),
-                            sharedWallLabel:
-                                localizations.sharedWall,
-                            partialSharedWallLabel:
-                                localizations.partialSharedWall,
-                            openRoomLabel: localizations.planOpenContour,
-                            continuationSelectionMode:
-                                widget.selectContinuationOpening,
                           ),
                         ),
-                      )),
+                      ),
                     ),
                   ),
-
                   if (_touchTransformMode)
                     Positioned(
                       left: 12,
@@ -2545,7 +2381,9 @@ class _FloorPlanViewerScreenState
                       bottom: 18,
                       child: SafeArea(
                         child: Material(
-                          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHigh,
                           elevation: 6,
                           borderRadius: BorderRadius.circular(16),
                           child: Padding(
@@ -2579,7 +2417,9 @@ class _FloorPlanViewerScreenState
                                     IconButton(
                                       tooltip: localizations.resetView,
                                       onPressed: _resetPlanZoom,
-                                      icon: const Icon(Icons.center_focus_strong),
+                                      icon: const Icon(
+                                        Icons.center_focus_strong,
+                                      ),
                                     ),
                                     IconButton(
                                       tooltip: localizations.zoomIn,
@@ -2587,7 +2427,8 @@ class _FloorPlanViewerScreenState
                                       icon: const Icon(Icons.zoom_in),
                                     ),
                                     IconButton(
-                                      tooltip: localizations.transformRoomsTitle,
+                                      tooltip:
+                                          localizations.transformRoomsTitle,
                                       onPressed: _showRoomTransformEditor,
                                       icon: const Icon(Icons.tune_rounded),
                                     ),
@@ -2599,40 +2440,25 @@ class _FloorPlanViewerScreenState
                         ),
                       ),
                     ),
-
                   Positioned(
                     left: 12,
                     top: 12,
-                    child:
-                        IgnorePointer(
+                    child: IgnorePointer(
                       child: Container(
-                        padding:
-                            const EdgeInsets
-                                .symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 8,                        ),                        decoration:
-                            BoxDecoration(
-                          color: Colors
-                              .black
-                              .withOpacity(
-                            0.72,
-                          ),
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
-                            12,
-                          ),
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.72),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${localizations.roomCount(rooms.length)} · '
                           '${_formatArea(provider.totalProjectArea, measurementSystem)}',
-                          style:
-                              const TextStyle(
-                            color:
-                                Colors.white,
-                            fontWeight:
-                                FontWeight
-                                    .w600,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
                             fontSize: 12,
                           ),
                         ),
@@ -2659,7 +2485,9 @@ class _FloorPlanViewerScreenState
                               style: TextStyle(
                                 color: hasAvailableOpenings
                                     ? Colors.white
-                                    : Theme.of(context).colorScheme.onErrorContainer,
+                                    : Theme.of(context)
+                                          .colorScheme
+                                          .onErrorContainer,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -2682,12 +2510,8 @@ class _FloorPlanViewerScreenState
 
   Future<void> _importProject() async {
     final localizations = AppLocalizations.of(context)!;
-    final provider =
-        context.read<
-            FloorPlanProvider>();
-    final result =
-        await ImportExportService
-            .importProject(
+    final provider = context.read<FloorPlanProvider>();
+    final result = await ImportExportService.importProject(
       provider,
       confirmReplacement: () async {
         if (provider.completedRooms.isEmpty) return true;
@@ -2717,17 +2541,12 @@ class _FloorPlanViewerScreenState
 
     switch (result) {
       case JsonImportResult.imported:
-        _showMessage(
-          localizations.planImportedSuccessfully,
-        );
+        _showMessage(localizations.planImportedSuccessfully);
         break;
       case JsonImportResult.cancelled:
         return;
       case JsonImportResult.invalid:
-        _showMessage(
-          localizations.planImportInvalid,
-          error: true,
-        );
+        _showMessage(localizations.planImportInvalid, error: true);
         break;
     }
   }
@@ -2754,17 +2573,13 @@ class _FloorPlanViewerScreenState
         title: Text(localizations.exportDestination),
         children: [
           SimpleDialogOption(
-            onPressed: () => Navigator.pop(
-              dialogContext,
-              ExportDestination.saveToFiles,
-            ),
+            onPressed: () =>
+                Navigator.pop(dialogContext, ExportDestination.saveToFiles),
             child: Text(localizations.saveToFiles),
           ),
           SimpleDialogOption(
-            onPressed: () => Navigator.pop(
-              dialogContext,
-              ExportDestination.share,
-            ),
+            onPressed: () =>
+                Navigator.pop(dialogContext, ExportDestination.share),
             child: Text(localizations.shareFile),
           ),
         ],
@@ -2804,13 +2619,10 @@ class _FloorPlanViewerScreenState
 
   Future<void> _saveJson(ExportDestination destination) async {
     final localizations = AppLocalizations.of(context)!;
-    final provider =
-        context.read<
-            FloorPlanProvider>();
+    final provider = context.read<FloorPlanProvider>();
 
     try {
-      await ImportExportService
-          .exportToJson(
+      await ImportExportService.exportToJson(
         provider.completedRooms,
         provider.projectName,
         destination: destination,
@@ -2832,7 +2644,8 @@ class _FloorPlanViewerScreenState
     _exportingDxf = true;
     try {
       await ImportExportService.exportToDxf(
-        provider.completedRooms, provider.projectName,
+        provider.completedRooms,
+        provider.projectName,
         languageCode: Localizations.localeOf(context).languageCode,
         destination: destination,
         sharePositionOrigin: _shareOrigin(),
@@ -2846,13 +2659,10 @@ class _FloorPlanViewerScreenState
 
   Future<void> _exportPdf(ExportDestination destination) async {
     final localizations = AppLocalizations.of(context)!;
-    final provider =
-        context.read<
-            FloorPlanProvider>();
+    final provider = context.read<FloorPlanProvider>();
 
     try {
-      await ImportExportService
-          .exportToPdf(
+      await ImportExportService.exportToPdf(
         provider.completedRooms,
         provider.projectName,
         context.read<MeasurementSettingsProvider>().system,
@@ -2904,82 +2714,50 @@ class _FloorPlanViewerScreenState
       if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
     }
   }
+
   // ===========================================================================
   // PUERTAS / VENTANAS
   // ===========================================================================  Future<void>
-      _showAddFeatureMenu({
+  _showAddFeatureMenu({
     required String roomId,
     required ARPoint location,
   }) async {
     final localizations = AppLocalizations.of(context)!;
-    final selected =
-        await showModalBottomSheet<
-            FeatureType>(
+    final selected = await showModalBottomSheet<FeatureType>(
       context: context,
-      builder: (
-        bottomSheetContext,
-      ) {
+      builder: (bottomSheetContext) {
         return SafeArea(
           child: Column(
-            mainAxisSize:
-                MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(
-                  Icons
-                      .add_location_alt,
-                ),
-                title: Text(
-                  localizations.addElement,
-                ),
-                subtitle: Text(
-                  localizations.selectElementToAdd,
-                ),
+                leading: const Icon(Icons.add_location_alt),
+                title: Text(localizations.addElement),
+                subtitle: Text(localizations.selectElementToAdd),
               ),
-              const Divider(
-                height: 1,
-              ),
+              const Divider(height: 1),
               ListTile(
-                leading:
-                    const Icon(
-                  Icons
-                      .door_front_door,
-                  color:
-                      Colors.red,
-                ),
+                leading: const Icon(Icons.door_front_door, color: Colors.red),
                 title: Text(localizations.door),
                 onTap: () {
-                  Navigator.pop(
-                    bottomSheetContext,
-                    FeatureType.door,                  );
+                  Navigator.pop(bottomSheetContext, FeatureType.door);
                 },
               ),
               ListTile(
-                leading:
-                    const Icon(
-                  Icons.window,
-                  color:
-                      Colors.blue,
-                ),
+                leading: const Icon(Icons.window, color: Colors.blue),
                 title: Text(localizations.window),
                 onTap: () {
-                  Navigator.pop(
-                    bottomSheetContext,
-                    FeatureType.window,
-                  );
+                  Navigator.pop(bottomSheetContext, FeatureType.window);
                 },
               ),
-              const SizedBox(
-                height: 8,
-              ),
+              const SizedBox(height: 8),
             ],
           ),
         );
       },
     );
 
-    if (selected == null ||
-        !mounted) {
+    if (selected == null || !mounted) {
       return;
     }
 
@@ -2988,54 +2766,63 @@ class _FloorPlanViewerScreenState
 
   @override
   Future<void> _placeOpeningOnWall(
-    String roomId, FeatureType type, {WallFeature? feature, int? initialWallIndex, ARPoint? initialLocation}
-  ) async {
+    String roomId,
+    FeatureType type, {
+    WallFeature? feature,
+    int? initialWallIndex,
+    ARPoint? initialLocation,
+  }) async {
     final provider = context.read<FloorPlanProvider>();
-    final room = provider.completedRooms.where((r) => r.id == roomId).firstOrNull;
+    final room = provider.completedRooms
+        .where((r) => r.id == roomId)
+        .firstOrNull;
     if (room == null || room.points.length < 2) return;
     final placement = await showOpeningPlacementDialog(
-      context: context, room: room, type: type,
+      context: context,
+      room: room,
+      type: type,
       system: context.read<MeasurementSettingsProvider>().system,
       initialFeature: feature,
-      initialWallIndex: initialWallIndex, initialLocation: initialLocation,
+      initialWallIndex: initialWallIndex,
+      initialLocation: initialLocation,
       includeClosingWall: room.isClosed,
     );
     if (!mounted || placement == null) return;
-    final current = provider.completedRooms.where((r) => r.id == roomId).firstOrNull;
+    final current = provider.completedRooms
+        .where((r) => r.id == roomId)
+        .firstOrNull;
     if (!identical(current, room)) return;
     final result = await provider.placeOpeningOnWall(
-      roomId: roomId, type: type, featureId: feature?.id,
-      wallIndex: placement.wallIndex, location: placement.location,
+      roomId: roomId,
+      type: type,
+      featureId: feature?.id,
+      wallIndex: placement.wallIndex,
+      location: placement.location,
       widthMeters: placement.width,
       openingHeightMeters: placement.openingHeightMeters,
       sillHeightMeters: placement.sillHeightMeters,
     );
     if (!mounted) return;
-    _showMessage(result.isSuccess
-        ? AppLocalizations.of(context)!.openingUpdated
-        : result.errorMessage ?? AppLocalizations.of(context)!.invalidOpeningMeasurement,
-        error: !result.isSuccess);
+    _showMessage(
+      result.isSuccess
+          ? AppLocalizations.of(context)!.openingUpdated
+          : result.errorMessage ??
+                AppLocalizations.of(context)!.invalidOpeningMeasurement,
+      error: !result.isSuccess,
+    );
   }
 
   @override
   Future<void> _showRoomListDialog() async {
     ModalRoute<dynamic>? roomListRoute;
-    final action =
-        await showModalBottomSheet<
-            _RoomListAction>(      context: context,
-      isScrollControlled: true,      builder: (
-        bottomSheetContext,
-      ) {
+    final action = await showModalBottomSheet<_RoomListAction>(
+      context: context,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
         roomListRoute = ModalRoute.of(bottomSheetContext);
-        return Consumer<
-            FloorPlanProvider>(
-          builder: (
-            context,
-            provider,
-            child,
-          ) {
-            final rooms =
-                provider.completedRooms;
+        return Consumer<FloorPlanProvider>(
+          builder: (context, provider, child) {
+            final rooms = provider.completedRooms;
             final localizations = AppLocalizations.of(context)!;
             final measurementSystem = context
                 .watch<MeasurementSettingsProvider>()
@@ -3043,17 +2830,10 @@ class _FloorPlanViewerScreenState
 
             return SafeArea(
               child: Padding(
-                padding:                    const EdgeInsets
-                        .fromLTRB(                  16,
-                  16,
-                  16,
-                  24,
-                ),
-                child: Column(                  mainAxisSize:
-                      MainAxisSize.min,
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
@@ -3062,148 +2842,98 @@ class _FloorPlanViewerScreenState
                             localizations.registeredRooms,
                             style: const TextStyle(
                               fontSize: 20,
-                              fontWeight:
-                                  FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         IconButton(
                           tooltip: localizations.close,
                           onPressed: () {
-                            Navigator.pop(
-                              bottomSheetContext,
-                            );
-                          },                          icon: const Icon(
-                            Icons.close,
-                          ),
+                            Navigator.pop(bottomSheetContext);
+                          },
+                          icon: const Icon(Icons.close),
                         ),
-                      ],                    ),
-                    const SizedBox(
-                      height: 8,
+                      ],
                     ),
-
+                    const SizedBox(height: 8),
                     if (rooms.isEmpty)
                       Padding(
-                        padding:
-                            const
-                            EdgeInsets.symmetric(
-                          vertical: 32,
-                        ),
-                        child: Center(
-                          child: Text(
-                            localizations.noRoomsYet,
-                          ),
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Center(child: Text(localizations.noRoomsYet)),
                       )
                     else
                       Flexible(
-                        child:
-                            ListView.separated(
+                        child: ListView.separated(
                           shrinkWrap: true,
-                          itemCount:
-                              rooms.length,
-                          separatorBuilder:
-                              (
-                            context,                            index,
-                          ) =>
-                                  const Divider(
-                            height: 1,
-                          ),
-                          itemBuilder:
-                              (
-                            context,
-                            index,
-                          ) {
-                            final room =
-                                rooms[index];
+                          itemCount: rooms.length,
+                          separatorBuilder: (context, index) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final room = rooms[index];
 
                             final area = PlanEditGeometry.area(room);
                             final perimeter = PlanEditGeometry.perimeter(room);
 
                             return ListTile(
-                              contentPadding:
-                                  EdgeInsets.zero,
-                              leading:
-                                  CircleAvatar(
-                                child: Text(
-                                  '${index + 1}',
-                                ),
+                              contentPadding: EdgeInsets.zero,
+                              leading: CircleAvatar(
+                                child: Text('${index + 1}'),
                               ),
-                              title: Text(
-                                room.name,
-                              ),
+                              title: Text(room.name),
                               subtitle: Text(
                                 localizations.roomSummary(
-                                  room.isClosed ? _formatArea(area, measurementSystem) : localizations.planOpenContour,
+                                  room.isClosed
+                                      ? _formatArea(area, measurementSystem)
+                                      : localizations.planOpenContour,
                                   _formatLength(perimeter, measurementSystem),
                                   room.points.length,
                                 ),
                               ),
-                              trailing:
-                                  PopupMenuButton<
-                                      _RoomListActionType>(
+                              trailing: PopupMenuButton<_RoomListActionType>(
                                 key: ValueKey('room-actions-${room.id}'),
                                 tooltip: localizations.actions,
-                                onSelected:
-                                    (
-                                  type,
-                                ) {
+                                onSelected: (type) {
                                   Navigator.pop(
                                     bottomSheetContext,
                                     _RoomListAction(
                                       type: type,
-                                      roomId:
-                                          room.id,
+                                      roomId: room.id,
                                     ),
                                   );
                                 },
-                                itemBuilder:
-                                    (
-                                  context,
-                                ) {
+                                itemBuilder: (context) {
                                   return [
                                     PopupMenuItem(
                                       value:
-                                          _RoomListActionType
-                                              .editMeasurements,
-                                      child:
-                                          ListTile(
+                                          _RoomListActionType.editMeasurements,
+                                      child: ListTile(
                                         dense: true,
-                                        leading:
-                                            Icon(
-                                          Icons
-                                              .straighten_outlined,
+                                        leading: Icon(
+                                          Icons.straighten_outlined,
                                         ),
-                                        title:
-                                            Text(
+                                        title: Text(
                                           localizations.editMeasurements,
                                         ),
                                       ),
                                     ),
                                     PopupMenuItem(
-                                      value:
-                                          _RoomListActionType
-                                              .rename,
-                                      child:
-                                          ListTile(
+                                      value: _RoomListActionType.rename,
+                                      child: ListTile(
                                         dense: true,
-                                        leading:
-                                            Icon(
-                                          Icons
-                                              .edit_outlined,
-                                        ),
-                                        title:
-                                            Text(
-                                          localizations.rename,
-                                        ),
+                                        leading: Icon(Icons.edit_outlined),
+                                        title: Text(localizations.rename),
                                       ),
                                     ),
                                     PopupMenuItem(
                                       value: _RoomListActionType.delete,
                                       child: ListTile(
                                         dense: true,
-                                        leading: const Icon(Icons.delete_forever_outlined),
-                                        title: Text(localizations.planDeleteRoom),
+                                        leading: const Icon(
+                                          Icons.delete_forever_outlined,
+                                        ),
+                                        title: Text(
+                                          localizations.planDeleteRoom,
+                                        ),
                                       ),
                                     ),
                                   ];
@@ -3213,34 +2943,21 @@ class _FloorPlanViewerScreenState
                           },
                         ),
                       ),
-
-                    if (rooms.length >
-                        1) ...[
-                      const SizedBox(
-                        height: 12,
-                      ),
+                    if (rooms.length > 1) ...[
+                      const SizedBox(height: 12),
                       SizedBox(
-                        width:
-                            double.infinity,
-                        child:
-                            OutlinedButton.icon(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
                           onPressed: () {
                             Navigator.pop(
                               bottomSheetContext,
                               const _RoomListAction(
-                                type:
-                                    _RoomListActionType
-                                        .organize,
+                                type: _RoomListActionType.organize,
                               ),
                             );
                           },
-                          icon: const Icon(
-                            Icons
-                                .grid_view_rounded,
-                          ),
-                          label: Text(
-                            localizations.organizeRooms,
-                          ),
+                          icon: const Icon(Icons.grid_view_rounded),
+                          label: Text(localizations.organizeRooms),
                         ),
                       ),
                     ],
@@ -3254,8 +2971,7 @@ class _FloorPlanViewerScreenState
     );
 
     await roomListRoute?.completed;
-    if (action == null ||
-        !mounted) {
+    if (action == null || !mounted) {
       return;
     }
 
@@ -3264,51 +2980,35 @@ class _FloorPlanViewerScreenState
         final room = _findRoom(action.roomId);
         if (room != null) await _deletePlanRoom(room);
         break;
-      case _RoomListActionType
-            .editMeasurements:
-        await _openMeasurementEditor(
-          roomId:
-              action.roomId,
-        );
+      case _RoomListActionType.editMeasurements:
+        await _openMeasurementEditor(roomId: action.roomId);
         break;
 
-      case _RoomListActionType
-            .rename:
-        final room =
-            _findRoom(
-          action.roomId,
-        );
+      case _RoomListActionType.rename:
+        final room = _findRoom(action.roomId);
         if (room != null) {
-          await _editRoomName(
-            room,          );
+          await _editRoomName(room);
         }
         break;
 
-      case _RoomListActionType
-            .organize:
+      case _RoomListActionType.organize:
         await _organizeRooms();
         break;
     }
   }
 
-  RoomModel? _findRoom(
-    String? roomId,
-  ) {
+  RoomModel? _findRoom(String? roomId) {
     if (roomId == null) {
       return null;
     }
 
-    final rooms =
-        context
-            .read<
-                FloorPlanProvider>()
-            .completedRooms;
+    final rooms = context.read<FloorPlanProvider>().completedRooms;
 
     for (final room in rooms) {
-      if (room.id ==
-          roomId) {
+      if (room.id == roomId) {
         return room;
-      }    }
+      }
+    }
     return null;
   }
 
@@ -3316,84 +3016,55 @@ class _FloorPlanViewerScreenState
   // RENOMBRAR AMBIENTE
   // ===========================================================================
 
-  Future<void> _editRoomName(
-    RoomModel room,
-  ) async {
+  Future<void> _editRoomName(RoomModel room) async {
     final localizations = AppLocalizations.of(context)!;
-    final controller =
-        TextEditingController(      text: room.name,
-    );
+    final controller = TextEditingController(text: room.name);
 
-    final newName =
-        await showDialog<String>(
+    final newName = await showDialog<String>(
       context: context,
-      builder: (
-        dialogContext,
-      ) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: Text(
-            localizations.renameRoom,
-          ),
+          title: Text(localizations.renameRoom),
           content: TextField(
-            controller:
-                controller,
+            controller: controller,
             autofocus: true,
-            textCapitalization:
-                TextCapitalization
-                    .sentences,
-            decoration:
-                InputDecoration(
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
               labelText: localizations.roomNameShortLabel,
-              hintText:
-                  localizations.roomNameMainBedroomExample,
-              border:
-                  const OutlineInputBorder(),
+              hintText: localizations.roomNameMainBedroomExample,
+              border: const OutlineInputBorder(),
             ),
-            onSubmitted:
-                (value) {
-              Navigator.pop(
-                dialogContext,
-                value.trim(),
-              );
+            onSubmitted: (value) {
+              Navigator.pop(dialogContext, value.trim());
             },
           ),
           actions: [
-            TextButton(              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                );
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
               },
-              child: Text(
-                localizations.cancel,
-              ),
+              child: Text(localizations.cancel),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  controller.text
-                      .trim(),
-                );
+                Navigator.pop(dialogContext, controller.text.trim());
               },
-              child: Text(
-                localizations.save,              ),
+              child: Text(localizations.save),
             ),
           ],
-        );      },
+        );
+      },
     );
 
     controller.dispose();
-    if (newName == null ||
-        newName.trim().isEmpty ||        !mounted) {
+    if (newName == null || newName.trim().isEmpty || !mounted) {
       return;
     }
 
-    await context
-        .read<FloorPlanProvider>()
-        .updateRoomName(
-          room.id,
-          newName.trim(),
-        );
+    await context.read<FloorPlanProvider>().updateRoomName(
+      room.id,
+      newName.trim(),
+    );
   }
 
   // ===========================================================================
@@ -3401,10 +3072,7 @@ class _FloorPlanViewerScreenState
   // ===========================================================================
 
   @override
-  void _showMessage(
-    String message, {
-    bool error = false,
-  }) {
+  void _showMessage(String message, {bool error = false}) {
     if (!mounted) {
       return;
     }
@@ -3413,18 +3081,14 @@ class _FloorPlanViewerScreenState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          behavior:
-              SnackBarBehavior.floating,
-          backgroundColor:
-              error
-                  ? Colors.red.shade700
-                  : null,
-          content: Text(            message,
-          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: error ? Colors.red.shade700 : null,
+          content: Text(message),
         ),
       );
   }
 }
+
 // =============================================================================
 // ACCIONES
 // =============================================================================
@@ -3440,29 +3104,23 @@ enum _ExportFormat { json, svg, png, jpg, pdf, dxf }
 
 extension on _ExportFormat {
   String label(AppLocalizations localizations) => switch (this) {
-        _ExportFormat.json => localizations.exportJson,
-        _ExportFormat.svg => localizations.exportSvg,
-        _ExportFormat.png => localizations.exportPng,
-        _ExportFormat.jpg => localizations.exportJpg,
-        _ExportFormat.pdf => localizations.exportPdf,
-        _ExportFormat.dxf => localizations.exportDxf,
-      };
+    _ExportFormat.json => localizations.exportJson,
+    _ExportFormat.svg => localizations.exportSvg,
+    _ExportFormat.png => localizations.exportPng,
+    _ExportFormat.jpg => localizations.exportJpg,
+    _ExportFormat.pdf => localizations.exportPdf,
+    _ExportFormat.dxf => localizations.exportDxf,
+  };
 }
-enum _RoomListActionType {
-  delete,
-  editMeasurements,
-  rename,
-  organize,
-}
+
+enum _RoomListActionType { delete, editMeasurements, rename, organize }
+
 class _RoomListAction {
   final _RoomListActionType type;
 
   final String? roomId;
 
-  const _RoomListAction({
-    required this.type,
-    this.roomId,
-  });
+  const _RoomListAction({required this.type, this.roomId});
 }
 
 enum _FeatureMenuAction {
@@ -3492,24 +3150,16 @@ class _FeatureSelection {
   final String roomId;
   final WallFeature feature;
 
-  const _FeatureSelection({
-    required this.roomId,
-    required this.feature,
-  });
+  const _FeatureSelection({required this.roomId, required this.feature});
 }
 
 class _OpeningDirectionPainter extends CustomPainter {
   final Offset openingDirection;
 
-  const _OpeningDirectionPainter({
-    required this.openingDirection,
-  });
+  const _OpeningDirectionPainter({required this.openingDirection});
   @override
   void paint(Canvas canvas, Size size) {
-    final midpoint = Offset(
-      size.width / 2.0,
-      size.height / 2.0,
-    );
+    final midpoint = Offset(size.width / 2.0, size.height / 2.0);
     final length = openingDirection.distance;
     final tangent = length <= 0.000001
         ? const Offset(1, 0)
@@ -3530,35 +3180,13 @@ class _OpeningDirectionPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(start, end, openingPaint);
-    _drawArrow(
-      canvas,      midpoint,
-      midpoint + normal * arrowLength,
-      arrowPaint,
-    );
-    _drawArrow(
-      canvas,
-      midpoint,
-      midpoint - normal * arrowLength,
-      arrowPaint,
-    );
-    canvas.drawCircle(
-      start,
-      9,
-      Paint()..color = const Color(0xFF00C853),
-    );
-    canvas.drawCircle(
-      start,
-      3,
-      Paint()..color = Colors.white,
-    );
+    _drawArrow(canvas, midpoint, midpoint + normal * arrowLength, arrowPaint);
+    _drawArrow(canvas, midpoint, midpoint - normal * arrowLength, arrowPaint);
+    canvas.drawCircle(start, 9, Paint()..color = const Color(0xFF00C853));
+    canvas.drawCircle(start, 3, Paint()..color = Colors.white);
   }
 
-  void _drawArrow(
-    Canvas canvas,
-    Offset start,
-    Offset end,
-    Paint paint,
-  ) {
+  void _drawArrow(Canvas canvas, Offset start, Offset end, Paint paint) {
     canvas.drawLine(start, end, paint);
     final delta = end - start;
     final length = delta.distance;
@@ -3569,63 +3197,41 @@ class _OpeningDirectionPainter extends CustomPainter {
 
     final direction = delta / length;
     final perpendicular = Offset(-direction.dy, direction.dx);
-    canvas.drawLine(
-      end,
-      end - direction * 10 + perpendicular * 8,
-      paint,
-    );
-    canvas.drawLine(
-      end,
-      end - direction * 10 - perpendicular * 8,
-      paint,
-    );
+    canvas.drawLine(end, end - direction * 10 + perpendicular * 8, paint);
+    canvas.drawLine(end, end - direction * 10 - perpendicular * 8, paint);
   }
 
   @override
-  bool shouldRepaint(
-    covariant _OpeningDirectionPainter oldDelegate,
-  ) => false;
+  bool shouldRepaint(covariant _OpeningDirectionPainter oldDelegate) => false;
 }
 
 class _EmptyPlanView extends StatelessWidget {
   const _EmptyPlanView();
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     return Center(
-      child: Padding(        padding: const EdgeInsets.all(24),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons
-                  .architecture_outlined,
+              Icons.architecture_outlined,
               size: 72,
               color: Colors.black38,
             ),
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
             Text(
               localizations.noScannedRooms,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight:
-                    FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
             Text(
               localizations.completeScanToViewPlan,
-              textAlign:
-                  TextAlign.center,              style: const TextStyle(
-                color: Colors.black54,              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.black54),
             ),
           ],
         ),
@@ -3675,10 +3281,7 @@ class _PreviewLegend extends StatelessWidget {
   final Color color;
   final String label;
 
-  const _PreviewLegend({
-    required this.color,
-    required this.label,
-  });
+  const _PreviewLegend({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -3703,9 +3306,7 @@ class _PreviewLegend extends StatelessWidget {
 class _AlignmentPreviewPainter extends CustomPainter {
   final WallAlignmentPreview preview;
 
-  const _AlignmentPreviewPainter({
-    required this.preview,
-  });
+  const _AlignmentPreviewPainter({required this.preview});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -3743,15 +3344,16 @@ class _AlignmentPreviewPainter extends CustomPainter {
     );
 
     Offset transform(ARPoint point) => Offset(
-          origin.dx + (point.x - minX) * scale,
-          origin.dy + (point.z - minZ) * scale,
-        );
+      origin.dx + (point.x - minX) * scale,
+      origin.dy + (point.z - minZ) * scale,
+    );
 
     void drawRoom(RoomModel room, Paint paint) {
       if (room.points.length < 2) {
         return;
       }
-      final path = Path()..moveTo(
+      final path = Path()
+        ..moveTo(
           transform(room.points.first).dx,
           transform(room.points.first).dy,
         );
@@ -3801,19 +3403,14 @@ class _AlignmentPreviewPainter extends CustomPainter {
   }
 }
 
-class FloorPlanPainter
-    extends CustomPainter {
+class FloorPlanPainter extends CustomPainter {
   final List<RoomModel> rooms;
 
-  final Offset Function(
-    ARPoint,
-  ) transform;
+  final Offset Function(ARPoint) transform;
   final String? selectedRoomId;
   final String? selectedFeatureId;
-  final String Function(double)
-      formatLength;
-  final String Function(WallFeature)
-      formatOpeningDimensions;
+  final String Function(double) formatLength;
+  final String Function(WallFeature) formatOpeningDimensions;
   final String sharedWallLabel;
   final String partialSharedWallLabel;
   final String openRoomLabel;
@@ -3835,71 +3432,38 @@ class FloorPlanPainter
   });
 
   @override
-  void paint(
-    Canvas canvas,
-    Size size,  ) {
+  void paint(Canvas canvas, Size size) {
     if (rooms.isEmpty) {
       return;
     }
 
     _occupiedLabelRects.clear();
 
-    final wallPaint =
-        Paint()
-          ..color =
-              const Color(
-            0xFF448AFF,
-          )
-          ..strokeWidth = 3.0
-          ..style =
-              PaintingStyle.stroke
-          ..strokeJoin =
-              StrokeJoin.round
-          ..strokeCap =
-              StrokeCap.round;
+    final wallPaint = Paint()
+      ..color = const Color(0xFF448AFF)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
 
-    final roomFill =
-        Paint()
-          ..color =
-              const Color(
-            0xFF448AFF,
-          ).withOpacity(
-            0.10,
-          )
-          ..style =
-              PaintingStyle.fill;
+    final roomFill = Paint()
+      ..color = const Color(0xFF448AFF).withOpacity(0.10)
+      ..style = PaintingStyle.fill;
 
-    final pointPaint =
-        Paint()
-          ..color =
-              const Color(
-            0xFF448AFF,
-          )
-          ..style =
-              PaintingStyle.fill;
-    final doorPaint =
-        Paint()
-          ..color =
-              const Color(
-            0xFFFF8A00,
-          )
-          ..strokeWidth = 5.0
-          ..style =
-              PaintingStyle.stroke
-          ..strokeCap =
-              StrokeCap.square;
+    final pointPaint = Paint()
+      ..color = const Color(0xFF448AFF)
+      ..style = PaintingStyle.fill;
+    final doorPaint = Paint()
+      ..color = const Color(0xFFFF8A00)
+      ..strokeWidth = 5.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
 
-    final windowPaint =
-        Paint()
-          ..color =
-              const Color(
-            0xFFD500F9,
-          )
-          ..strokeWidth = 5.0
-          ..style =
-              PaintingStyle.stroke
-          ..strokeCap =
-              StrokeCap.square;
+    final windowPaint = Paint()
+      ..color = const Color(0xFFD500F9)
+      ..strokeWidth = 5.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
 
     final selectedPaint = Paint()
       ..color = const Color(0xFF00C853)
@@ -3921,14 +3485,12 @@ class FloorPlanPainter
     final dimensionedFeatureIds = <String>{};
     final featureOwnerRoomIds = <String, String>{};
     final sharedWalls = SharedWallService.detect(rooms: rooms);
-    final hiddenWallIntervals =
-        _buildHiddenWallIntervals(sharedWalls);
+    final hiddenWallIntervals = _buildHiddenWallIntervals(sharedWalls);
     final hiddenDimensionWalls = hiddenWallIntervals.entries
         .where(
           (entry) => entry.value.any(
             (interval) =>
-                interval.start <= 0.000001 &&
-                interval.end >= 0.999999,
+                interval.start <= 0.000001 && interval.end >= 0.999999,
           ),
         )
         .map((entry) => entry.key)
@@ -3936,13 +3498,9 @@ class FloorPlanPainter
 
     for (final room in rooms) {
       for (final feature in room.features) {
-        featureOwnerRoomIds.putIfAbsent(
-          feature.id,
-          () => room.id,
-        );
+        featureOwnerRoomIds.putIfAbsent(feature.id, () => room.id);
 
-        if (room.id == selectedRoomId &&
-            feature.id == selectedFeatureId) {
+        if (room.id == selectedRoomId && feature.id == selectedFeatureId) {
           featureOwnerRoomIds[feature.id] = room.id;
         }
       }
@@ -3957,20 +3515,12 @@ class FloorPlanPainter
         pointPaint,
         hiddenWallIntervals,
       );
-
     }
 
-    _drawSharedWalls(
-      canvas,
-      sharedWalls,
-    );
+    _drawSharedWalls(canvas, sharedWalls);
 
     for (final room in rooms) {
-
-      _drawRoomLabel(
-        canvas,
-        room,
-      );
+      _drawRoomLabel(canvas, room);
 
       _drawFeatures(
         canvas,
@@ -3988,7 +3538,6 @@ class FloorPlanPainter
         dimensionedFeatureIds: dimensionedFeatureIds,
       );
     }
-
   }
 
   // ===========================================================================
@@ -4009,43 +3558,26 @@ class FloorPlanPainter
 
     final path = Path();
 
-    final start =
-        transform(
-      room.points.first,
-    );
+    final start = transform(room.points.first);
 
-    path.moveTo(
-      start.dx,
-      start.dy,
-    );
+    path.moveTo(start.dx, start.dy);
 
-    for (
-      int i = 1;
-      i < room.points.length;      i++
-    ) {
-      final next =
-          transform(
-        room.points[i],
-      );
+    for (int i = 1; i < room.points.length; i++) {
+      final next = transform(room.points[i]);
 
-      path.lineTo(
-        next.dx,
-        next.dy,
-      );    }
-    if (room.isClosed) { path.close();
+      path.lineTo(next.dx, next.dy);
+    }
+    if (room.isClosed) {
+      path.close();
     }
     if (room.isClosed && room.points.length >= 3) {
-      canvas.drawPath(
-        path,        roomFill,
-      );
+      canvas.drawPath(path, roomFill);
     }
 
     final wallCount = room.isClosed
         ? room.points.length
         : room.points.length - 1;
-    for (var wallIndex = 0;
-        wallIndex < wallCount;
-        wallIndex++) {
+    for (var wallIndex = 0; wallIndex < wallCount; wallIndex++) {
       final wallStart = transform(room.points[wallIndex]);
       final wallEnd = transform(
         room.points[(wallIndex + 1) % room.points.length],
@@ -4055,20 +3587,13 @@ class FloorPlanPainter
         start: wallStart,
         end: wallEnd,
         paint: wallPaint,
-        hiddenIntervals: hiddenWallIntervals[
-              _WallIdentity(room.id, wallIndex)
-            ] ??
-            const [],
+        hiddenIntervals:
+            hiddenWallIntervals[_WallIdentity(room.id, wallIndex)] ?? const [],
       );
     }
 
-    for (final point
-        in room.points) {
-      canvas.drawCircle(
-        transform(point),
-        4.0,
-        pointPaint,
-      );
+    for (final point in room.points) {
+      canvas.drawCircle(transform(point), 4.0, pointPaint);
     }
   }
 
@@ -4081,9 +3606,8 @@ class FloorPlanPainter
         (candidate) => candidate.id == sharedWall.secondRoomId,
       );
       final wallStart = room.points[sharedWall.secondWallIndex];
-      final wallEnd = room.points[
-        (sharedWall.secondWallIndex + 1) % room.points.length
-      ];
+      final wallEnd =
+          room.points[(sharedWall.secondWallIndex + 1) % room.points.length];
       final dx = wallEnd.x - wallStart.x;
       final dz = wallEnd.z - wallStart.z;
       final lengthSquared = dx * dx + dz * dz;
@@ -4091,8 +3615,7 @@ class FloorPlanPainter
         continue;
       }
       double projection(ARPoint point) {
-        return (((point.x - wallStart.x) * dx +
-                    (point.z - wallStart.z) * dz) /
+        return (((point.x - wallStart.x) * dx + (point.z - wallStart.z) * dz) /
                 lengthSquared)
             .clamp(0.0, 1.0)
             .toDouble();
@@ -4102,18 +3625,10 @@ class FloorPlanPainter
       final second = projection(sharedWall.end);
       intervals
           .putIfAbsent(
-            _WallIdentity(
-              sharedWall.secondRoomId,
-              sharedWall.secondWallIndex,
-            ),
+            _WallIdentity(sharedWall.secondRoomId, sharedWall.secondWallIndex),
             () => [],
           )
-          .add(
-            _WallInterval(
-              math.min(first, second),
-              math.max(first, second),
-            ),
-          );
+          .add(_WallInterval(math.min(first, second), math.max(first, second)));
     }
     return intervals;
   }
@@ -4146,18 +3661,11 @@ class FloorPlanPainter
       visibleStart = math.max(visibleStart, hiddenEnd);
     }
     if (visibleStart < 1.0 - 0.000001) {
-      canvas.drawLine(
-        Offset.lerp(start, end, visibleStart)!,
-        end,
-        paint,
-      );
+      canvas.drawLine(Offset.lerp(start, end, visibleStart)!, end, paint);
     }
   }
 
-  void _drawSharedWalls(
-    Canvas canvas,
-    List<SharedWallSegment> sharedWalls,
-  ) {
+  void _drawSharedWalls(Canvas canvas, List<SharedWallSegment> sharedWalls) {
     final completePaint = Paint()
       ..color = const Color(0xFF00695C)
       ..strokeWidth = 4.5
@@ -4175,13 +3683,8 @@ class FloorPlanPainter
     for (final sharedWall in sharedWalls) {
       final start = transform(sharedWall.start);
       final end = transform(sharedWall.end);
-      final isPartial =
-          sharedWall.coverage == SharedWallCoverage.partial;
-      canvas.drawLine(
-        start,
-        end,
-        isPartial ? partialPaint : completePaint,
-      );
+      final isPartial = sharedWall.coverage == SharedWallCoverage.partial;
+      canvas.drawLine(start, end, isPartial ? partialPaint : completePaint);
       if (isPartial) {
         canvas.drawCircle(start, 3.5, endpointPaint);
         canvas.drawCircle(end, 3.5, endpointPaint);
@@ -4193,35 +3696,27 @@ class FloorPlanPainter
   // NOMBRE Y SUPERFICIE
   // ===========================================================================
 
-  void _drawRoomLabel(
-    Canvas canvas,
-    RoomModel room,
-  ) {
+  void _drawRoomLabel(Canvas canvas, RoomModel room) {
     if (room.points.isEmpty) {
       return;
     }
 
-    double x = 0.0;    double y = 0.0;
+    double x = 0.0;
+    double y = 0.0;
 
-    for (final point
-        in room.points) {
-      final transformed =
-          transform(point);
+    for (final point in room.points) {
+      final transformed = transform(point);
 
       x += transformed.dx;
       y += transformed.dy;
     }
 
-    final center = Offset(
-      x / room.points.length,
-      y / room.points.length,
-    );
+    final center = Offset(x / room.points.length, y / room.points.length);
 
     final screenBounds = _boundsForPoints(
       room.points.map(transform).toList(growable: false),
     );
-    final compact =
-        screenBounds.width < 105 || screenBounds.height < 54;
+    final compact = screenBounds.width < 105 || screenBounds.height < 54;
 
     final textPainter = TextPainter(
       text: TextSpan(
@@ -4277,32 +3772,20 @@ class FloorPlanPainter
       }
     }
     _occupiedLabelRects.add(backgroundRect.inflate(2));
-    final backgroundPaint =
-        Paint()
-          ..color = Colors.white
-              .withOpacity(
-            0.86,
-          )
-          ..style =
-              PaintingStyle.fill;
+    final backgroundPaint = Paint()
+      ..color = Colors.white.withOpacity(0.86)
+      ..style = PaintingStyle.fill;
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        backgroundRect,
-        const Radius.circular(
-          7,
-        ),
-      ),
+      RRect.fromRectAndRadius(backgroundRect, const Radius.circular(7)),
       backgroundPaint,
     );
 
     textPainter.paint(
       canvas,
       Offset(
-        labelCenter.dx -
-            textPainter.width / 2,
-        labelCenter.dy -
-            textPainter.height / 2,
+        labelCenter.dx - textPainter.width / 2,
+        labelCenter.dy - textPainter.height / 2,
       ),
     );
   }
@@ -4335,14 +3818,12 @@ class FloorPlanPainter
     );
 
     final placements = DimensionLayout.layout(
-      dimensions.map(
-        (dimension) {
-          if (dimension.kind == DimensionKind.opening) {
-            dimensionedFeatureIds.add(dimension.id);
-          }
-          return dimension;
-        },
-      ),
+      dimensions.map((dimension) {
+        if (dimension.kind == DimensionKind.opening) {
+          dimensionedFeatureIds.add(dimension.id);
+        }
+        return dimension;
+      }),
       suppressRedundantOverallSegments: true,
       strictHierarchy: true,
     );
@@ -4380,12 +3861,7 @@ class FloorPlanPainter
       );
       canvas.drawLine(dimensionStart, dimensionEnd, dimensionPaint);
 
-      _drawIsoDimensionArrow(
-        canvas,
-        dimensionStart,
-        tangent,
-        dimensionPaint,
-      );
+      _drawIsoDimensionArrow(canvas, dimensionStart, tangent, dimensionPaint);
       _drawIsoDimensionArrow(
         canvas,
         dimensionEnd,
@@ -4395,15 +3871,15 @@ class FloorPlanPainter
 
       final label = switch (dimension.kind) {
         DimensionKind.opening => _openingDimensionLabelForId(
-            room,
-            dimension.id,
-          ),
+          room,
+          dimension.id,
+        ),
         DimensionKind.wall => formatLength(
-            _dimensionLengthMeters(room, dimension),
-          ),
+          _dimensionLengthMeters(room, dimension),
+        ),
         DimensionKind.total => formatLength(
-            _dimensionLengthMeters(room, dimension),
-          ),
+          _dimensionLengthMeters(room, dimension),
+        ),
       };
       if (label.isEmpty) {
         continue;
@@ -4473,22 +3949,11 @@ class FloorPlanPainter
     const arrowLength = 7.0;
     const arrowHalfWidth = 2.4;
     final base = tip + unit * arrowLength;
-    canvas.drawLine(
-      tip,
-      base + normal * arrowHalfWidth,
-      paint,
-    );
-    canvas.drawLine(
-      tip,
-      base - normal * arrowHalfWidth,
-      paint,
-    );
+    canvas.drawLine(tip, base + normal * arrowHalfWidth, paint);
+    canvas.drawLine(tip, base - normal * arrowHalfWidth, paint);
   }
 
-  String _openingDimensionLabelForId(
-    RoomModel room,
-    String dimensionId,
-  ) {
+  String _openingDimensionLabelForId(RoomModel room, String dimensionId) {
     final marker = ':opening:';
     final markerIndex = dimensionId.indexOf(marker);
     if (markerIndex < 0) {
@@ -4503,10 +3968,7 @@ class FloorPlanPainter
     return '';
   }
 
-  double _dimensionLengthMeters(
-    RoomModel room,
-    DimensionSegment dimension,
-  ) {
+  double _dimensionLengthMeters(RoomModel room, DimensionSegment dimension) {
     final pointByScreen = <ARPoint>[];
     for (final point in room.points) {
       final screen = transform(point);
@@ -4652,32 +4114,20 @@ class FloorPlanPainter
     Paint referencePaint,
     Map<String, String> featureOwnerRoomIds,
   ) {
-    for (final feature
-        in room.features) {
+    for (final feature in room.features) {
       if (featureOwnerRoomIds[feature.id] != room.id) {
         continue;
       }
 
-      final start =
-          transform(
-        feature.start,
-      );
+      final start = transform(feature.start);
 
-      final end =
-          transform(
-        feature.end,
-      );
+      final end = transform(feature.end);
 
       final isSelected =
-          room.id == selectedRoomId &&
-              feature.id == selectedFeatureId;
+          room.id == selectedRoomId && feature.id == selectedFeatureId;
 
       if (isSelected) {
-        canvas.drawLine(
-          start,
-          end,
-          selectedPaint,
-        );
+        canvas.drawLine(start, end, selectedPaint);
       }
 
       switch (feature.type) {
@@ -4696,7 +4146,8 @@ class FloorPlanPainter
             canvas: canvas,
             start: start,
             end: end,
-            paint: windowPaint,          );
+            paint: windowPaint,
+          );
           break;
       }
 
@@ -4735,30 +4186,27 @@ class FloorPlanPainter
 
     final tangent = opening / width;
     final leftNormal = Offset(-tangent.dy, tangent.dx);
-    final baseSwingNormal =
-        feature.doorSwingSide == DoorSwingSide.left
-            ? leftNormal
-            : -leftNormal;
+    final baseSwingNormal = feature.doorSwingSide == DoorSwingSide.left
+        ? leftNormal
+        : -leftNormal;
     final swingNormal =
         feature.doorOpeningDirection == DoorOpeningDirection.interior
-            ? baseSwingNormal
-            : -baseSwingNormal;
-    final hinge = feature.doorHingeSide == DoorHingeSide.start
-        ? start
-        : end;
-    final latch = feature.doorHingeSide == DoorHingeSide.start
-        ? end
-        : start;
+        ? baseSwingNormal
+        : -baseSwingNormal;
+    final hinge = feature.doorHingeSide == DoorHingeSide.start ? start : end;
+    final latch = feature.doorHingeSide == DoorHingeSide.start ? end : start;
     final closedDirection = (latch - hinge) / width;
     final erasePaint = Paint()
       ..color = Colors.white
       ..strokeWidth = 7
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
-    final symbolPaint = Paint()      ..color = paint.color
+    final symbolPaint = Paint()
+      ..color = paint.color
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.square;    final leafEnd = hinge + swingNormal * width;
+      ..strokeCap = StrokeCap.square;
+    final leafEnd = hinge + swingNormal * width;
 
     // Interrumpe gráficamente la pared en el ancho real de la puerta.
     canvas.drawLine(start, end, erasePaint);
@@ -4773,24 +4221,12 @@ class FloorPlanPainter
         ..style = PaintingStyle.fill,
     );
 
-    final startAngle = math.atan2(
-      closedDirection.dy,
-      closedDirection.dx,
-    );
-    final inwardAngle = math.atan2(
-      swingNormal.dy,
-      swingNormal.dx,
-    );
-    final sweepAngle = _shortestSweep(
-      startAngle,
-      inwardAngle,
-    );
+    final startAngle = math.atan2(closedDirection.dy, closedDirection.dx);
+    final inwardAngle = math.atan2(swingNormal.dy, swingNormal.dx);
+    final sweepAngle = _shortestSweep(startAngle, inwardAngle);
 
     canvas.drawArc(
-      Rect.fromCircle(
-        center: hinge,
-        radius: width,
-      ),
+      Rect.fromCircle(center: hinge, radius: width),
       startAngle,
       sweepAngle,
       false,
@@ -4799,7 +4235,8 @@ class FloorPlanPainter
   }
 
   void _drawProfessionalWindow({
-    required Canvas canvas,    required Offset start,
+    required Canvas canvas,
+    required Offset start,
     required Offset end,
     required Paint paint,
   }) {
@@ -4835,21 +4272,11 @@ class FloorPlanPainter
       end - normal * railOffset,
       symbolPaint,
     );
-    canvas.drawLine(
-      start - normal * 5,
-      start + normal * 5,
-      symbolPaint,    );
-    canvas.drawLine(
-      end - normal * 5,
-      end + normal * 5,
-      symbolPaint,
-    );
+    canvas.drawLine(start - normal * 5, start + normal * 5, symbolPaint);
+    canvas.drawLine(end - normal * 5, end + normal * 5, symbolPaint);
   }
 
-  double _shortestSweep(
-    double startAngle,
-    double endAngle,
-  ) {
+  double _shortestSweep(double startAngle, double endAngle) {
     var sweep = endAngle - startAngle;
 
     while (sweep > math.pi) {
@@ -4869,28 +4296,16 @@ class FloorPlanPainter
     Paint referencePaint, {
     required bool selected,
   }) {
-    canvas.drawCircle(
-      point,
-      selected ? 10 : 8,
-      referencePaint,
-    );
+    canvas.drawCircle(point, selected ? 10 : 8, referencePaint);
 
-    canvas.drawCircle(
-      point,
-      selected ? 4 : 3,
-      Paint()..color = Colors.white,
-    );
+    canvas.drawCircle(point, selected ? 4 : 3, Paint()..color = Colors.white);
   }
-
 
   // REPAINT
   // ===========================================================================
 
   @override
-  bool shouldRepaint(
-    covariant FloorPlanPainter
-        oldDelegate,
-  ) {
+  bool shouldRepaint(covariant FloorPlanPainter oldDelegate) {
     return true;
   }
 }

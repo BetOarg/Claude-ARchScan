@@ -538,5 +538,11 @@
   "continueFromSelectedVertexTitle": "Continue from this vertex?",
   "continueFromSelectedVertexBody": "The highlighted vertex will be the start. In AR you will first mark the previous vertex and then this point to preserve the wall orientation.",
   "areaSummaryTitle": "Project areas",
-  "totalAreaLabel": "Total area"
+  "totalAreaLabel": "Total area",
+  "validationTooCloseToPreviousPoint": "The point is too close to the previous point.",
+  "validationDuplicatePoint": "This point is too close to an existing corner.",
+  "validationSelfIntersection": "The change would create a crossing in the plan.",
+  "validationInsufficientCorners": "At least 3 corners are required.",
+  "validationInsufficientArea": "The room area is too small.",
+  "validationInvalidGeometry": "The geometry is not valid." 
 }

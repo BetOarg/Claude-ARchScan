@@ -13,6 +13,7 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
 import '../l10n/generated/app_localizations.dart';
+import '../l10n/validation_error_localization.dart';
 import '../l10n/room_type_localization.dart';
 import '../providers/floor_plan_provider.dart';
 import '../providers/measurement_settings_provider.dart';
@@ -22,7 +23,8 @@ import '../services/resume_room_calibration.dart';
 import '../services/scan_draft_service.dart';
 import '../widgets/room_name_dialog.dart';
 import '../widgets/room_completion_dialog.dart';
-import '../widgets/opening_placement_dialog.dart' show showOpeningPlacementDialog;
+import '../widgets/opening_placement_dialog.dart'
+    show showOpeningPlacementDialog;
 import '../widgets/scanner_plan_opening_hint.dart';
 import '../widgets/scanner_guide_painter.dart';
 import '../scanner/adapters/ar_scanner_adapter.dart';
@@ -30,11 +32,7 @@ import '../scanner/widgets/archscan_ar_view.dart';
 import 'basic_scanner_screen.dart';
 import 'floor_plan_viewer_screen.dart';
 
-enum AppMode {
-  wall,
-  door,
-  window,
-}
+enum AppMode { wall, door, window }
 
 class ARScannerScreen extends StatefulWidget {
   /// UUID del proyecto Isar al que pertenece este escaneo.
@@ -86,8 +84,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
   bool get _isContinuationCalibrated =>
       !_requiresContinuationCalibration ||
-      (_continuationSessionStart != null &&
-          _continuationSessionEnd != null);
+      (_continuationSessionStart != null && _continuationSessionEnd != null);
 
   // ================================================================
   // CONTROLADORES AR
@@ -95,8 +92,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
   ARSessionManager? _arSessionManager;
   ARObjectManager? _arObjectManager;
-  static const Duration _arInitializationTimeout =
-      Duration(seconds: 15);
+  static const Duration _arInitializationTimeout = Duration(seconds: 15);
   Future<void> _arLifecycleTask = Future<void>.value();
   Timer? _arInitializationTimer;
   bool _appIsResumed = true;
@@ -132,18 +128,15 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     _activeResumeRoom = widget.resumeRoom;
     _appIsResumed =
         WidgetsBinding.instance.lifecycleState == null ||
-            WidgetsBinding.instance.lifecycleState ==
-                AppLifecycleState.resumed;
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
 
-    WidgetsBinding.instance
-        .addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
       // Permisos del modo AR actual.
-      final granted =
-          await PermissionService.requestScannerPermissions();
+      final granted = await PermissionService.requestScannerPermissions();
 
       if (!mounted) return;
 
@@ -261,17 +254,20 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
     _draftSaveTimer?.cancel();
     _draftSaveTimer = Timer(const Duration(milliseconds: 250), () {
-      _scanDraftService.save(
-        projectUuid: widget.projectUuid,
-        room: room,
-        resumeRoom: _activeResumeRoom,
-        continuationReference: _activeContinuationReference,
-      ).then((_) {
-        _lastDraftFingerprint = fingerprint;
-      }).catchError((Object error) {
-        _lastDraftFingerprint = null;
-        debugPrint('No se pudo guardar el borrador: $error');
-      });
+      _scanDraftService
+          .save(
+            projectUuid: widget.projectUuid,
+            room: room,
+            resumeRoom: _activeResumeRoom,
+            continuationReference: _activeContinuationReference,
+          )
+          .then((_) {
+            _lastDraftFingerprint = fingerprint;
+          })
+          .catchError((Object error) {
+            _lastDraftFingerprint = null;
+            debugPrint('No se pudo guardar el borrador: $error');
+          });
     });
   }
 
@@ -289,9 +285,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(
-    AppLifecycleState state,
-  ) {
+  void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.paused ||
@@ -324,16 +318,12 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     }
   }
 
-  void _queueArLifecycle(
-    Future<void> Function() operation,
-  ) {
-    _arLifecycleTask = _arLifecycleTask
-        .then((_) => operation())
-        .catchError((_) {
+  void _queueArLifecycle(Future<void> Function() operation) {
+    _arLifecycleTask = _arLifecycleTask.then((_) => operation()).catchError((
+      _,
+    ) {
       if (mounted) {
-        context
-            .read<ScannerProvider>()
-            .updateTrackingStatus(false);
+        context.read<ScannerProvider>().updateTrackingStatus(false);
       }
     });
   }
@@ -343,9 +333,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     _arSessionReady = false;
 
     if (mounted) {
-      context
-          .read<ScannerProvider>()
-          .updateTrackingStatus(false);
+      context.read<ScannerProvider>().updateTrackingStatus(false);
     }
 
     _arSessionManager = null;
@@ -373,8 +361,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     _draftProvider?.removeListener(_onScannerDraftChanged);
     _arInitializationTimer?.cancel();
     _appIsResumed = false;
-    WidgetsBinding.instance
-        .removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
 
     unawaited(_arScannerAdapter.dispose());
 
@@ -396,9 +383,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     ARAnchorManager arAnchorManager,
     ARLocationManager arLocationManager,
   ) {
-    if (!mounted ||
-        !_appIsResumed ||
-        generation != _arViewGeneration) {
+    if (!mounted || !_appIsResumed || generation != _arViewGeneration) {
       arSessionManager.dispose();
       return;
     }
@@ -426,30 +411,25 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     }
 
     final watchedGeneration = _arViewGeneration;
-    _arInitializationTimer = Timer(
-      _arInitializationTimeout,
-      () {
-        if (!mounted ||
-            !_appIsResumed ||
-            _arSessionReady ||
-            watchedGeneration != _arViewGeneration) {
-          return;
-        }
+    _arInitializationTimer = Timer(_arInitializationTimeout, () {
+      if (!mounted ||
+          !_appIsResumed ||
+          _arSessionReady ||
+          watchedGeneration != _arViewGeneration) {
+        return;
+      }
 
-        _arSessionManager = null;
-        _arObjectManager = null;
-        unawaited(_arScannerAdapter.dispose());
+      _arSessionManager = null;
+      _arObjectManager = null;
+      unawaited(_arScannerAdapter.dispose());
 
-        setState(() {
-          _arInitializationFailed = true;
-          _arViewGeneration++;
-        });
+      setState(() {
+        _arInitializationFailed = true;
+        _arViewGeneration++;
+      });
 
-        context
-            .read<ScannerProvider>()
-            .updateTrackingStatus(false);
-      },
-    );
+      context.read<ScannerProvider>().updateTrackingStatus(false);
+    });
   }
 
   Future<void> _retryArInitialization() async {
@@ -484,9 +464,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     );
   }
 
-  Widget _buildArInitializationFallback(
-    AppLocalizations l10n,
-  ) {
+  Widget _buildArInitializationFallback(AppLocalizations l10n) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -553,11 +531,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       return null;
     }
 
-    final position = vector.Vector3(
-      point.x,
-      point.y,
-      point.z,
-    );
+    final position = vector.Vector3(point.x, point.y, point.z);
 
     _currentCameraPosition = position;
 
@@ -567,7 +541,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   // BUILD
   // ================================================================
 
-  @override  Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     final provider = context.watch<ScannerProvider>();
     final measurementSystem = context
         .watch<MeasurementSettingsProvider>()
@@ -579,26 +554,20 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     if (_checkingPermissions) {
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (!_permissionsGranted) {
       return Scaffold(
         backgroundColor: Colors.black,
-        appBar: AppBar(
-          title: Text(l10n.permissionsRequired),
-        ),
+        appBar: AppBar(title: Text(l10n.permissionsRequired)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Text(
               l10n.cameraLocationPermissionsDenied,
-              style: const TextStyle(
-                color: Colors.white70,
-              ),
+              style: const TextStyle(color: Colors.white70),
               textAlign: TextAlign.center,
             ),
           ),
@@ -620,42 +589,43 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
           ArchScanArView(
             key: ValueKey<int>(arViewGeneration),
-            onCreated: (
-              viewId,
-              sessionManager,
-              objectManager,
-              anchorManager,
-              locationManager,
-            ) => _onARViewCreated(
-              arViewGeneration,
-              viewId,
-              sessionManager,
-              objectManager,
-              anchorManager,
-              locationManager,
-            ),
-            planeDetectionConfig:
-                PlaneDetectionConfig.horizontalAndVertical,
+            onCreated:
+                (
+                  viewId,
+                  sessionManager,
+                  objectManager,
+                  anchorManager,
+                  locationManager,
+                ) => _onARViewCreated(
+                  arViewGeneration,
+                  viewId,
+                  sessionManager,
+                  objectManager,
+                  anchorManager,
+                  locationManager,
+                ),
+            planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
           ),
 
           // ============================================================
           // CAPA 2: RETÍCULA CENTRAL
           // ============================================================
-
           if (_isContinuationCalibrated)
             Positioned.fill(
               child: IgnorePointer(
                 child: CustomPaint(
                   painter: ScannerGuidePainter(
                     points: provider.currentRoom?.points ?? const <ARPoint>[],
-                    features: provider.currentRoom?.features ?? const <WallFeature>[],
-                    previousRooms: _activeContinuationReference == null &&
+                    features:
+                        provider.currentRoom?.features ?? const <WallFeature>[],
+                    previousRooms:
+                        _activeContinuationReference == null &&
                             _activeResumeRoom == null
                         ? const <RoomModel>[]
                         : context
-                            .watch<FloorPlanProvider>()
-                            .completedRooms
-                            .toList(growable: false),
+                              .watch<FloorPlanProvider>()
+                              .completedRooms
+                              .toList(growable: false),
                     continuationReference: _activeContinuationReference,
                   ),
                 ),
@@ -669,10 +639,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.9),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.black,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.black, width: 2),
               ),
             ),
           ),
@@ -680,7 +647,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
           // ============================================================
           // CAPA 3: HUD SUPERIOR DE ESTADO
           // ============================================================
-
           Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             left: 16,
@@ -691,42 +657,36 @@ class _ARScannerScreenState extends State<ARScannerScreen>
           // ============================================================
           // CAPA 4: CONTADOR DE PUNTOS
           // ============================================================
-
           if (provider.currentPointsCount > 0)
             Positioned(
-              top: MediaQuery.of(context).padding.top +
+              top:
+                  MediaQuery.of(context).padding.top +
                   (narrowLayout ? 112 : 70),
               left: 16,
               right: 16,
-              child: Container(                padding: const EdgeInsets.symmetric(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white24,
-                  ),
+                  border: Border.all(color: Colors.white24),
                 ),
                 child: Text(
-                  _scanRecommendation(
-                    provider.currentPointsCount,
-                    l10n,
-                  ),
+                  _scanRecommendation(provider.currentPointsCount, l10n),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
                 ),
               ),
             ),
 
           if (_requiresContinuationCalibration)
             Positioned(
-              top: MediaQuery.of(context).padding.top +
+              top:
+                  MediaQuery.of(context).padding.top +
                   (narrowLayout ? 154 : 112),
               left: 16,
               right: 16,
@@ -767,7 +727,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
           // ============================================================
           // CAPA 5: CONTROLES INFERIORES
           // ============================================================
-
           Positioned(
             bottom: 0,
             left: 0,
@@ -777,200 +736,150 @@ class _ARScannerScreenState extends State<ARScannerScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                PopupMenuButton<MeasurementSystem>(
-                  tooltip: l10n.measurementSystem,
-                  initialValue: measurementSystem,
-                  onSelected: (newSystem) {
-                    context
-                        .read<MeasurementSettingsProvider>()
-                        .setSystem(newSystem);
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem<MeasurementSystem>(
-                      value: MeasurementSystem.metric,
-                      child: ListTile(
-                        dense: true,
-                        leading: const Icon(
-                          Icons.straighten,
-                        ),
-                        title: Text(
-                          l10n.metricSystem,
+                  PopupMenuButton<MeasurementSystem>(
+                    tooltip: l10n.measurementSystem,
+                    initialValue: measurementSystem,
+                    onSelected: (newSystem) {
+                      context.read<MeasurementSettingsProvider>().setSystem(
+                        newSystem,
+                      );
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem<MeasurementSystem>(
+                        value: MeasurementSystem.metric,
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.straighten),
+                          title: Text(l10n.metricSystem),
                         ),
                       ),
-                    ),
-                    PopupMenuItem<MeasurementSystem>(
-                      value: MeasurementSystem.imperial,
-                      child: ListTile(
-                        dense: true,
-                        leading: const Icon(                          Icons.square_foot,
+                      PopupMenuItem<MeasurementSystem>(
+                        value: MeasurementSystem.imperial,
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.square_foot),
+                          title: Text(l10n.imperialSystem),
                         ),
-                        title: Text(                          l10n.imperialSystem,                        ),
                       ),
-                    ),
-                  ],
-                  child: Chip(
-                    avatar: Icon(
-                      measurementSystem ==
-                              MeasurementSystem.metric
-                          ? Icons.straighten
-                          : Icons.square_foot,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                    label: Text(
-                      measurementSystem ==
-                              MeasurementSystem.metric
-                          ? l10n.metricSystem
-                          : l10n.imperialSystem,
-                    ),
-                    backgroundColor: Colors.black87,
-                    labelStyle: const TextStyle(
-                      color: Colors.white,
+                    ],
+                    child: Chip(
+                      avatar: Icon(
+                        measurementSystem == MeasurementSystem.metric
+                            ? Icons.straighten
+                            : Icons.square_foot,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        measurementSystem == MeasurementSystem.metric
+                            ? l10n.metricSystem
+                            : l10n.imperialSystem,
+                      ),
+                      backgroundColor: Colors.black87,
+                      labelStyle: const TextStyle(color: Colors.white),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                const ScannerPlanOpeningHint(
-                  scannerKey: ValueKey('ar-plan-opening-hint'),
-                ),
+                  const ScannerPlanOpeningHint(
+                    scannerKey: ValueKey('ar-plan-opening-hint'),
+                  ),
 
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // ------------------------------------------------------
-                // BOTONES PRINCIPALES DE ESCANEO
-                // ------------------------------------------------------
+                  // ------------------------------------------------------
+                  // BOTONES PRINCIPALES DE ESCANEO
+                  // ------------------------------------------------------
+                  Row(
+                    children: [
+                      IconButton.filledTonal(
+                        tooltip: l10n.undoScanEdit,
+                        onPressed: provider.canUndo && !_placingOpening
+                            ? () {
+                                HapticFeedback.lightImpact();
 
-                Row(
-                  children: [
-                    IconButton.filledTonal(
-                      tooltip: l10n.undoScanEdit,
-                      onPressed:
-                          provider.canUndo && !_placingOpening
-                              ? () {
-                                  HapticFeedback
-                                      .lightImpact();
-
-                                  setState(() {
-                                    _pendingFeatureStart = null;
-                                    _pendingFeatureMode = null;
-                                  });
-                                  provider.undoEdit();
-                                }
-                              : null,
-                      icon: const Icon(
-                        Icons.undo,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor:
-                            Colors.black87,
-                        foregroundColor:
-                            Colors.white,
-                      ),
-                    ),
-
-                    IconButton.filledTonal(
-                      tooltip: l10n.redoScanEdit,
-                      onPressed: provider.canRedo && !_placingOpening ? () {
-                        setState(() {
-                          _pendingFeatureStart = null;
-                          _pendingFeatureMode = null;
-                        });
-                        provider.redoEdit();
-                      } : null,
-                      icon: const Icon(Icons.redo),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black87,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () =>
-                            _onCapturePressed(                          provider,
+                                setState(() {
+                                  _pendingFeatureStart = null;
+                                  _pendingFeatureMode = null;
+                                });
+                                provider.undoEdit();
+                              }
+                            : null,
+                        icon: const Icon(Icons.undo),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
                         ),
-                        icon: Icon(
-                          _currentMode ==
-                                  AppMode.wall
-                              ? Icons
-                                  .add_location_alt_outlined
-                              : _currentMode ==
-                                      AppMode.door
-                                  ? Icons
-                                      .door_front_door
-                                  : Icons.window,
+                      ),
+                      IconButton.filledTonal(
+                        tooltip: l10n.redoScanEdit,
+                        onPressed: provider.canRedo && !_placingOpening
+                            ? () {
+                                setState(() {
+                                  _pendingFeatureStart = null;
+                                  _pendingFeatureMode = null;
+                                });
+                                provider.redoEdit();
+                              }
+                            : null,
+                        icon: const Icon(Icons.redo),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
                         ),
-                        label: Text(
-                          !_isContinuationCalibrated
-                              ? _continuationCaptureLabel(l10n)
-                              : _currentMode ==
-                                  AppMode.wall
-                              ? l10n.addCorner
-                              : _pendingFeatureStart !=
-                                      null
-                                  ? l10n.markSecondEnd
-                                  : _currentMode ==
-                                          AppMode.door
-                                      ? l10n.measureDoor
-                                      : l10n.measureWindow,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                        ),
-                        style:
-                            ElevatedButton.styleFrom(
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            vertical: 16,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _onCapturePressed(provider),
+                          icon: Icon(
+                            _currentMode == AppMode.wall
+                                ? Icons.add_location_alt_outlined
+                                : _currentMode == AppMode.door
+                                ? Icons.door_front_door
+                                : Icons.window,
                           ),
-                          backgroundColor:
-                              _modeColor(
-                            _currentMode,
+                          label: Text(
+                            !_isContinuationCalibrated
+                                ? _continuationCaptureLabel(l10n)
+                                : _currentMode == AppMode.wall
+                                ? l10n.addCorner
+                                : _pendingFeatureStart != null
+                                ? l10n.markSecondEnd
+                                : _currentMode == AppMode.door
+                                ? l10n.measureDoor
+                                : l10n.measureWindow,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
-                          foregroundColor:
-                              Colors.white,
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(
-                              16,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: _modeColor(_currentMode),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    IconButton.filled(
-                      tooltip: l10n.closeRoom,
-                      onPressed:
-                          provider.currentPointsCount >=
-                                  3
-                              ? () =>
-                                  _onCloseRoomPressed(
-                                    provider,
-                                  )
-                              : null,
-                      icon: const Icon(
-                        Icons.check,
+                      const SizedBox(width: 12),
+                      IconButton.filled(
+                        tooltip: l10n.closeRoom,
+                        onPressed: provider.currentPointsCount >= 3
+                            ? () => _onCloseRoomPressed(provider)
+                            : null,
+                        icon: const Icon(Icons.check),
+                        style: IconButton.styleFrom(
+                          backgroundColor: provider.currentPointsCount >= 3
+                              ? Colors.green
+                              : Colors.grey,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
-                      style: IconButton.styleFrom(
-                        backgroundColor:
-                            provider.currentPointsCount >=
-                                    3
-                                ? Colors.green
-                                : Colors.grey,
-                        foregroundColor:
-                            Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -980,73 +889,53 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     );
   }
 
-  String _localizedRoomName(
-    ScannerProvider provider,
-    AppLocalizations l10n,
-  ) {
-    final room =
-        provider.currentRoom;
+  String _localizedRoomName(ScannerProvider provider, AppLocalizations l10n) {
+    final room = provider.currentRoom;
 
     if (room == null) {
       return l10n.newRoom;
     }
 
-    final defaultName =
-        room.type.displayName;
+    final defaultName = room.type.displayName;
 
-    return room.name == defaultName
-        ? room.type.localizedName(l10n)
-        : room.name;
+    return room.name == defaultName ? room.type.localizedName(l10n) : room.name;
   }
 
-  String _scanRecommendation(
-    int cornerCount,
-    AppLocalizations l10n,
-  ) {
+  String _scanRecommendation(int cornerCount, AppLocalizations l10n) {
     if (cornerCount == 0) return l10n.markStartRecommendation;
     if (cornerCount < 3) return l10n.addNextCornerRecommendation;
     return l10n.closeSpaceRecommendation;
   }
-  Future<void> _showCustomRoomNameDialog(
-    ScannerProvider provider,
-  ) async {
+
+  Future<void> _showCustomRoomNameDialog(ScannerProvider provider) async {
     final l10n = AppLocalizations.of(context)!;
     final name = await showRoomNameDialog(
       context: context,
-      initialName: provider.currentRoom?.name ??
+      initialName:
+          provider.currentRoom?.name ??
           provider.selectedType.localizedName(l10n),
     );
 
-    if (!mounted ||
-        name == null ||
-        name.trim().isEmpty) {
+    if (!mounted || name == null || name.trim().isEmpty) {
       return;
     }
 
-    provider.setCurrentRoomName(
-      name,
-    );
+    provider.setCurrentRoomName(name);
   }
-  Widget _buildAdaptiveTopHud(
-    ScannerProvider provider,
-    AppLocalizations l10n,
-  ) {
+
+  Widget _buildAdaptiveTopHud(ScannerProvider provider, AppLocalizations l10n) {
     Widget roomNameChip() => ActionChip(
-          tooltip: l10n.editRoomName,
-          avatar: const Icon(
-            Icons.edit_outlined,
-            size: 16,
-            color: Colors.white,
-          ),
-          label: Text(
-            _localizedRoomName(provider, l10n),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          onPressed: () => _showCustomRoomNameDialog(provider),
-          backgroundColor: Colors.black87,
-          labelStyle: const TextStyle(color: Colors.white),
-        );
+      tooltip: l10n.editRoomName,
+      avatar: const Icon(Icons.edit_outlined, size: 16, color: Colors.white),
+      label: Text(
+        _localizedRoomName(provider, l10n),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      onPressed: () => _showCustomRoomNameDialog(provider),
+      backgroundColor: Colors.black87,
+      labelStyle: const TextStyle(color: Colors.white),
+    );
 
     final planButton = IconButton.filledTonal(
       tooltip: l10n.viewPlan,
@@ -1061,14 +950,10 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       avatar: Icon(
         Icons.circle,
         size: 10,
-        color: provider.isTrackingOk
-            ? Colors.greenAccent
-            : Colors.orangeAccent,
+        color: provider.isTrackingOk ? Colors.greenAccent : Colors.orangeAccent,
       ),
       label: Text(
-        provider.isTrackingOk
-            ? l10n.arTrackingActive
-            : l10n.arCalibrating,
+        provider.isTrackingOk ? l10n.arTrackingActive : l10n.arCalibrating,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -1188,11 +1073,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
           : ResumeRoomCalibration.tryCreate(
               modelPrevious: points[points.length - 2],
               modelStart: points.last,
-              sessionPrevious: ARPoint(
-                x: start.x,
-                y: start.y,
-                z: start.z,
-              ),
+              sessionPrevious: ARPoint(x: start.x, y: start.y, z: start.z),
               sessionStart: ARPoint(
                 x: position.x,
                 y: position.y,
@@ -1203,8 +1084,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context)!
-                  .openingReferenceEndpointsTooClose,
+              AppLocalizations.of(context)!.openingReferenceEndpointsTooClose,
             ),
             backgroundColor: Colors.orange,
           ),
@@ -1217,9 +1097,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.vertexReferenceAligned,
-          ),
+          content: Text(AppLocalizations.of(context)!.vertexReferenceAligned),
         ),
       );
       return;
@@ -1244,49 +1122,34 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                 )
               : AppLocalizations.of(context)!.openingReferenceAligned,
         ),
-        backgroundColor:
-            difference > 0.15 ? Colors.orange : Colors.green,
+        backgroundColor: difference > 0.15 ? Colors.orange : Colors.green,
       ),
     );
   }
 
-  String _formatLength(
-    double meters,
-    MeasurementSystem measurementSystem,
-  ) {
-    if (measurementSystem ==
-        MeasurementSystem.metric) {
+  String _formatLength(double meters, MeasurementSystem measurementSystem) {
+    if (measurementSystem == MeasurementSystem.metric) {
       return '${_formatDecimal(meters)} m';
     }
 
-    final imperial =
-        MeasurementUnits.metersToFeetAndInches(
-      meters,
-    );
+    final imperial = MeasurementUnits.metersToFeetAndInches(meters);
 
     return '${imperial.feet}′ '
         '${_formatDecimal(imperial.inches)}″';
   }
 
-  String _formatDecimal(
-    double value,
-  ) {
+  String _formatDecimal(double value) {
     var formatted = value.toStringAsFixed(2);
 
-    if (Localizations.localeOf(context)
-            .languageCode ==
-        'es') {
+    if (Localizations.localeOf(context).languageCode == 'es') {
       formatted = formatted.replaceAll('.', ',');
     }
 
     return formatted;
   }
 
-  vector.Vector3 _toContinuationLocal(
-    vector.Vector3 sessionPoint,
-  ) {
-    if (!_requiresContinuationCalibration ||
-        !_isContinuationCalibrated) {
+  vector.Vector3 _toContinuationLocal(vector.Vector3 sessionPoint) {
+    if (!_requiresContinuationCalibration || !_isContinuationCalibrated) {
       return sessionPoint;
     }
 
@@ -1303,30 +1166,20 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         sessionStart: ARPoint(x: end.x, y: end.y, z: end.z),
       );
       final transformed = calibration?.transform(
-        ARPoint(
-          x: sessionPoint.x,
-          y: sessionPoint.y,
-          z: sessionPoint.z,
-        ),
+        ARPoint(x: sessionPoint.x, y: sessionPoint.y, z: sessionPoint.z),
       );
       return transformed == null
           ? sessionPoint
-          : vector.Vector3(
-              transformed.x,
-              transformed.y,
-              transformed.z,
-            );
+          : vector.Vector3(transformed.x, transformed.y, transformed.z);
     }
 
     final reference = _activeContinuationReference!;
-    final sessionOrigin = reference.startEndpoint ==
-            ContinuationStartEndpoint.start
+    final sessionOrigin =
+        reference.startEndpoint == ContinuationStartEndpoint.start
         ? start
         : end;
-    final tangent = vector.Vector2(
-      end.x - start.x,
-      end.z - start.z,
-    )..normalize();
+    final tangent = vector.Vector2(end.x - start.x, end.z - start.z)
+      ..normalize();
 
     final forward = reference.side == OpeningConnectionSide.left
         ? vector.Vector2(-tangent.y, tangent.x)
@@ -1349,22 +1202,15 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   // la lógica de proyectos anteriores. La captura visible queda fija en pared.
   // ================================================================
 
-  Color _modeColor(
-    AppMode mode,
-  ) {
+  Color _modeColor(AppMode mode) {
     switch (mode) {
-      case AppMode.wall:        return const Color(
-          0xFF448AFF,
-        );
+      case AppMode.wall:
+        return const Color(0xFF448AFF);
       case AppMode.door:
-        return const Color(
-          0xFFFF8A00,
-        );
+        return const Color(0xFFFF8A00);
 
       case AppMode.window:
-        return const Color(
-          0xFFD500F9,
-        );
+        return const Color(0xFFD500F9);
     }
   }
 
@@ -1372,9 +1218,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   // CAPTURA DE PUNTOS / ABERTURAS
   // ================================================================
 
-  Future<void> _onCapturePressed(
-    ScannerProvider provider,
-  ) async {
+  Future<void> _onCapturePressed(ScannerProvider provider) async {
     if (_placingOpening) return;
     HapticFeedback.lightImpact();
 
@@ -1383,17 +1227,14 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       return;
     }
 
-    final pos =
-        await _getCurrentCameraPosition();
+    final pos = await _getCurrentCameraPosition();
 
     if (!mounted) return;
 
     if (pos == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.invalidCameraPosition,
-          ),
+          content: Text(AppLocalizations.of(context)!.invalidCameraPosition),
           backgroundColor: Colors.orange,
         ),
       );
@@ -1401,7 +1242,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       return;
     }
 
-    final resolvedPosition =        _toContinuationLocal(pos);
+    final resolvedPosition = _toContinuationLocal(pos);
 
     switch (_currentMode) {
       case AppMode.wall:
@@ -1410,29 +1251,23 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
       case AppMode.door:
       case AppMode.window:
-        await _handleFeatureInsertion(          provider,
-          _currentMode,
-          resolvedPosition,
-        );        break;
+        await _handleFeatureInsertion(provider, _currentMode, resolvedPosition);
+        break;
     }
   }
 
-  void _handleWallPoint(
-    ScannerProvider provider,
-    vector.Vector3 pos,
-  ) {    final ValidationResult result =
-        provider.tryAddPoint(
-      pos.x,
-      pos.y,
-      pos.z,
-    );
+  void _handleWallPoint(ScannerProvider provider, vector.Vector3 pos) {
+    final ValidationResult result = provider.tryAddPoint(pos.x, pos.y, pos.z);
 
     if (!result.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result.errorMessage ??
-                AppLocalizations.of(context)!.invalidCorner,
+            validationErrorMessage(
+              result,
+              AppLocalizations.of(context)!,
+              fallback: AppLocalizations.of(context)!.invalidCorner,
+            ),
           ),
           backgroundColor: Colors.redAccent,
         ),
@@ -1444,13 +1279,9 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     if (result.warningMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            result.warningMessage!,
-          ),
-          backgroundColor:
-              Colors.amber.shade800,
-          duration:
-              const Duration(seconds: 2),
+          content: Text(result.warningMessage!),
+          backgroundColor: Colors.amber.shade800,
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -1474,60 +1305,46 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       return;
     }
 
-    final currentPoint =
-        ARPoint(
-      x: position.x,
-      y: position.y,
-      z: position.z,
-    );
+    final currentPoint = ARPoint(x: position.x, y: position.y, z: position.z);
 
     final l10n = AppLocalizations.of(context)!;
-    final label =
-        mode == AppMode.door
-            ? l10n.door
-            : l10n.window;
+    final label = mode == AppMode.door ? l10n.door : l10n.window;
 
-    final pendingStart =
-        _pendingFeatureStart;
+    final pendingStart = _pendingFeatureStart;
 
-    if (pendingStart == null ||
-        _pendingFeatureMode !=
-            mode) {
+    if (pendingStart == null || _pendingFeatureMode != mode) {
       setState(() {
-        _pendingFeatureStart =
-            currentPoint;
-        _pendingFeatureMode =
-            mode;
+        _pendingFeatureStart = currentPoint;
+        _pendingFeatureMode = mode;
       });
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(
-              l10n.featureStartRegistered(label),
-            ),
-            duration:
-                const Duration(
-              seconds: 3,
-            ),
+            content: Text(l10n.featureStartRegistered(label)),
+            duration: const Duration(seconds: 3),
           ),
         );
 
       return;
     }
 
-    final featureType =
-        mode == AppMode.door
-            ? FeatureType.door
-            : FeatureType.window;
+    final featureType = mode == AppMode.door
+        ? FeatureType.door
+        : FeatureType.window;
 
     // Keep the AR measurement as the initial width, then confirm the wall
     // and vertical dimensions through the same dialog used by Basic Scanner.
     await _placeFeatureByTouch(
-      provider, type: featureType,
-      measured: WallFeature(id: 'ar-measurement', type: featureType,
-          start: pendingStart, end: currentPoint),
+      provider,
+      type: featureType,
+      measured: WallFeature(
+        id: 'ar-measurement',
+        type: featureType,
+        start: pendingStart,
+        end: currentPoint,
+      ),
     );
   }
 
@@ -1537,8 +1354,11 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     WallFeature? measured,
   }) async {
     final room = provider.currentRoom;
-    if (_placingOpening || !_isContinuationCalibrated ||
-        room == null || room.points.length < 2) return;
+    if (_placingOpening ||
+        !_isContinuationCalibrated ||
+        room == null ||
+        room.points.length < 2)
+      return;
     setState(() {
       _placingOpening = true;
       _pendingFeatureStart = null;
@@ -1546,14 +1366,21 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     });
     try {
       final placement = await showOpeningPlacementDialog(
-        context: context, room: room, type: type,
+        context: context,
+        room: room,
+        type: type,
         system: context.read<MeasurementSettingsProvider>().system,
         reference: _activeContinuationReference,
         initialFeature: measured,
       );
-      if (!mounted || placement == null || !identical(provider.currentRoom, room)) return;
+      if (!mounted ||
+          placement == null ||
+          !identical(provider.currentRoom, room))
+        return;
       final result = provider.addFeatureToCurrentRoom(
-        type, placement.location, widthMeters: placement.width,
+        type,
+        placement.location,
+        widthMeters: placement.width,
         preferredWallIndex: placement.wallIndex,
         openingHeightMeters: placement.openingHeightMeters,
         sillHeightMeters: placement.sillHeightMeters,
@@ -1561,13 +1388,25 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(result.isValid ? l10n.openingUpdated
-              : result.errorMessage ?? l10n.couldNotAttachOpening),
-          backgroundColor: result.isValid ? null : Colors.redAccent,
-        ));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              result.isValid
+                  ? l10n.openingUpdated
+                  : validationErrorMessage(
+                      result,
+                      l10n,
+                      fallback: l10n.couldNotAttachOpening,
+                    ),
+            ),
+            backgroundColor: result.isValid ? null : Colors.redAccent,
+          ),
+        );
     } finally {
-      if (mounted) setState(() { _placingOpening = false; });
+      if (mounted)
+        setState(() {
+          _placingOpening = false;
+        });
     }
   }
 
@@ -1587,15 +1426,14 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     }
   }
 
-  Future<void> _closeRoomOnce(
-    ScannerProvider provider,
-  ) async {
+  Future<void> _closeRoomOnce(ScannerProvider provider) async {
     HapticFeedback.mediumImpact();
 
     final l10n = AppLocalizations.of(context)!;
     final roomName = await showRoomNameDialog(
       context: context,
-      initialName: provider.currentRoom?.name ??
+      initialName:
+          provider.currentRoom?.name ??
           provider.selectedType.localizedName(l10n),
     );
     if (!mounted || roomName == null || roomName.trim().isEmpty) {
@@ -1609,8 +1447,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         provider.currentRoom?.points ?? const <ARPoint>[],
       );
       if (suggestion != null) {
-        final confirmed =
-            await confirmOrthogonalContinuationClosure(context);
+        final confirmed = await confirmOrthogonalContinuationClosure(context);
         if (!mounted || !confirmed) {
           return;
         }
@@ -1633,7 +1470,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         }
       }
     }
-
 
     final floorPlanProvider = context.read<FloorPlanProvider>();
 
@@ -1658,20 +1494,15 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       }
     }
 
-    final closedRoom =
-        provider.closeCurrentRoom();
+    final closedRoom = provider.closeCurrentRoom();
 
     if (!mounted) return;
 
     if (closedRoom == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            provider.lastCloseError ??
-                l10n.closeRoomFailed,
-          ),
-          backgroundColor:
-              Colors.redAccent,
+          content: Text(provider.lastCloseError ?? l10n.closeRoomFailed),
+          backgroundColor: Colors.redAccent,
         ),
       );
 
@@ -1679,7 +1510,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     }
 
     final resumeRoom = _activeResumeRoom;
-    final resumesExistingRoom = resumeRoom != null &&
+    final resumesExistingRoom =
+        resumeRoom != null &&
         floorPlanProvider.completedRooms.any(
           (room) => room.id == resumeRoom.id,
         );
@@ -1689,9 +1521,11 @@ class _ARScannerScreenState extends State<ARScannerScreen>
             expectedOpenRoom: resumeRoom,
           )
         : continuation == null
-            ? await floorPlanProvider.addCompletedRoom(
-                closedRoom, preservePlacement: resumeRoom != null)
-            : await floorPlanProvider.addCompletedRoomFromContinuation(
+        ? await floorPlanProvider.addCompletedRoom(
+            closedRoom,
+            preservePlacement: resumeRoom != null,
+          )
+        : await floorPlanProvider.addCompletedRoomFromContinuation(
             room: closedRoom,
             reference: continuation,
           );
@@ -1702,9 +1536,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            l10n.closeRoomFailed,
-          ),
+          content: Text(l10n.closeRoomFailed),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -1723,17 +1555,14 @@ class _ARScannerScreenState extends State<ARScannerScreen>
     if (action == RoomCompletionAction.viewFullPlan) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const FloorPlanViewerScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const FloorPlanViewerScreen()),
       );
     } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const FloorPlanViewerScreen(
-            selectContinuationOpening: true,
-          ),
+          builder: (_) =>
+              const FloorPlanViewerScreen(selectContinuationOpening: true),
         ),
       );
     }
@@ -1746,10 +1575,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   void _openFloorPlan() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const FloorPlanViewerScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const FloorPlanViewerScreen()),
     );
   }
 }

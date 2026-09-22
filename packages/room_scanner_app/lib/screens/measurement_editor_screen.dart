@@ -3,47 +3,37 @@ import 'package:provider/provider.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../l10n/validation_error_localization.dart';
 import '../providers/floor_plan_provider.dart';
 import '../providers/measurement_settings_provider.dart';
 
 class MeasurementEditorScreen extends StatefulWidget {
   final String? roomId;
 
-  const MeasurementEditorScreen({
-    super.key,
-    this.roomId,
-  });
+  const MeasurementEditorScreen({super.key, this.roomId});
 
   @override
   State<MeasurementEditorScreen> createState() =>
       _MeasurementEditorScreenState();
 }
 
-class _MeasurementEditorScreenState
-    extends State<MeasurementEditorScreen> {
+class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
   int? _selectedRoomIndex;
 
   @override
   Widget build(BuildContext context) {
-    final provider =
-        context.watch<FloorPlanProvider>();
+    final provider = context.watch<FloorPlanProvider>();
 
-    final rooms =
-        provider.completedRooms;
+    final rooms = provider.completedRooms;
 
     if (rooms.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Editar medidas',
-          ),
-        ),
+        appBar: AppBar(title: const Text('Editar medidas')),
         body: const Center(
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Column(
-              mainAxisSize:
-                  MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.straighten_outlined,
@@ -53,23 +43,14 @@ class _MeasurementEditorScreenState
                 SizedBox(height: 16),
                 Text(
                   'No hay ambientes para editar.',
-                  textAlign:
-                      TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Primero completá y guardá un ambiente desde el Scanner.',
-                  textAlign:
-                      TextAlign.center,
-                  style: TextStyle(
-                    color:
-                        Colors.black54,
-                  ),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.black54),
                 ),
               ],
             ),
@@ -78,32 +59,17 @@ class _MeasurementEditorScreenState
       );
     }
 
-    final selectedIndex =
-        _resolveSelectedIndex(
-      rooms,
-    );
+    final selectedIndex = _resolveSelectedIndex(rooms);
 
-    final selectedRoom =
-        rooms[selectedIndex];
+    final selectedRoom = rooms[selectedIndex];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Editar medidas',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Editar medidas')),
       body: Column(
         children: [
-          _buildRoomSelector(
-            rooms,
-            selectedIndex,
-          ),
+          _buildRoomSelector(rooms, selectedIndex),
           Expanded(
-            child: _buildRoomEditor(
-              selectedRoom,
-              provider,
-              selectedIndex,
-            ),
+            child: _buildRoomEditor(selectedRoom, provider, selectedIndex),
           ),
         ],
       ),
@@ -114,29 +80,18 @@ class _MeasurementEditorScreenState
   // SELECCIÓN DE AMBIENTE
   // ===========================================================================
 
-  int _resolveSelectedIndex(
-    List<RoomModel> rooms,
-  ) {
-    final current =
-        _selectedRoomIndex;
+  int _resolveSelectedIndex(List<RoomModel> rooms) {
+    final current = _selectedRoomIndex;
 
-    if (current != null &&
-        current >= 0 &&
-        current < rooms.length) {
+    if (current != null && current >= 0 && current < rooms.length) {
       return current;
     }
 
     if (widget.roomId != null) {
-      final index =
-          rooms.indexWhere(
-        (room) =>
-            room.id ==
-            widget.roomId,
-      );
+      final index = rooms.indexWhere((room) => room.id == widget.roomId);
 
       if (index >= 0) {
-        _selectedRoomIndex =
-            index;
+        _selectedRoomIndex = index;
 
         return index;
       }
@@ -147,20 +102,10 @@ class _MeasurementEditorScreenState
     return 0;
   }
 
-  Widget _buildRoomSelector(
-    List<RoomModel> rooms,
-    int selectedIndex,
-  ) {
+  Widget _buildRoomSelector(List<RoomModel> rooms, int selectedIndex) {
     return Padding(
-      padding:
-          const EdgeInsets.fromLTRB(
-        16,
-        14,
-        16,
-        12,
-      ),
-      child:
-          DropdownButtonFormField<int>(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      child: DropdownButtonFormField<int>(
         key: ValueKey(
           'room-selector-'
           '${rooms.length}-'
@@ -168,41 +113,29 @@ class _MeasurementEditorScreenState
         ),
         value: selectedIndex,
         isExpanded: true,
-        decoration:
-            InputDecoration(
+        decoration: InputDecoration(
           labelText: AppLocalizations.of(context)!.selectedRoom,
-          prefixIcon: const Icon(
-            Icons.home_outlined,
-          ),
-          border:
-              const OutlineInputBorder(),
+          prefixIcon: const Icon(Icons.home_outlined),
+          border: const OutlineInputBorder(),
         ),
-        items: List.generate(
-          rooms.length,
-          (index) {
-            final room =
-                rooms[index];
+        items: List.generate(rooms.length, (index) {
+          final room = rooms[index];
 
-            return DropdownMenuItem<int>(
-              value: index,
-              child: Text(
-                '${index + 1}. ${room.name}',
-                overflow:
-                    TextOverflow.ellipsis,
-              ),
-            );
-          },
-        ),
+          return DropdownMenuItem<int>(
+            value: index,
+            child: Text(
+              '${index + 1}. ${room.name}',
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }),
         onChanged: (value) {
-          if (value == null ||
-              value < 0 ||
-              value >= rooms.length) {
+          if (value == null || value < 0 || value >= rooms.length) {
             return;
           }
 
           setState(() {
-            _selectedRoomIndex =
-                value;
+            _selectedRoomIndex = value;
           });
         },
       ),
@@ -218,68 +151,29 @@ class _MeasurementEditorScreenState
     FloorPlanProvider provider,
     int roomIndex,
   ) {
-    final area =
-        _calculateArea(
-      room,
-    );
+    final area = _calculateArea(room);
 
-    final perimeter =
-        _calculatePerimeter(
-      room,
-      provider,
-    );
+    final perimeter = _calculatePerimeter(room, provider);
 
     return ListView(
-      padding:
-          const EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        32,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
-        _buildSummaryCard(
-          room,
-          area,
-          perimeter,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
+        _buildSummaryCard(room, area, perimeter),
+        const SizedBox(height: 16),
         const Text(
           'Paredes',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight:
-                FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(
-          height: 6,
-        ),
+        const SizedBox(height: 6),
         const Text(
           'Seleccioná una pared para corregir su longitud. '
           'La dirección actual de la pared se conserva automáticamente.',
-          style: TextStyle(
-            color:
-                Colors.black54,
-            height: 1.3,
-          ),
+          style: TextStyle(color: Colors.black54, height: 1.3),
         ),
-        const SizedBox(
-          height: 12,
-        ),
-        ...List.generate(
-          room.points.length,
-          (wallIndex) {
-            return _buildWallCard(
-              room,
-              provider,
-              roomIndex,
-              wallIndex,
-            );
-          },
-        ),
+        const SizedBox(height: 12),
+        ...List.generate(room.points.length, (wallIndex) {
+          return _buildWallCard(room, provider, roomIndex, wallIndex);
+        }),
       ],
     );
   }
@@ -288,11 +182,7 @@ class _MeasurementEditorScreenState
   // RESUMEN
   // ===========================================================================
 
-  Widget _buildSummaryCard(
-    RoomModel room,
-    double area,
-    double perimeter,
-  ) {
+  Widget _buildSummaryCard(RoomModel room, double area, double perimeter) {
     final measurementSystem = context
         .watch<MeasurementSettingsProvider>()
         .system;
@@ -300,43 +190,25 @@ class _MeasurementEditorScreenState
     return Card(
       elevation: 0,
       child: Padding(
-        padding:
-            const EdgeInsets.all(
-          16,
-        ),        child: Row(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
             Expanded(
               child: _metric(
                 Icons.square_foot,
                 'Superficie',
-                _formatArea(
-                  area,
-                  measurementSystem,
-                ),
+                _formatArea(area, measurementSystem),
               ),
             ),
-            Container(
-              width: 1,
-              height: 48,
-              color:
-                  Colors.black12,
-            ),
+            Container(width: 1, height: 48, color: Colors.black12),
             Expanded(
               child: _metric(
                 Icons.timeline,
                 'Perímetro',
-                _formatLength(
-                  perimeter,
-                  measurementSystem,
-                ),
+                _formatLength(perimeter, measurementSystem),
               ),
             ),
-            Container(
-              width: 1,
-              height: 48,
-              color:
-                  Colors.black12,
-            ),
+            Container(width: 1, height: 48, color: Colors.black12),
             Expanded(
               child: _metric(
                 Icons.polyline,
@@ -350,42 +222,20 @@ class _MeasurementEditorScreenState
     );
   }
 
-  Widget _metric(
-    IconData icon,
-    String label,
-    String value,
-  ) {
+  Widget _metric(IconData icon, String label, String value) {
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 22,
-        ),
-        const SizedBox(
-          height: 6,
-        ),
+        Icon(icon, size: 22),
+        const SizedBox(height: 6),
         Text(
           value,
-          style:
-              const TextStyle(
-            fontWeight:
-                FontWeight.bold,
-            fontSize: 15,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
-        const SizedBox(
-          height: 2,
-        ),
+        const SizedBox(height: 2),
         Text(
           label,
-          textAlign:
-              TextAlign.center,
-          style:
-              const TextStyle(
-            color:
-                Colors.black54,
-            fontSize: 11,
-          ),
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.black54, fontSize: 11),
         ),
       ],
     );
@@ -404,43 +254,20 @@ class _MeasurementEditorScreenState
     final measurementSystem = context
         .watch<MeasurementSettingsProvider>()
         .system;
-    final length =
-        provider.wallLength(
-      room,
-      wallIndex,
-    );
+    final length = provider.wallLength(room, wallIndex);
 
-    final startIndex =
-        wallIndex + 1;
+    final startIndex = wallIndex + 1;
 
-    final endIndex =
-        ((wallIndex + 1) %
-                room.points.length) +
-            1;
+    final endIndex = ((wallIndex + 1) % room.points.length) + 1;
 
     return Card(
-      margin:
-          const EdgeInsets.only(
-        bottom: 10,
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 6,
-        ),
-        leading: CircleAvatar(
-          child: Text(
-            '${wallIndex + 1}',
-          ),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        leading: CircleAvatar(child: Text('${wallIndex + 1}')),
         title: Text(
           'Pared ${wallIndex + 1}',
-          style:
-              const TextStyle(
-            fontWeight:
-                FontWeight.bold,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
           'Esquina $startIndex → '
@@ -448,19 +275,10 @@ class _MeasurementEditorScreenState
           '${_formatLength(length, measurementSystem)}',
         ),
         trailing: IconButton(
-          tooltip:
-              'Editar medida',
-          icon: const Icon(
-            Icons.edit_outlined,
-          ),
+          tooltip: 'Editar medida',
+          icon: const Icon(Icons.edit_outlined),
           onPressed: () =>
-              _editWallLength(
-            room,
-            provider,
-            roomIndex,
-            wallIndex,
-            length,
-          ),
+              _editWallLength(room, provider, roomIndex, wallIndex, length),
         ),
       ),
     );
@@ -480,182 +298,113 @@ class _MeasurementEditorScreenState
     final measurementSystem = context
         .read<MeasurementSettingsProvider>()
         .system;
-    final metricController =
-        TextEditingController(
-      text: _formatDecimal(
-        currentLength,
-      ),
+    final metricController = TextEditingController(
+      text: _formatDecimal(currentLength),
     );
-    final imperialLength =
-        MeasurementUnits.metersToFeetAndInches(
+    final imperialLength = MeasurementUnits.metersToFeetAndInches(
       currentLength,
     );
-    final feetController =
-        TextEditingController(
+    final feetController = TextEditingController(
       text: '${imperialLength.feet}',
     );
-    final inchesController =
-        TextEditingController(
-      text: _formatDecimal(
-        imperialLength.inches,
-      ),
+    final inchesController = TextEditingController(
+      text: _formatDecimal(imperialLength.inches),
     );
 
     String? error;
 
     final route = DialogRoute<double>(
       context: context,
-      barrierDismissible:
-          false,
-      builder:
-          (dialogContext) {
+      barrierDismissible: false,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (
-            context,
-            setDialogState,
-          ) {
+          builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
                 'Editar pared '
                 '${wallIndex + 1}',
               ),
-              content:
-                  SingleChildScrollView(
+              content: SingleChildScrollView(
                 child: Column(
-                  mainAxisSize:
-                      MainAxisSize.min,
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Medida actual: '
                       '${_formatLength(currentLength, measurementSystem)}',
-                      style:
-                          const TextStyle(
-                        color:
-                            Colors.black54,
-                      ),
+                      style: const TextStyle(color: Colors.black54),
                     ),
-                    const SizedBox(
-                      height: 16,
-                    ),
-                    if (measurementSystem ==
-                        MeasurementSystem.metric)
+                    const SizedBox(height: 16),
+                    if (measurementSystem == MeasurementSystem.metric)
                       TextField(
-                        controller:
-                            metricController,
-                        autofocus: true,                        keyboardType:
-                            const TextInputType
-                                .numberWithOptions(
+                        controller: metricController,
+                        autofocus: true,
+                        keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        decoration:
-                            InputDecoration(
-                          labelText:
-                              'Nueva longitud',
-                          hintText:
-                              'Ejemplo: 3,25',
-                          suffixText:
-                              AppLocalizations.of(context)!
-                                  .meters,
-                          errorText:
-                              error,
-                          prefixIcon:
-                              const Icon(
-                            Icons.straighten,
-                          ),
-                          border:
-                              const OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: 'Nueva longitud',
+                          hintText: 'Ejemplo: 3,25',
+                          suffixText: AppLocalizations.of(context)!.meters,
+                          errorText: error,
+                          prefixIcon: const Icon(Icons.straighten),
+                          border: const OutlineInputBorder(),
                         ),
-                        onSubmitted:
-                            (_) {
+                        onSubmitted: (_) {
                           _validateAndCloseDialog(
-                            dialogContext:
-                                dialogContext,
-                            measurementSystem:
-                                measurementSystem,
-                            metricController:
-                                metricController,
-                            feetController:
-                                feetController,
-                            inchesController:
-                                inchesController,
-                            setDialogState:
-                                setDialogState,
-                            setError:
-                                (message) {
-                              error =
-                                  message;
+                            dialogContext: dialogContext,
+                            measurementSystem: measurementSystem,
+                            metricController: metricController,
+                            feetController: feetController,
+                            inchesController: inchesController,
+                            setDialogState: setDialogState,
+                            setError: (message) {
+                              error = message;
                             },
                           );
                         },
                       )
                     else
                       Row(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(                            child: TextField(
-                              controller:
-                                  feetController,
+                          Expanded(
+                            child: TextField(
+                              controller: feetController,
                               autofocus: true,
                               keyboardType:
-                                  const TextInputType
-                                      .numberWithOptions(
-                                decimal: true,
-                              ),
-                              decoration:
-                                  InputDecoration(
-                                labelText:
-                                    AppLocalizations.of(context)!
-                                        .feet,
-                                errorText:
-                                    error,
-                                border:
-                                    const OutlineInputBorder(),
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)!.feet,
+                                errorText: error,
+                                border: const OutlineInputBorder(),
                               ),
                             ),
                           ),
-                          const SizedBox(
-                            width: 12,
-                          ),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: TextField(
-                              controller:
-                                  inchesController,
+                              controller: inchesController,
                               keyboardType:
-                                  const TextInputType
-                                      .numberWithOptions(
-                                decimal: true,
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)!.inches,
+                                border: const OutlineInputBorder(),
                               ),
-                              decoration:
-                                  InputDecoration(
-                                labelText:
-                                    AppLocalizations.of(context)!
-                                        .inches,
-                                border:
-                                    const OutlineInputBorder(),
-                              ),
-                              onSubmitted:
-                                  (_) {
+                              onSubmitted: (_) {
                                 _validateAndCloseDialog(
-                                  dialogContext:
-                                      dialogContext,
-                                  measurementSystem:
-                                      measurementSystem,
-                                  metricController:
-                                      metricController,
-                                  feetController:
-                                      feetController,
-                                  inchesController:
-                                      inchesController,
-                                  setDialogState:
-                                      setDialogState,
-                                  setError:
-                                      (message) {
-                                    error =
-                                        message;
+                                  dialogContext: dialogContext,
+                                  measurementSystem: measurementSystem,
+                                  metricController: metricController,
+                                  feetController: feetController,
+                                  inchesController: inchesController,
+                                  setDialogState: setDialogState,
+                                  setError: (message) {
+                                    error = message;
                                   },
                                 );
                               },
@@ -663,17 +412,13 @@ class _MeasurementEditorScreenState
                           ),
                         ],
                       ),
-                    const SizedBox(
-                      height: 12,
-                    ),
+                    const SizedBox(height: 12),
                     const Text(
                       'La nueva medida modifica la geometría real '
                       'del ambiente. El plano será validado antes '
                       'de guardar el cambio.',
-                      style:
-                          TextStyle(
-                        color:
-                            Colors.black54,
+                      style: TextStyle(
+                        color: Colors.black54,
                         fontSize: 12,
                         height: 1.35,
                       ),
@@ -684,42 +429,26 @@ class _MeasurementEditorScreenState
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(
-                      dialogContext,
-                    );
+                    Navigator.pop(dialogContext);
                   },
-                  child:
-                      const Text(
-                    'Cancelar',                  ),
+                  child: const Text('Cancelar'),
                 ),
                 FilledButton.icon(
                   onPressed: () {
                     _validateAndCloseDialog(
-                      dialogContext:
-                          dialogContext,
-                      measurementSystem:
-                          measurementSystem,
-                      metricController:
-                          metricController,
-                      feetController:
-                          feetController,
-                      inchesController:
-                          inchesController,
-                      setDialogState:
-                          setDialogState,
-                      setError:
-                          (message) {
-                        error =
-                            message;
+                      dialogContext: dialogContext,
+                      measurementSystem: measurementSystem,
+                      metricController: metricController,
+                      feetController: feetController,
+                      inchesController: inchesController,
+                      setDialogState: setDialogState,
+                      setError: (message) {
+                        error = message;
                       },
                     );
                   },
-                  icon: const Icon(
-                    Icons.check,
-                  ),
-                  label: const Text(
-                    'Guardar',
-                  ),
+                  icon: const Icon(Icons.check),
+                  label: const Text('Guardar'),
                 ),
               ],
             );
@@ -728,28 +457,25 @@ class _MeasurementEditorScreenState
       },
     );
 
-    final newLength = await Navigator.of(context, rootNavigator: true).push(route);
+    final newLength = await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push(route);
     await route.completed;
 
     metricController.dispose();
     feetController.dispose();
     inchesController.dispose();
 
-    if (newLength == null ||
-        !mounted) {
+    if (newLength == null || !mounted) {
       return;
     }
 
-    final result =
-        await provider
-            .updateWallLength(
+    final result = await provider.updateWallLength(
       roomId: room.id,
-      roomIndex:
-          roomIndex,
-      wallIndex:
-          wallIndex,
-      lengthMeters:
-          newLength,
+      roomIndex: roomIndex,
+      wallIndex: wallIndex,
+      lengthMeters: newLength,
     );
 
     if (!mounted) {
@@ -758,18 +484,18 @@ class _MeasurementEditorScreenState
 
     if (!result.isValid) {
       _showMessage(
-        result.errorMessage ??
-            'La nueva medida no es válida.',
+        validationErrorMessage(
+          result,
+          AppLocalizations.of(context)!,
+          fallback: AppLocalizations.of(context)!.invalidCorner,
+        ),
         error: true,
       );
 
       return;
     }
 
-    _showMessage(
-      result.warningMessage ??
-          'Medida actualizada correctamente.',
-    );
+    _showMessage(result.warningMessage ?? 'Medida actualizada correctamente.');
   }
 
   void _validateAndCloseDialog({
@@ -779,37 +505,26 @@ class _MeasurementEditorScreenState
     required TextEditingController feetController,
     required TextEditingController inchesController,
     required StateSetter setDialogState,
-    required void Function(String?)
-        setError,
+    required void Function(String?) setError,
   }) {
-    final value = measurementSystem ==
-            MeasurementSystem.metric
-        ? MeasurementUnits.metricInputToMeters(
-            metricController.text,
-          )
+    final value = measurementSystem == MeasurementSystem.metric
+        ? MeasurementUnits.metricInputToMeters(metricController.text)
         : MeasurementUnits.imperialInputToMeters(
-            feetInput:
-                feetController.text,
-            inchesInput:
-                inchesController.text,
+            feetInput: feetController.text,
+            inchesInput: inchesController.text,
           );
 
     if (value == null) {
       setDialogState(() {
-        setError(
-          'Ingresá un número válido.',
-        );
+        setError('Ingresá un número válido.');
       });
 
       return;
     }
 
-    if (!value.isFinite ||
-        value <= 0) {
+    if (!value.isFinite || value <= 0) {
       setDialogState(() {
-        setError(
-          'La longitud debe ser mayor que 0.',
-        );
+        setError('La longitud debe ser mayor que 0.');
       });
 
       return;
@@ -819,60 +534,36 @@ class _MeasurementEditorScreenState
       setError(null);
     });
 
-    Navigator.pop(
-      dialogContext,
-      value,
-    );
+    Navigator.pop(dialogContext, value);
   }
 
   // ===========================================================================
   // CÁLCULOS
   // ===========================================================================
 
-  double _calculateArea(
-    RoomModel room,
-  ) {
+  double _calculateArea(RoomModel room) {
     if (room.points.length < 3) {
       return 0.0;
     }
 
     double area = 0.0;
 
-    for (
-      int i = 0;
-      i < room.points.length;
-      i++
-    ) {
-      final next =
-          (i + 1) %
-              room.points.length;
+    for (int i = 0; i < room.points.length; i++) {
+      final next = (i + 1) % room.points.length;
 
       area +=
-          room.points[i].x *
-                  room.points[next].z -
-              room.points[next].x *
-                  room.points[i].z;
+          room.points[i].x * room.points[next].z -
+          room.points[next].x * room.points[i].z;
     }
 
     return area.abs() / 2.0;
   }
 
-  double _calculatePerimeter(
-    RoomModel room,
-    FloorPlanProvider provider,
-  ) {
+  double _calculatePerimeter(RoomModel room, FloorPlanProvider provider) {
     double result = 0.0;
 
-    for (
-      int i = 0;
-      i < room.points.length;
-      i++
-    ) {
-      result +=
-          provider.wallLength(
-        room,
-        i,
-      );
+    for (int i = 0; i < room.points.length; i++) {
+      result += provider.wallLength(room, i);
     }
 
     return result;
@@ -882,59 +573,36 @@ class _MeasurementEditorScreenState
   // PRESENTACIÓN DE UNIDADES
   // ===========================================================================
 
-  String _formatLength(
-    double meters,
-    MeasurementSystem measurementSystem,
-  ) {
-    if (measurementSystem ==
-        MeasurementSystem.metric) {
+  String _formatLength(double meters, MeasurementSystem measurementSystem) {
+    if (measurementSystem == MeasurementSystem.metric) {
       return '${_formatDecimal(meters)} m';
     }
 
-    final imperial =
-        MeasurementUnits.metersToFeetAndInches(
-      meters,
-    );
+    final imperial = MeasurementUnits.metersToFeetAndInches(meters);
 
     return '${imperial.feet}′ '
         '${_formatDecimal(imperial.inches)}″';
   }
 
-  String _formatArea(
-    double squareMeters,
-    MeasurementSystem measurementSystem,
-  ) {
-    final localizations =
-        AppLocalizations.of(context)!;
+  String _formatArea(double squareMeters, MeasurementSystem measurementSystem) {
+    final localizations = AppLocalizations.of(context)!;
 
-    if (measurementSystem ==
-        MeasurementSystem.metric) {
+    if (measurementSystem == MeasurementSystem.metric) {
       return '${_formatDecimal(squareMeters)} '
           '${localizations.squareMeters}';
     }
 
-    final squareFeet =
-        MeasurementUnits.squareMetersToSquareFeet(
-      squareMeters,
-    );
+    final squareFeet = MeasurementUnits.squareMetersToSquareFeet(squareMeters);
 
     return '${_formatDecimal(squareFeet)} '
         '${localizations.squareFeet}';
   }
 
-  String _formatDecimal(
-    double value,
-  ) {
-    var formatted =
-        value.toStringAsFixed(2);
+  String _formatDecimal(double value) {
+    var formatted = value.toStringAsFixed(2);
 
-    if (Localizations.localeOf(context)
-            .languageCode ==
-        'es') {
-      formatted = formatted.replaceAll(
-        '.',
-        ',',
-      );
+    if (Localizations.localeOf(context).languageCode == 'es') {
+      formatted = formatted.replaceAll('.', ',');
     }
 
     return formatted;
@@ -944,10 +612,7 @@ class _MeasurementEditorScreenState
   // MENSAJES
   // ===========================================================================
 
-  void _showMessage(
-    String message, {
-    bool error = false,
-  }) {
+  void _showMessage(String message, {bool error = false}) {
     if (!mounted) {
       return;
     }
@@ -956,35 +621,19 @@ class _MeasurementEditorScreenState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          behavior:
-              SnackBarBehavior.floating,
-          backgroundColor:
-              error
-                  ? Colors.red.shade800
-                  : Colors.green.shade700,
-          duration:
-              Duration(
-            seconds:
-                error ? 4 : 2,
-          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: error ? Colors.red.shade800 : Colors.green.shade700,
+          duration: Duration(seconds: error ? 4 : 2),
           content: Row(
             children: [
               Icon(
                 error
-                    ? Icons
-                        .warning_amber_rounded
-                    : Icons
-                        .check_circle_outline,
+                    ? Icons.warning_amber_rounded
+                    : Icons.check_circle_outline,
                 color: Colors.white,
               ),
-              const SizedBox(
-                width: 10,
-              ),
-              Expanded(
-                child: Text(
-                  message,
-                ),
-              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(message)),
             ],
           ),
         ),
