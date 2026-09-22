@@ -21,7 +21,7 @@ jobs:
       - run: flutter pub get
         working-directory: packages/room_scanner_app
       - name: Format audited files
-        run: dart format packages/room_scanner_app/lib/screens/basic_scanner_screen.dart packages/room_scanner_app/lib/screens/measurement_editor_screen.dart packages/room_scanner_app/test/room_dialog_lifecycle_test.dart
+        run: dart format packages/room_scanner_app/lib/screens/basic_scanner_screen.dart packages/room_scanner_app/lib/screens/measurement_editor_screen.dart packages/room_scanner_app/test/room_dialog_lifecycle_test.dart packages/room_scanner_app/tool/security_audit.dart
       - name: Commit formatted files
         run: |
           if git diff --quiet; then
@@ -30,6 +30,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add packages/room_scanner_app/lib/screens/basic_scanner_screen.dart packages/room_scanner_app/lib/screens/measurement_editor_screen.dart packages/room_scanner_app/test/room_dialog_lifecycle_test.dart
+          git add packages/room_scanner_app/lib/screens/basic_scanner_screen.dart packages/room_scanner_app/lib/screens/measurement_editor_screen.dart packages/room_scanner_app/test/room_dialog_lifecycle_test.dart packages/room_scanner_app/tool/security_audit.dart
           git commit -m "style: format audited Dart files"
           git push
