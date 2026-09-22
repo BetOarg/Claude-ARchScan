@@ -538,7 +538,7 @@
   "continueFromSelectedVertexTitle": "¿Continuar desde este vértice?",
   "continueFromSelectedVertexBody": "El vértice resaltado será el inicio. En AR primero marcarás el vértice anterior y después este punto para conservar la orientación de la pared.",
   "areaSummaryTitle": "Superficies del proyecto",
-  "totalAreaLabel": "Superficie total"
+  "totalAreaLabel": "Superficie total",
   "validationTooCloseToPreviousPoint": "El punto está demasiado cerca del punto anterior.",
   "validationDuplicatePoint": "El punto está demasiado cerca de una esquina existente.",
   "validationSelfIntersection": "El cambio generaría un cruce en el plano.",
