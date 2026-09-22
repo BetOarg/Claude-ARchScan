@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../l10n/validation_error_localization.dart';
 import '../providers/floor_plan_provider.dart';
 import '../providers/measurement_settings_provider.dart';
 import '../services/import_export_service.dart';
@@ -1053,8 +1054,7 @@ class _FloorPlanViewerScreenState
     _showMessage(
       result.isSuccess
           ? localizations.openingUpdated
-          : result.errorMessage ??
-              localizations.invalidOpeningMeasurement,
+          : validationErrorMessage(result, localizations, fallback: localizations.invalidOpeningMeasurement),
       error: !result.isSuccess,
     );
   }
@@ -3013,7 +3013,7 @@ class _FloorPlanViewerScreenState
     if (!mounted) return;
     _showMessage(result.isSuccess
         ? AppLocalizations.of(context)!.openingUpdated
-        : result.errorMessage ?? AppLocalizations.of(context)!.invalidOpeningMeasurement,
+        : validationErrorMessage(result, AppLocalizations.of(context)!, fallback: AppLocalizations.of(context)!.invalidOpeningMeasurement),
         error: !result.isSuccess);
   }
 
