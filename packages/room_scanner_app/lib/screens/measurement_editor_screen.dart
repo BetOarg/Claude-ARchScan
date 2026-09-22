@@ -32,32 +32,35 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
         appBar: AppBar(title: Text(l10n.measurementEditorTitle)),
         body: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.straighten_outlined,
                   size: 64,
                   color: Colors.black38,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
                   l10n.noRoomsToEditMessage,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   l10n.measurementEditorEmptyHint,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black54),
+                  style: const TextStyle(color: Colors.black54),
                 ),
               ],
             ),
           ),
         ),
-      );
+
     }
 
     final selectedIndex = _resolveSelectedIndex(rooms);
