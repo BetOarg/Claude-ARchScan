@@ -1655,7 +1655,11 @@ class _BasicScannerScreenState
             .removeLastPoint();
 
         _showValidationError(
-          validationErrorMessage(result, l10n, fallback: l10n.couldNotAddStart),
+          validationErrorMessage(
+            result,
+            l10n,
+            fallback: l10n.couldNotAddStart,
+          ),
         );
         return;
       }
@@ -1758,7 +1762,11 @@ class _BasicScannerScreenState
             .cancelPendingMeasurement();
 
         _showValidationError(
-          validationErrorMessage(result, l10n, fallback: l10n.invalidCorner),
+          validationErrorMessage(
+            result,
+            l10n,
+            fallback: l10n.invalidCorner,
+          ),
         );
 
         return;
