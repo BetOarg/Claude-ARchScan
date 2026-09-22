@@ -22,13 +22,14 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = context.watch<FloorPlanProvider>();
 
     final rooms = provider.completedRooms;
 
     if (rooms.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Editar medidas')),
+        appBar: AppBar(title: Text(l10n.measurementEditorTitle)),
         body: const Center(
           child: Padding(
             padding: EdgeInsets.all(24),
@@ -42,13 +43,13 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                 ),
                 SizedBox(height: 16),
                 Text(
-                  'No hay ambientes para editar.',
+                  l10n.noRoomsToEditMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Primero completá y guardá un ambiente desde el Scanner.',
+                  l10n.measurementEditorEmptyHint,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.black54),
                 ),
@@ -160,14 +161,13 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
       children: [
         _buildSummaryCard(room, area, perimeter),
         const SizedBox(height: 16),
-        const Text(
-          'Paredes',
+        Text(
+          l10n.wallsSection,
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Seleccioná una pared para corregir su longitud. '
-          'La dirección actual de la pared se conserva automáticamente.',
+        Text(
+          l10n.selectWallToEdit,
           style: TextStyle(color: Colors.black54, height: 1.3),
         ),
         const SizedBox(height: 12),
@@ -196,7 +196,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
             Expanded(
               child: _metric(
                 Icons.square_foot,
-                'Superficie',
+                l10n.areaLabel,
                 _formatArea(area, measurementSystem),
               ),
             ),
@@ -204,7 +204,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
             Expanded(
               child: _metric(
                 Icons.timeline,
-                'Perímetro',
+                l10n.perimeterLabel,
                 _formatLength(perimeter, measurementSystem),
               ),
             ),
@@ -212,7 +212,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
             Expanded(
               child: _metric(
                 Icons.polyline,
-                'Esquinas',
+                l10n.cornersLabel,
                 '${room.points.length}',
               ),
             ),
@@ -251,6 +251,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     int roomIndex,
     int wallIndex,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final measurementSystem = context
         .watch<MeasurementSettingsProvider>()
         .system;
@@ -266,13 +267,14 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: CircleAvatar(child: Text('${wallIndex + 1}')),
         title: Text(
-          'Pared ${wallIndex + 1}',
+          l10n.wallNumber.replaceFirst('{number}', '${wallIndex + 1}'),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          'Esquina $startIndex → '
-          'Esquina $endIndex\n'
-          '${_formatLength(length, measurementSystem)}',
+          l10n.cornerRange
+                  .replaceFirst('{start}', '$startIndex')
+                  .replaceFirst('{end}', '$endIndex') +
+              '\n${_formatLength(length, measurementSystem)}',
         ),
         trailing: IconButton(
           tooltip: 'Editar medida',
@@ -295,6 +297,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     int wallIndex,
     double currentLength,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final measurementSystem = context
         .read<MeasurementSettingsProvider>()
         .system;
@@ -321,8 +324,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
-                'Editar pared '
-                '${wallIndex + 1}',
+                l10n.editWallTitle.replaceFirst('{number}', '${wallIndex + 1}'),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -330,8 +332,10 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Medida actual: '
-                      '${_formatLength(currentLength, measurementSystem)}',
+                      l10n.currentMeasurement.replaceFirst(
+                        '{value}',
+                        _formatLength(currentLength, measurementSystem),
+                      ),
                       style: const TextStyle(color: Colors.black54),
                     ),
                     const SizedBox(height: 16),
@@ -413,10 +417,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                         ],
                       ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'La nueva medida modifica la geometría real '
-                      'del ambiente. El plano será validado antes '
-                      'de guardar el cambio.',
+                    Text(
+                      l10n.wallLengthChangeNotice,
                       style: TextStyle(
                         color: Colors.black54,
                         fontSize: 12,
@@ -448,7 +450,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                     );
                   },
                   icon: const Icon(Icons.check),
-                  label: const Text('Guardar'),
+                  label: Text(l10n.save),
                 ),
               ],
             );
