@@ -2057,7 +2057,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       return AppLocalizations.of(context)!.directionLeftPreview;
     }
 
-    return AppLocalizations.of(context)!.customDirection.replaceFirst('{angle}', _formatAngle(angle));
+    return AppLocalizations.of(context)!.customDirection(_formatAngle(angle));
   }
 
   double? _parseNumber(String value) {
