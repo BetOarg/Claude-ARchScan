@@ -572,5 +572,6 @@
   "customDirection": "Custom direction · {angle}°",
   "referenceOpeningConnected": "The opening is already connected to another space.",
   "needThreeCornersToCloseMessage": "You need at least 3 corners to close the space.",
-  "closeRoomFailedFallback": "The space could not be closed."
+  "closeRoomFailedFallback": "The space could not be closed.",
+  "saveRoomFailed": "The space could not be saved. Review overlaps and try again."
 }
