@@ -278,7 +278,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
               '\n${_formatLength(length, measurementSystem)}',
         ),
         trailing: IconButton(
-          tooltip: 'Editar medida',
+          tooltip: l10n.editWallTitle(wallIndex + 1),
           icon: const Icon(Icons.edit_outlined),
           onPressed: () =>
               _editWallLength(room, provider, roomIndex, wallIndex, length),
