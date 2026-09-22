@@ -60,7 +60,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
             ),
           ),
         ),
-
+      );
     }
 
     final selectedIndex = _resolveSelectedIndex(rooms);
