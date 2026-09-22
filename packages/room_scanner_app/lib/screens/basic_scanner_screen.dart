@@ -2038,26 +2038,26 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     final parsed = _parseNumber(rawValue);
 
     if (parsed == null) {
-      return 'Ingresá un ángulo válido';
+      return AppLocalizations.of(context)!.validAngleRequired;
     }
 
     final angle = _normalizeAngle(parsed);
     const tolerance = 0.001;
 
     if ((angle - 0.0).abs() < tolerance) {
-      return '↑ Frente · 0°';
+      return AppLocalizations.of(context)!.directionFront;
     }
     if ((angle - 90.0).abs() < tolerance) {
-      return '→ Derecha · 90°';
+      return AppLocalizations.of(context)!.directionRightPreview;
     }
     if ((angle - 180.0).abs() < tolerance) {
-      return '↓ Atrás · 180°';
+      return AppLocalizations.of(context)!.directionBack;
     }
     if ((angle - 270.0).abs() < tolerance) {
-      return '← Izquierda · 270°';
+      return AppLocalizations.of(context)!.directionLeftPreview;
     }
 
-    return 'Dirección personalizada · ${_formatAngle(angle)}°';
+    return AppLocalizations.of(context)!.customDirection.replaceFirst('{angle}', _formatAngle(angle));
   }
 
   double? _parseNumber(String value) {
@@ -2126,7 +2126,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
   Future<void> _closeRoomOnce(ScannerProvider provider) async {
     if (provider.currentPointsCount < 3) {
       _showValidationError(
-        'Necesitás al menos 3 esquinas para cerrar el ambiente.',
+        AppLocalizations.of(context)!.needThreeCornersToCloseMessage,
       );
       return;
     }
@@ -2181,8 +2181,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       if (sourceFeature == null || sourceFeature.isConnected) {
         _showValidationError(
           sourceFeature == null
-              ? 'La abertura de referencia ya no existe.'
-              : 'La abertura ya conecta otro ambiente.',
+              ? l10n.referenceOpeningMissing
+              : l10n.referenceOpeningConnected,
         );
         return;
       }
@@ -2192,7 +2192,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
 
     if (room == null) {
       _showValidationError(
-        provider.lastCloseError ?? 'No se pudo cerrar el ambiente.',
+        provider.lastCloseError ?? l10n.closeRoomFailedFallback,
       );
       return;
     }
@@ -2221,7 +2221,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     if (!saved) {
       provider.restoreCurrentRoom(room.copyWith(isClosed: false));
       _showValidationError(
-        'No se pudo guardar el ambiente. Revisá los solapamientos y volvé a intentar.',
+        l10n.saveRoomFailed,
       );
       return;
     }
