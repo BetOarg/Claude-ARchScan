@@ -1432,7 +1432,11 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            validationErrorMessage(result, AppLocalizations.of(context)!, fallback: AppLocalizations.of(context)!.invalidCorner),
+            validationErrorMessage(
+              result,
+              AppLocalizations.of(context)!,
+              fallback: AppLocalizations.of(context)!.invalidCorner,
+            ),
           ),
           backgroundColor: Colors.redAccent,
         ),
