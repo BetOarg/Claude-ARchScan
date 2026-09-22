@@ -2,23 +2,46 @@ import 'dart:math';
 
 import '../models/room_model.dart';
 
+enum ValidationErrorCode {
+  tooCloseToPreviousPoint,
+  duplicatePoint,
+  selfIntersection,
+  insufficientCorners,
+  insufficientArea,
+  invalidGeometry,
+}
+
 class ValidationResult {
   final bool isValid;
+  final ValidationErrorCode? errorCode;
+  /// Kept temporarily for backward compatibility with existing UI callers.
+  /// New UI code should map [errorCode] through gen-l10n.
   final String? errorMessage;
   final String? warningMessage;
   final ARPoint? suggestedPoint;
 
   const ValidationResult._({
     required this.isValid,
+    this.errorCode,
     this.errorMessage,
     this.warningMessage,
     this.suggestedPoint,
   });
 
-  static const ValidationResult valid = ValidationResult._(isValid: true);
+  static const ValidationResult valid = ValidationResult._(
+    isValid: true,
+    errorCode: null,
+  );
 
-  static ValidationResult invalid(String message) =>
-      ValidationResult._(isValid: false, errorMessage: message);
+  static ValidationResult invalid(
+    String message, {
+    ValidationErrorCode? code,
+  }) =>
+      ValidationResult._(
+        isValid: false,
+        errorCode: code,
+        errorMessage: message,
+      );
 
   static ValidationResult warning(String message, {ARPoint? suggestion}) =>
       ValidationResult._(isValid: true, warningMessage: message, suggestedPoint: suggestion);
@@ -52,6 +75,7 @@ class ScanValidator {
     if (lastDistSq < (minCornerDistance * minCornerDistance)) {
       return ValidationResult.invalid(
         'Demasiado cerca del punto anterior (${sqrt(lastDistSq).toStringAsFixed(2)} m). Mínimo: $minCornerDistance m.',
+        code: ValidationErrorCode.tooCloseToPreviousPoint,
       );
     }
 
@@ -61,7 +85,10 @@ class ScanValidator {
       final dx = candidate.x - p.x;
       final dz = candidate.z - p.z;
       if ((dx * dx + dz * dz) < dupThreshSq) {
-        return ValidationResult.invalid('Punto duplicado detectado (cerca de esquina ${i + 1}).');
+        return ValidationResult.invalid(
+          'Punto duplicado detectado (cerca de esquina ${i + 1}).',
+          code: ValidationErrorCode.duplicatePoint,
+        );
       }
     }
 
@@ -84,7 +111,10 @@ class ScanValidator {
           segA.x, segA.z, segB.x, segB.z,
           last.x, last.z, candidate.x, candidate.z,
         )) {
-          return ValidationResult.invalid('Autointersección detectada: el tramo cruza una pared.');
+          return ValidationResult.invalid(
+            'Autointersección detectada: el tramo cruza una pared.',
+            code: ValidationErrorCode.selfIntersection,
+          );
         }
       }
     }
@@ -127,6 +157,7 @@ class ScanValidator {
       if (distPrev < minCornerDistance) {
         return ValidationResult.invalid(
           'Demasiado cerca del vértice anterior.',
+          code: ValidationErrorCode.tooCloseToPreviousPoint,
         );
       }
     }
@@ -135,6 +166,7 @@ class ScanValidator {
       if (distNext < minCornerDistance) {
         return ValidationResult.invalid(
           'Demasiado cerca del vértice siguiente.',
+          code: ValidationErrorCode.tooCloseToPreviousPoint,
         );
       }
     }
@@ -146,7 +178,10 @@ class ScanValidator {
       final dx = updated.x - points[i].x;
       final dz = updated.z - points[i].z;
       if ((dx * dx + dz * dz) < dupThreshSq) {
-        return ValidationResult.invalid('Posición duplicada con vértice ${i + 1}.');
+        return ValidationResult.invalid(
+          'Posición duplicada con vértice ${i + 1}.',
+          code: ValidationErrorCode.duplicatePoint,
+        );
       }
     }
 
@@ -174,7 +209,8 @@ class ScanValidator {
           )) {
         return ValidationResult.invalid(
           'Movimiento genera autointersección.',
-        );
+            code: ValidationErrorCode.selfIntersection,
+          );
       }
 
       // Segmento actualizado -> siguiente, si existe.
@@ -335,7 +371,10 @@ class ScanValidator {
 
   static ValidationResult validateClosure(List<ARPoint> points) {
     if (points.length < 3) {
-      return ValidationResult.invalid('Se necesitan al menos 3 esquinas.');
+      return ValidationResult.invalid(
+        'Se necesitan al menos 3 esquinas.',
+        code: ValidationErrorCode.insufficientCorners,
+      );
     }
 
     double doubleArea = 0.0;
@@ -347,7 +386,10 @@ class ScanValidator {
     final double area = doubleArea.abs() / 2.0;
 
     if (area < minArea) {
-      return ValidationResult.invalid('Área insuficiente (${area.toStringAsFixed(2)} m²).');
+      return ValidationResult.invalid(
+        'Área insuficiente (${area.toStringAsFixed(2)} m²).',
+        code: ValidationErrorCode.insufficientArea,
+      );
     }
 
     return ValidationResult.valid;
