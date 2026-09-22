@@ -539,4 +539,10 @@
   "continueFromSelectedVertexBody": "El vértice resaltado será el inicio. En AR primero marcarás el vértice anterior y después este punto para conservar la orientación de la pared.",
   "areaSummaryTitle": "Superficies del proyecto",
   "totalAreaLabel": "Superficie total"
+  "validationTooCloseToPreviousPoint": "El punto está demasiado cerca del punto anterior.",
+  "validationDuplicatePoint": "El punto está demasiado cerca de una esquina existente.",
+  "validationSelfIntersection": "El cambio generaría un cruce en el plano.",
+  "validationInsufficientCorners": "Se necesitan al menos 3 esquinas.",
+  "validationInsufficientArea": "La superficie del ambiente es demasiado pequeña.",
+  "validationInvalidGeometry": "La geometría no es válida.",
 }
