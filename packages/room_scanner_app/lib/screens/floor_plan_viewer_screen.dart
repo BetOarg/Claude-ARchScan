@@ -10,7 +10,6 @@ import 'package:provider/provider.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
 import '../l10n/generated/app_localizations.dart';
-import '../l10n/validation_error_localization.dart';
 import '../providers/floor_plan_provider.dart';
 import '../providers/measurement_settings_provider.dart';
 import '../services/import_export_service.dart';
