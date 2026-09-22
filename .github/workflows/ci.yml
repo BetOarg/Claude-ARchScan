@@ -33,9 +33,8 @@ jobs:
           cache: true
 
       - name: Get dependencies for Dart formatting
-        run: |
-          flutter pub get --directory=packages/room_scanner_core
-          flutter pub get --directory=packages/room_scanner_app
+        run: flutter pub get
+        working-directory: packages/room_scanner_core
 
       - name: Verify Dart formatting on changed files
         shell: bash
