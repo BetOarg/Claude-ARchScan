@@ -509,6 +509,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     required StateSetter setDialogState,
     required void Function(String?) setError,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final value = measurementSystem == MeasurementSystem.metric
         ? MeasurementUnits.metricInputToMeters(metricController.text)
         : MeasurementUnits.imperialInputToMeters(
@@ -518,7 +519,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
 
     if (value == null) {
       setDialogState(() {
-        setError('Ingresá un número válido.');
+        setError(l10n.invalidNumber);
       });
 
       return;
@@ -526,7 +527,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
 
     if (!value.isFinite || value <= 0) {
       setDialogState(() {
-        setError('La longitud debe ser mayor que 0.');
+        setError(l10n.positiveLengthRequired);
       });
 
       return;
