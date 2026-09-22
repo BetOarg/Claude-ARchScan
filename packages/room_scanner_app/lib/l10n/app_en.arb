@@ -544,5 +544,5 @@
   "validationSelfIntersection": "The change would create a crossing in the plan.",
   "validationInsufficientCorners": "At least 3 corners are required.",
   "validationInsufficientArea": "The room area is too small.",
-  "validationInvalidGeometry": "The geometry is not valid.",
+  "validationInvalidGeometry": "The geometry is not valid." 
 }
