@@ -32,9 +32,13 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Get dependencies for Dart formatting
+      - name: Get dependencies for Dart formatting (core)
         run: flutter pub get
         working-directory: packages/room_scanner_core
+
+      - name: Get dependencies for Dart formatting (app)
+        run: flutter pub get
+        working-directory: packages/room_scanner_app
 
       - name: Verify Dart formatting on changed files
         shell: bash

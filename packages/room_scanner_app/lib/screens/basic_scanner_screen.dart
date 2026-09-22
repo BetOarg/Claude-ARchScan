@@ -98,8 +98,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
 
     _activeContinuationReference = widget.continuationReference;
     _activeResumeRoom = widget.resumeRoom;
-    _shouldResumeCamera =
-        WidgetsBinding.instance.lifecycleState == null ||
+    _shouldResumeCamera = WidgetsBinding.instance.lifecycleState == null ||
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
 
     WidgetsBinding.instance.addObserver(this);
@@ -354,19 +353,18 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
 
       _scanDraftService
           .save(
-            projectUuid: widget.projectUuid,
-            room: room,
-            resumeRoom: _activeResumeRoom,
-            continuationReference: _activeContinuationReference,
-            basicHistory: history,
-          )
+        projectUuid: widget.projectUuid,
+        room: room,
+        resumeRoom: _activeResumeRoom,
+        continuationReference: _activeContinuationReference,
+        basicHistory: history,
+      )
           .then((_) {
-            _lastDraftFingerprint = fingerprint;
-          })
-          .catchError((Object error) {
-            _lastDraftFingerprint = null;
-            debugPrint('No se pudo guardar el borrador: $error');
-          });
+        _lastDraftFingerprint = fingerprint;
+      }).catchError((Object error) {
+        _lastDraftFingerprint = null;
+        debugPrint('No se pudo guardar el borrador: $error');
+      });
     });
   }
 
@@ -443,9 +441,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     }
 
     final width = continuation.width;
-    final tangentSign = continuation.side == OpeningConnectionSide.left
-        ? 1.0
-        : -1.0;
+    final tangentSign =
+        continuation.side == OpeningConnectionSide.left ? 1.0 : -1.0;
     final otherX = continuation.startEndpoint == ContinuationStartEndpoint.start
         ? tangentSign * width
         : -tangentSign * width;
@@ -591,8 +588,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       setState(() {
         _cameraReady = false;
         _initializing = false;
-        _initializationError = AppLocalizations.of(context)!
-            .cameraResumeFailed(error.toString());
+        _initializationError =
+            AppLocalizations.of(context)!.cameraResumeFailed(error.toString());
       });
 
       context.read<ScannerProvider>().updateTrackingStatus(false);
@@ -732,11 +729,9 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       child: FittedBox(
         fit: BoxFit.cover,
         child: SizedBox(
-          width:
-              controller.value.previewSize?.height ??
+          width: controller.value.previewSize?.height ??
               MediaQuery.of(context).size.width,
-          height:
-              controller.value.previewSize?.width ??
+          height: controller.value.previewSize?.width ??
               MediaQuery.of(context).size.height,
           child: CameraPreview(controller),
         ),
@@ -759,8 +754,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
           features: features,
           previousRooms:
               _activeContinuationReference == null && _activeResumeRoom == null
-              ? const <RoomModel>[]
-              : completedRooms,
+                  ? const <RoomModel>[]
+                  : completedRooms,
           continuationReference: _activeContinuationReference,
         ),
         size: Size.infinite,
@@ -848,8 +843,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
                   child: Text(
                     count == 0
                         ? continuation != null
-                              ? l10n.continuationFirstCornerInstruction
-                              : l10n.markRoomStartingPoint
+                            ? l10n.continuationFirstCornerInstruction
+                            : l10n.markRoomStartingPoint
                         : l10n.measureNextCornerInstruction,
                     style: const TextStyle(
                       color: Colors.white,
@@ -955,8 +950,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     final l10n = AppLocalizations.of(context)!;
     final name = await showRoomNameDialog(
       context: context,
-      initialName:
-          provider.currentRoom?.name ??
+      initialName: provider.currentRoom?.name ??
           provider.selectedType.localizedName(l10n),
     );
 
@@ -1293,8 +1287,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
   Future<void> _captureWallPoint(ScannerProvider provider) async {
     final l10n = AppLocalizations.of(context)!;
 
-    final isFirstContinuationCorner =
-        _activeContinuationReference != null &&
+    final isFirstContinuationCorner = _activeContinuationReference != null &&
         provider.currentPointsCount == 0;
 
     final measurement = await _showMeasurementDialog(
@@ -1439,8 +1432,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       );
       if (!mounted ||
           placement == null ||
-          !identical(provider.currentRoom, room))
-        return;
+          !identical(provider.currentRoom, room)) return;
       final result = provider.addFeatureToCurrentRoom(
         type,
         placement.location,
@@ -1490,9 +1482,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     final featureInchesController = TextEditingController(
       text: _formatUnitNumber(initialImperialWidth.inches),
     );
-    final selectedMeasurementSystem = context
-        .read<MeasurementSettingsProvider>()
-        .system;
+    final selectedMeasurementSystem =
+        context.read<MeasurementSettingsProvider>().system;
     double? distanceError;
     double? angleError;
     double? featureWidthError;
@@ -1796,14 +1787,12 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
                         : null;
 
                     setDialogState(() {
-                      distanceError = distance == null || distance <= 0
-                          ? 1
-                          : null;
+                      distanceError =
+                          distance == null || distance <= 0 ? 1 : null;
 
                       angleError = angle == null ? 1 : null;
 
-                      featureWidthError =
-                          featureMode &&
+                      featureWidthError = featureMode &&
                               (featureWidth == null || featureWidth < 0.20)
                           ? 1
                           : null;
@@ -2038,26 +2027,26 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     final parsed = _parseNumber(rawValue);
 
     if (parsed == null) {
-      return 'Ingresá un ángulo válido';
+      return AppLocalizations.of(context)!.validAngleRequired;
     }
 
     final angle = _normalizeAngle(parsed);
     const tolerance = 0.001;
 
     if ((angle - 0.0).abs() < tolerance) {
-      return '↑ Frente · 0°';
+      return AppLocalizations.of(context)!.directionFront;
     }
     if ((angle - 90.0).abs() < tolerance) {
-      return '→ Derecha · 90°';
+      return AppLocalizations.of(context)!.directionRightPreview;
     }
     if ((angle - 180.0).abs() < tolerance) {
-      return '↓ Atrás · 180°';
+      return AppLocalizations.of(context)!.directionBack;
     }
     if ((angle - 270.0).abs() < tolerance) {
-      return '← Izquierda · 270°';
+      return AppLocalizations.of(context)!.directionLeftPreview;
     }
 
-    return 'Dirección personalizada · ${_formatAngle(angle)}°';
+    return AppLocalizations.of(context)!.customDirection(_formatAngle(angle));
   }
 
   double? _parseNumber(String value) {
@@ -2126,7 +2115,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
   Future<void> _closeRoomOnce(ScannerProvider provider) async {
     if (provider.currentPointsCount < 3) {
       _showValidationError(
-        'Necesitás al menos 3 esquinas para cerrar el ambiente.',
+        AppLocalizations.of(context)!.needThreeCornersToCloseMessage,
       );
       return;
     }
@@ -2136,8 +2125,7 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     final l10n = AppLocalizations.of(context)!;
     final roomName = await showRoomNameDialog(
       context: context,
-      initialName:
-          provider.currentRoom?.name ??
+      initialName: provider.currentRoom?.name ??
           provider.selectedType.localizedName(l10n),
     );
     if (!mounted || roomName == null || roomName.trim().isEmpty) {
@@ -2181,8 +2169,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       if (sourceFeature == null || sourceFeature.isConnected) {
         _showValidationError(
           sourceFeature == null
-              ? 'La abertura de referencia ya no existe.'
-              : 'La abertura ya conecta otro ambiente.',
+              ? l10n.referenceOpeningMissing
+              : l10n.referenceOpeningConnected,
         );
         return;
       }
@@ -2192,14 +2180,13 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
 
     if (room == null) {
       _showValidationError(
-        provider.lastCloseError ?? 'No se pudo cerrar el ambiente.',
+        provider.lastCloseError ?? l10n.closeRoomFailedFallback,
       );
       return;
     }
 
     final resumeRoom = _activeResumeRoom;
-    final resumesExistingRoom =
-        resumeRoom != null &&
+    final resumesExistingRoom = resumeRoom != null &&
         floorPlanProvider.completedRooms.any(
           (existing) => existing.id == resumeRoom.id,
         );
@@ -2209,19 +2196,19 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
             expectedOpenRoom: resumeRoom,
           )
         : continuation == null
-        ? await floorPlanProvider.addCompletedRoom(
-            room,
-            preservePlacement: resumeRoom != null,
-          )
-        : await floorPlanProvider.addCompletedRoomFromContinuation(
-            room: room,
-            reference: continuation,
-          );
+            ? await floorPlanProvider.addCompletedRoom(
+                room,
+                preservePlacement: resumeRoom != null,
+              )
+            : await floorPlanProvider.addCompletedRoomFromContinuation(
+                room: room,
+                reference: continuation,
+              );
 
     if (!saved) {
       provider.restoreCurrentRoom(room.copyWith(isClosed: false));
       _showValidationError(
-        'No se pudo guardar el ambiente. Revisá los solapamientos y volvé a intentar.',
+        l10n.saveRoomFailed,
       );
       return;
     }

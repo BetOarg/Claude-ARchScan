@@ -22,35 +22,39 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = context.watch<FloorPlanProvider>();
 
     final rooms = provider.completedRooms;
 
     if (rooms.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Editar medidas')),
-        body: const Center(
+        appBar: AppBar(title: Text(l10n.measurementEditorTitle)),
+        body: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.straighten_outlined,
                   size: 64,
                   color: Colors.black38,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  'No hay ambientes para editar.',
+                  l10n.noRoomsToEditMessage,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Primero completá y guardá un ambiente desde el Scanner.',
+                  l10n.measurementEditorEmptyHint,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black54),
+                  style: const TextStyle(color: Colors.black54),
                 ),
               ],
             ),
@@ -64,7 +68,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     final selectedRoom = rooms[selectedIndex];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar medidas')),
+      appBar: AppBar(title: Text(l10n.measurementEditorTitle)),
       body: Column(
         children: [
           _buildRoomSelector(rooms, selectedIndex),
@@ -151,6 +155,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     FloorPlanProvider provider,
     int roomIndex,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final area = _calculateArea(room);
 
     final perimeter = _calculatePerimeter(room, provider);
@@ -160,14 +165,13 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
       children: [
         _buildSummaryCard(room, area, perimeter),
         const SizedBox(height: 16),
-        const Text(
-          'Paredes',
+        Text(
+          l10n.wallsSection,
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Seleccioná una pared para corregir su longitud. '
-          'La dirección actual de la pared se conserva automáticamente.',
+        Text(
+          l10n.selectWallToEdit,
           style: TextStyle(color: Colors.black54, height: 1.3),
         ),
         const SizedBox(height: 12),
@@ -183,9 +187,9 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
   // ===========================================================================
 
   Widget _buildSummaryCard(RoomModel room, double area, double perimeter) {
-    final measurementSystem = context
-        .watch<MeasurementSettingsProvider>()
-        .system;
+    final l10n = AppLocalizations.of(context)!;
+    final measurementSystem =
+        context.watch<MeasurementSettingsProvider>().system;
 
     return Card(
       elevation: 0,
@@ -196,7 +200,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
             Expanded(
               child: _metric(
                 Icons.square_foot,
-                'Superficie',
+                l10n.areaLabel,
                 _formatArea(area, measurementSystem),
               ),
             ),
@@ -204,7 +208,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
             Expanded(
               child: _metric(
                 Icons.timeline,
-                'Perímetro',
+                l10n.perimeterLabel,
                 _formatLength(perimeter, measurementSystem),
               ),
             ),
@@ -212,7 +216,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
             Expanded(
               child: _metric(
                 Icons.polyline,
-                'Esquinas',
+                l10n.cornersLabel,
                 '${room.points.length}',
               ),
             ),
@@ -251,9 +255,9 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     int roomIndex,
     int wallIndex,
   ) {
-    final measurementSystem = context
-        .watch<MeasurementSettingsProvider>()
-        .system;
+    final l10n = AppLocalizations.of(context)!;
+    final measurementSystem =
+        context.watch<MeasurementSettingsProvider>().system;
     final length = provider.wallLength(room, wallIndex);
 
     final startIndex = wallIndex + 1;
@@ -266,16 +270,15 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: CircleAvatar(child: Text('${wallIndex + 1}')),
         title: Text(
-          'Pared ${wallIndex + 1}',
+          l10n.wallNumber(wallIndex + 1),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          'Esquina $startIndex → '
-          'Esquina $endIndex\n'
-          '${_formatLength(length, measurementSystem)}',
+          l10n.cornerRange(startIndex, endIndex) +
+              '\n${_formatLength(length, measurementSystem)}',
         ),
         trailing: IconButton(
-          tooltip: 'Editar medida',
+          tooltip: l10n.editWallTitle(wallIndex + 1),
           icon: const Icon(Icons.edit_outlined),
           onPressed: () =>
               _editWallLength(room, provider, roomIndex, wallIndex, length),
@@ -295,9 +298,9 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     int wallIndex,
     double currentLength,
   ) async {
-    final measurementSystem = context
-        .read<MeasurementSettingsProvider>()
-        .system;
+    final l10n = AppLocalizations.of(context)!;
+    final measurementSystem =
+        context.read<MeasurementSettingsProvider>().system;
     final metricController = TextEditingController(
       text: _formatDecimal(currentLength),
     );
@@ -321,8 +324,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
-                'Editar pared '
-                '${wallIndex + 1}',
+                l10n.editWallTitle(wallIndex + 1),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -330,8 +332,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Medida actual: '
-                      '${_formatLength(currentLength, measurementSystem)}',
+                      l10n.currentMeasurement(
+                          _formatLength(currentLength, measurementSystem)),
                       style: const TextStyle(color: Colors.black54),
                     ),
                     const SizedBox(height: 16),
@@ -343,8 +345,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                           decimal: true,
                         ),
                         decoration: InputDecoration(
-                          labelText: 'Nueva longitud',
-                          hintText: 'Ejemplo: 3,25',
+                          labelText: l10n.newLength,
+                          hintText: l10n.lengthExample,
                           suffixText: AppLocalizations.of(context)!.meters,
                           errorText: error,
                           prefixIcon: const Icon(Icons.straighten),
@@ -374,8 +376,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                               autofocus: true,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                decimal: true,
+                              ),
                               decoration: InputDecoration(
                                 labelText: AppLocalizations.of(context)!.feet,
                                 errorText: error,
@@ -389,8 +391,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                               controller: inchesController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                decimal: true,
+                              ),
                               decoration: InputDecoration(
                                 labelText: AppLocalizations.of(context)!.inches,
                                 border: const OutlineInputBorder(),
@@ -413,10 +415,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                         ],
                       ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'La nueva medida modifica la geometría real '
-                      'del ambiente. El plano será validado antes '
-                      'de guardar el cambio.',
+                    Text(
+                      l10n.wallLengthChangeNotice,
                       style: TextStyle(
                         color: Colors.black54,
                         fontSize: 12,
@@ -431,7 +431,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                   onPressed: () {
                     Navigator.pop(dialogContext);
                   },
-                  child: const Text('Cancelar'),
+                  child: Text(l10n.cancel),
                 ),
                 FilledButton.icon(
                   onPressed: () {
@@ -448,7 +448,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                     );
                   },
                   icon: const Icon(Icons.check),
-                  label: const Text('Guardar'),
+                  label: Text(l10n.save),
                 ),
               ],
             );
@@ -487,7 +487,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
         validationErrorMessage(
           result,
           AppLocalizations.of(context)!,
-          fallback: AppLocalizations.of(context)!.invalidCorner,
+          fallback: l10n.invalidNewMeasurement,
         ),
         error: true,
       );
@@ -495,7 +495,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
       return;
     }
 
-    _showMessage(result.warningMessage ?? 'Medida actualizada correctamente.');
+    _showMessage(result.warningMessage ?? l10n.measurementUpdated);
   }
 
   void _validateAndCloseDialog({
@@ -507,6 +507,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     required StateSetter setDialogState,
     required void Function(String?) setError,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final value = measurementSystem == MeasurementSystem.metric
         ? MeasurementUnits.metricInputToMeters(metricController.text)
         : MeasurementUnits.imperialInputToMeters(
@@ -516,7 +517,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
 
     if (value == null) {
       setDialogState(() {
-        setError('Ingresá un número válido.');
+        setError(l10n.invalidNumber);
       });
 
       return;
@@ -524,7 +525,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
 
     if (!value.isFinite || value <= 0) {
       setDialogState(() {
-        setError('La longitud debe ser mayor que 0.');
+        setError(l10n.positiveLengthRequired);
       });
 
       return;
@@ -551,8 +552,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     for (int i = 0; i < room.points.length; i++) {
       final next = (i + 1) % room.points.length;
 
-      area +=
-          room.points[i].x * room.points[next].z -
+      area += room.points[i].x * room.points[next].z -
           room.points[next].x * room.points[i].z;
     }
 
