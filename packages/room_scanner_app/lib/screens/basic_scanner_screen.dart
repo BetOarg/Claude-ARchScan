@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../l10n/validation_error_localization.dart';
 import '../l10n/room_type_localization.dart';
 import '../providers/floor_plan_provider.dart';
 import '../providers/measurement_settings_provider.dart';
@@ -1654,8 +1655,7 @@ class _BasicScannerScreenState
             .removeLastPoint();
 
         _showValidationError(
-          result.errorMessage ??
-              l10n.couldNotAddStart,
+          validationErrorMessage(result, l10n, fallback: l10n.couldNotAddStart),
         );
         return;
       }
@@ -1758,8 +1758,7 @@ class _BasicScannerScreenState
             .cancelPendingMeasurement();
 
         _showValidationError(
-          result.errorMessage ??
-              l10n.invalidCorner,
+          validationErrorMessage(result, l10n, fallback: l10n.invalidCorner),
         );
 
         return;
