@@ -563,5 +563,15 @@
   "invalidNumber": "Ingresá un número válido.",
   "positiveLengthRequired": "La longitud debe ser mayor que 0.",
   "measurementUpdated": "Medida actualizada correctamente.",
-  "invalidNewMeasurement": "La nueva medida no es válida."
+  "invalidNewMeasurement": "La nueva medida no es válida.",
+  "validAngleRequired": "Ingresá un ángulo válido",
+  "directionFront": "↑ Frente · 0°",
+  "directionRightPreview": "→ Derecha · 90°",
+  "directionBack": "↓ Atrás · 180°",
+  "directionLeftPreview": "← Izquierda · 270°",
+  "customDirection": "Dirección personalizada · {angle}°",
+  "referenceOpeningMissing": "La abertura de referencia ya no existe.",
+  "referenceOpeningConnected": "La abertura ya conecta otro ambiente.",
+  "needThreeCornersToCloseMessage": "Necesitás al menos 3 esquinas para cerrar el ambiente.",
+  "closeRoomFailedFallback": "No se pudo cerrar el ambiente."
 }
