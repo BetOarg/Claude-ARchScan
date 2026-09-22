@@ -30,7 +30,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     if (rooms.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.measurementEditorTitle)),
-        body: const Center(
+        body: Center(
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Column(
@@ -65,7 +65,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     final selectedRoom = rooms[selectedIndex];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar medidas')),
+      appBar: AppBar(title: Text(l10n.measurementEditorTitle)),
       body: Column(
         children: [
           _buildRoomSelector(rooms, selectedIndex),
@@ -152,6 +152,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
     FloorPlanProvider provider,
     int roomIndex,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final area = _calculateArea(room);
 
     final perimeter = _calculatePerimeter(room, provider);
@@ -183,6 +184,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
   // ===========================================================================
 
   Widget _buildSummaryCard(RoomModel room, double area, double perimeter) {
+    final l10n = AppLocalizations.of(context)!;
     final measurementSystem = context
         .watch<MeasurementSettingsProvider>()
         .system;
@@ -267,13 +269,11 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: CircleAvatar(child: Text('${wallIndex + 1}')),
         title: Text(
-          l10n.wallNumber.replaceFirst('{number}', '${wallIndex + 1}'),
+          l10n.wallNumber(wallIndex + 1),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          l10n.cornerRange
-                  .replaceFirst('{start}', '$startIndex')
-                  .replaceFirst('{end}', '$endIndex') +
+          l10n.cornerRange(startIndex, endIndex) +
               '\n${_formatLength(length, measurementSystem)}',
         ),
         trailing: IconButton(
@@ -324,7 +324,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
-                l10n.editWallTitle.replaceFirst('{number}', '${wallIndex + 1}'),
+                l10n.editWallTitle(wallIndex + 1),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -332,10 +332,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.currentMeasurement.replaceFirst(
-                        '{value}',
-                        _formatLength(currentLength, measurementSystem),
-                      ),
+                      l10n.currentMeasurement(_formatLength(currentLength, measurementSystem)),
                       style: const TextStyle(color: Colors.black54),
                     ),
                     const SizedBox(height: 16),
@@ -347,8 +344,8 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                           decimal: true,
                         ),
                         decoration: InputDecoration(
-                          labelText: 'Nueva longitud',
-                          hintText: 'Ejemplo: 3,25',
+                          labelText: l10n.newLength,
+                          hintText: l10n.lengthExample,
                           suffixText: AppLocalizations.of(context)!.meters,
                           errorText: error,
                           prefixIcon: const Icon(Icons.straighten),
@@ -433,7 +430,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
                   onPressed: () {
                     Navigator.pop(dialogContext);
                   },
-                  child: const Text('Cancelar'),
+                  child: Text(l10n.cancel),
                 ),
                 FilledButton.icon(
                   onPressed: () {
@@ -489,7 +486,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
         validationErrorMessage(
           result,
           AppLocalizations.of(context)!,
-          fallback: AppLocalizations.of(context)!.invalidCorner,
+          fallback: l10n.invalidNewMeasurement,
         ),
         error: true,
       );
@@ -497,7 +494,7 @@ class _MeasurementEditorScreenState extends State<MeasurementEditorScreen> {
       return;
     }
 
-    _showMessage(result.warningMessage ?? 'Medida actualizada correctamente.');
+    _showMessage(result.warningMessage ?? l10n.measurementUpdated);
   }
 
   void _validateAndCloseDialog({
