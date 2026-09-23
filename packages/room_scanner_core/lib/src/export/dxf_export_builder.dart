@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import '../models/room_model.dart';
 import '../errors/domain_error.dart';
 import '../models/room_model.dart';
 import '../utils/geometry_tolerance.dart';
