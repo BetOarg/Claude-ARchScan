@@ -1,4 +1,3 @@
-import 'package:room_scanner_core/room_scanner_core.dart';
 import 'dart:math' as math;
 
 import 'package:room_scanner_core/room_scanner_core.dart';
@@ -43,14 +42,14 @@ void main() {
 
     final svgScale = svgLengths.first / dxfLengths.first;
     for (var i = 0; i < svgLengths.length; i++) {
-      expect(svgLengths[i] / dxfLengths[i], closeTo(svgScale, 1e-6));
+      expect(svgLengths[i] / dxfLengths[i], closeTo(svgScale, kGeometryEpsilon));
     }
 
     final svgArea = _signedArea(svgPoints);
     final dxfArea = _signedArea([
       for (final segment in dxfSegments) segment.$1,
     ]);
-    expect(svgArea.abs() / dxfArea.abs(), closeTo(svgScale * svgScale, 1e-6));
+    expect(svgArea.abs() / dxfArea.abs(), closeTo(svgScale * svgScale, kGeometryEpsilon));
   });
 
   test('PDF is generated from the same technical SVG geometry', () async {
@@ -239,7 +238,7 @@ List<_SvgPoint> _svgPolygonPoints(String svg) {
   return match
       .group(1)!
       .trim()
-      .split(RegExp(r'\\s+'))
+      .split(RegExp(r'\s+'))
       .map((pair) {
         final values = pair.split(',');
         return _SvgPoint(double.parse(values[0]), double.parse(values[1]));
