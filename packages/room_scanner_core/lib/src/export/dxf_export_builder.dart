@@ -1,11 +1,12 @@
 import 'dart:math' as math;
 
 import '../models/room_model.dart';
-import 'technical_drawing_geometry.dart';
+import '../errors/domain_error.dart';
+import '../models/room_model.dart';
+import '../utils/geometry_tolerance.dart';
 import 'dimension_layout.dart';
 import 'technical_dimension_layout.dart';
-import '../errors/domain_error.dart';
-import '../utils/geometry_tolerance.dart';
+import 'technical_drawing_geometry.dart';
 
 /// AutoCAD 2000 ASCII DXF. Spanish uses metres; English uses inches.
 /// The visible drawing contains the plan, room names, openings and dimensions.
@@ -218,7 +219,10 @@ class DxfExportBuilder {
 
   static void _validate(ARPoint point) {
     if (!point.x.isFinite || !point.y.isFinite || !point.z.isFinite) {
-      throw DomainError(DomainErrorCode.invalidExportGeometry, 'DXF requires finite coordinates.');
+      throw DomainError(
+        DomainErrorCode.invalidExportGeometry,
+        'DXF requires finite coordinates.',
+      );
     }
   }
 }
