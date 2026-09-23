@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../models/room_model.dart';
+import '../utils/geometry_tolerance.dart';
 
 /// Prepara una copia geométrica para salidas técnicas sin modificar la
 /// medición original que se conserva en el proyecto y sus metadatos.
@@ -75,7 +76,7 @@ class TechnicalDrawingGeometry {
       final rawDz = current.z - previousOriginal.z;
       final firstLength = math.sqrt(firstDx * firstDx + firstDz * firstDz);
       final rawLength = math.sqrt(rawDx * rawDx + rawDz * rawDz);
-      if (firstLength < 0.000001 || rawLength < 0.000001) {
+      if (firstLength < kGeometryEpsilon || rawLength < kGeometryEpsilon) {
         result.add(current);
         continue;
       }
@@ -128,7 +129,7 @@ class TechnicalDrawingGeometry {
     final bz = b.z - vertex.z;
     final denominator = math.sqrt(ax * ax + az * az) *
         math.sqrt(bx * bx + bz * bz);
-    if (denominator < 0.000001) return 0;
+    if (denominator < kGeometryEpsilon) return 0;
     return math.acos(((ax * bx + az * bz) / denominator).clamp(-1.0, 1.0)) *
         180 /
         math.pi;
@@ -145,7 +146,7 @@ class TechnicalDrawingGeometry {
     final cdX = d.x - c.x;
     final cdZ = d.z - c.z;
     final denominator = abX * cdZ - abZ * cdX;
-    if (denominator.abs() < 0.000001) return null;
+    if (denominator.abs() < kGeometryEpsilon) return null;
     final t = ((c.x - a.x) * cdZ - (c.z - a.z) * cdX) / denominator;
     return ARPoint(x: a.x + t * abX, y: b.y, z: a.z + t * abZ);
   }
@@ -154,7 +155,7 @@ class TechnicalDrawingGeometry {
     final dx = b.x - a.x;
     final dz = b.z - a.z;
     final lengthSquared = dx * dx + dz * dz;
-    if (lengthSquared < 0.000001) {
+    if (lengthSquared < kGeometryEpsilon) {
       return math.sqrt(
         (p.x - a.x) * (p.x - a.x) + (p.z - a.z) * (p.z - a.z),
       );
@@ -179,7 +180,7 @@ class TechnicalDrawingGeometry {
     final dx = originalEnd.x - originalStart.x;
     final dz = originalEnd.z - originalStart.z;
     final lengthSquared = dx * dx + dz * dz;
-    final t = lengthSquared < 0.000001
+    final t = lengthSquared < kGeometryEpsilon
         ? 0.0
         : (((point.x - originalStart.x) * dx +
                     (point.z - originalStart.z) * dz) /
