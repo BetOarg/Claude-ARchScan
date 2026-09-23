@@ -25,3 +25,5 @@ export 'src/utils/measurement_units.dart';
 export 'src/utils/scan_validator.dart';
 
 export 'src/export/dxf_export_builder.dart';
+export 'src/errors/domain_error.dart';
+export 'src/utils/geometry_tolerance.dart';
