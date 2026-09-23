@@ -44,6 +44,22 @@ Bundle ID: **com.bet0.ARchScan**
 
 Never commit certificates, private keys, profiles or passwords.
 
+## Google Play configuration
+
+- [ ] Google Play Console developer account active.
+- [ ] App created with application ID `com.bet0.ARchScan`.
+- [ ] Play App Signing configured and verified.
+- [ ] Production/upload keystore created and stored securely outside Git.
+- [ ] GitHub Actions secrets configured:
+  - `ANDROID_KEYSTORE_BASE64`
+  - `ANDROID_STORE_PASSWORD`
+  - `ANDROID_KEY_ALIAS`
+  - `ANDROID_KEY_PASSWORD`
+- [ ] Signed AAB workflow passes its final manifest, permission and native-library audit.
+- [ ] Store listing, Data Safety answers and privacy/support URLs match the final binary.
+
+Never commit `key.properties`, upload keystores, passwords or private signing material.
+
 ## App Store Connect
 
 - [ ] Create ARchScan with Bundle ID `com.bet0.ARchScan`.
