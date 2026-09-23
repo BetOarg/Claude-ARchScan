@@ -15,21 +15,16 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() =>
-      _DashboardScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState
-    extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) {
-      context
-          .read<ProjectProvider>()
-          .init();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectProvider>().init();
     });
   }
 
@@ -37,8 +32,7 @@ class _DashboardScreenState
     BuildContext context,
   ) {
     final localizations = AppLocalizations.of(context)!;
-    final controller =
-        TextEditingController();
+    final controller = TextEditingController();
 
     showDialog(
       context: context,
@@ -48,30 +42,23 @@ class _DashboardScreenState
         ),
         content: TextField(
           controller: controller,
-          decoration:
-              InputDecoration(
-            hintText:
-                localizations.projectNameExample,
-            border:
-                const OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: localizations.projectNameExample,
+            border: const OutlineInputBorder(),
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(ctx),
-            child:
-                Text(localizations.cancel),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(localizations.cancel),
           ),
           ElevatedButton(
-            onPressed: () =>
-                _createProject(
+            onPressed: () => _createProject(
               ctx,
               controller.text.trim(),
             ),
-            child:
-                Text(localizations.create),
+            child: Text(localizations.create),
           ),
         ],
       ),
@@ -88,36 +75,27 @@ class _DashboardScreenState
 
     Navigator.pop(dialogContext);
 
-    final uuid = DateTime.now()
-        .millisecondsSinceEpoch
-        .toString();
+    final uuid = DateTime.now().millisecondsSinceEpoch.toString();
 
-    await context
-        .read<ProjectProvider>()
-        .saveCurrentProject(
-          uuid: uuid,
-          name: name,
-          rooms: const [],
-        );
+    await context.read<ProjectProvider>().saveCurrentProject(
+      uuid: uuid,
+      name: name,
+      rooms: const [],
+    );
 
     if (!mounted) {
       return;
     }
 
-    context
-        .read<FloorPlanProvider>()
-        .loadProject(
-          uuid: uuid,
-          name: name,
-          rooms: const [],
-        );
+    context.read<FloorPlanProvider>().loadProject(
+      uuid: uuid,
+      name: name,
+      rooms: const [],
+    );
 
-    context
-        .read<ScannerProvider>()
-        .loadRooms(const []);
+    context.read<ScannerProvider>().loadRooms(const []);
 
-    await ArCheckService
-        .abrirEscanerConValidacion(
+    await ArCheckService.abrirEscanerConValidacion(
       context,
       projectUuid: uuid,
       projectName: name,
@@ -127,11 +105,9 @@ class _DashboardScreenState
   Future<void> _openProject(
     IsarProject project,
   ) async {
-    final provider =
-        context.read<ProjectProvider>();
+    final provider = context.read<ProjectProvider>();
 
-    final rooms =
-        await provider.selectProject(
+    final rooms = await provider.selectProject(
       project,
     );
 
@@ -139,20 +115,15 @@ class _DashboardScreenState
       return;
     }
 
-    context
-        .read<FloorPlanProvider>()
-        .loadProject(
+    context.read<FloorPlanProvider>().loadProject(
           uuid: project.uuid,
           name: project.name,
           rooms: rooms,
         );
 
-    context
-        .read<ScannerProvider>()
-        .loadRooms(rooms);
+    context.read<ScannerProvider>().loadRooms(rooms);
 
-    await ArCheckService
-        .abrirEscanerConValidacion(
+    await ArCheckService.abrirEscanerConValidacion(
       context,
       projectUuid: project.uuid,
       projectName: project.name,
@@ -162,11 +133,9 @@ class _DashboardScreenState
   Future<void> _viewFloorPlan(
     IsarProject project,
   ) async {
-    final provider =
-        context.read<ProjectProvider>();
+    final provider = context.read<ProjectProvider>();
 
-    final rooms =
-        await provider.selectProject(
+    final rooms = await provider.selectProject(
       project,
     );
 
@@ -174,9 +143,7 @@ class _DashboardScreenState
       return;
     }
 
-    context
-        .read<FloorPlanProvider>()
-        .loadProject(
+    context.read<FloorPlanProvider>().loadProject(
           uuid: project.uuid,
           name: project.name,
           rooms: rooms,
@@ -185,8 +152,7 @@ class _DashboardScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            const FloorPlanViewerScreen(),
+        builder: (_) => const FloorPlanViewerScreen(),
       ),
     );
   }
@@ -203,13 +169,10 @@ class _DashboardScreenState
   Widget build(
     BuildContext context,
   ) {
-    final provider =
-        context.watch<ProjectProvider>();
+    final provider = context.watch<ProjectProvider>();
 
-    final theme =
-        Theme.of(context);
-    final localizations =
-        AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -223,24 +186,19 @@ class _DashboardScreenState
             icon: const Icon(
               Icons.privacy_tip_outlined,
             ),
-            tooltip:
-                localizations.privacyAndAccount,
-            onPressed:
-                _openPrivacyAndAccount,
+            tooltip: localizations.privacyAndAccount,
+            onPressed: _openPrivacyAndAccount,
           ),
         ],
       ),
       body: Column(
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
               vertical: 12.0,
             ),
-            color: theme
-                .colorScheme
-                .surfaceContainerHighest,
+            color: theme.colorScheme.surfaceContainerHighest,
             child: Row(
               children: [
                 Icon(
@@ -254,23 +212,19 @@ class _DashboardScreenState
                 Expanded(
                   child: Text(
                     localizations.localProjectsStoredOnDevice,
-                    style:
-                        const TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                     ),
-                    overflow:
-                        TextOverflow.ellipsis,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ),
-
           Expanded(
             child: provider.isLoading
                 ? const Center(
-                    child:
-                        CircularProgressIndicator(),
+                    child: CircularProgressIndicator(),
                   )
                 : provider.projects.isEmpty
                     ? _buildEmptyState()
@@ -280,14 +234,11 @@ class _DashboardScreenState
           ),
         ],
       ),
-      floatingActionButton:
-          FloatingActionButton.extended(
-        onPressed: () =>
-            _showNewProjectDialog(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showNewProjectDialog(
           context,
         ),
-        icon:
-            const Icon(Icons.add),
+        icon: const Icon(Icons.add),
         label: Text(
           localizations.newScan,
         ),
@@ -296,12 +247,10 @@ class _DashboardScreenState
   }
 
   Widget _buildEmptyState() {
-    final localizations =
-        AppLocalizations.of(context)!;
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const ArchScanLogo(size: 88),
           const SizedBox(
@@ -329,36 +278,29 @@ class _DashboardScreenState
     ProjectProvider provider,
   ) {
     return ListView.builder(
-      padding:
-          const EdgeInsets.all(16),
-      itemCount:
-          provider.projects.length,
-      itemBuilder:
-          (context, index) {
-        final localizations =
-            AppLocalizations.of(context)!;
-        final project =
-            provider.projects[index];
+      padding: const EdgeInsets.all(16),
+      itemCount: provider.projects.length,
+      itemBuilder: (context, index) {
+        final localizations = AppLocalizations.of(context)!;
+        final project = provider.projects[index];
 
         return Card(
-          margin:
-              const EdgeInsets.only(
+          margin: const EdgeInsets.only(
             bottom: 12,
           ),
           child: ListTile(
-            leading:
-                const CircleAvatar(
+            leading: const CircleAvatar(
               child: Icon(
                 Icons.meeting_room,
               ),
             ),
             title: Text(
               project.name,
-              style:
-                  const TextStyle(
-                fontWeight:
-                    FontWeight.bold,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
               localizations.projectUpdated(
@@ -368,17 +310,14 @@ class _DashboardScreenState
               ),
             ),
             trailing: Row(
-              mainAxisSize:
-                  MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: const Icon(
                     Icons.map_outlined,
                   ),
-                  tooltip:
-                      localizations.viewFloorPlan,
-                  onPressed: () =>
-                      _viewFloorPlan(
+                  tooltip: localizations.viewFloorPlan,
+                  onPressed: () => _viewFloorPlan(
                     project,
                   ),
                 ),
@@ -387,19 +326,16 @@ class _DashboardScreenState
                     Icons.delete_outline,
                     color: Colors.red,
                   ),
-                  tooltip:
-                      localizations.delete,
+                  tooltip: localizations.delete,
                   onPressed: () async {
-                    await provider
-                        .deleteProject(
+                    await provider.deleteProject(
                       project.uuid,
                     );
                   },
                 ),
               ],
             ),
-            onTap: () =>
-                _openProject(
+            onTap: () => _openProject(
               project,
             ),
           ),
