@@ -226,8 +226,7 @@ Directory _findRepositoryRoot() {
   var directory = Directory.current.absolute;
 
   while (true) {
-    final hasPackages =
-        Directory('${directory.path}/packages').existsSync();
+    final hasPackages = Directory('${directory.path}/packages').existsSync();
     final hasWorkflows =
         Directory('${directory.path}/.github/workflows').existsSync();
 
