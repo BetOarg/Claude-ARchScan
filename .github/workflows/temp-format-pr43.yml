@@ -1,0 +1,35 @@
+name: Temporary format PR 43
+
+on:
+  push:
+    branches:
+      - release/ux-accessibility-audit
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.0
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: packages/room_scanner_app
+      - run: dart format packages/room_scanner_app/lib/screens/dashboard_screen.dart
+      - name: Commit formatted file
+        run: |
+          if git diff --quiet -- packages/room_scanner_app/lib/screens/dashboard_screen.dart; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/room_scanner_app/lib/screens/dashboard_screen.dart
+          git commit -m "chore: format dashboard screen"
+          git push
