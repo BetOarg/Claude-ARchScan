@@ -359,6 +359,8 @@ class _DashboardScreenState
                 fontWeight:
                     FontWeight.bold,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
               localizations.projectUpdated(
