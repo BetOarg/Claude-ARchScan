@@ -91,21 +91,21 @@ void main() {
   test(
     'technical SVG auto-fits the complete drawing instead of a fixed viewport',
     () {
-    final room = _rectangle('fit', 'Fit', 3, 2);
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [room],
-      MeasurementSystem.metric,
-    );
+      final room = _rectangle('fit', 'Fit', 3, 2);
+      final svg = PlanExportBuilder.buildFloorPlanSvg(
+        [room],
+        MeasurementSystem.metric,
+      );
 
-    final match = RegExp(r'viewBox="([^"]+)"').firstMatch(svg);
-    expect(match, isNotNull);
-    final viewBox = match!.group(1)!
+      final match = RegExp(r'viewBox="([^"]+)"').firstMatch(svg);
+      expect(match, isNotNull);
+      final viewBox = match!.group(1)!
       .split(RegExp(r'\s+'))
       .map(double.parse)
       .toList();
 
-    expect(viewBox, hasLength(4));
-    expect(viewBox[2], isNot(900));
+      expect(viewBox, hasLength(4));
+      expect(viewBox[2], isNot(900));
     expect(viewBox[3], isNot(600));
     expect(svg, contains('id="cotas"'));
   });
@@ -274,7 +274,6 @@ List<Map<int, String>> _entities(String dxf) {
   }
   return result;
 }
-
 
 List<_SvgPoint> _svgPolygonPoints(String svg) {
   final match = RegExp(r'<polygon points="([^"]+)"').firstMatch(svg);
