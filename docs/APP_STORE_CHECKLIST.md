@@ -5,6 +5,9 @@ Bundle ID: **com.bet0.ARchScan**
 
 ## Implemented and checked in the repository
 
+- [x] Store-readiness gate validates Android camera-only permissions, backup disabled, iOS camera-only usage declarations, tracking disabled and the declared UserDefaults privacy reason.
+- [x] Store-readiness gate rejects accidental location/tracking declarations and incompatible Android permission declarations before a signed store build.
+
 - [x] iOS deployment target 15.0 or later.
 - [x] ARKit capability detection with Basic Scanner fallback.
 - [x] RoomPlan hardware detection (iOS 16+ and LiDAR) available as an auxiliary native capability.
