@@ -53,8 +53,7 @@ class MeasurementUnits {
   }) {
     if (!meters.isFinite || meters < 0) {
       throw DomainError(
-        DomainErrorCode.invalidMeasurement, '');
-        'meters',
+        DomainErrorCode.invalidMeasurement,
         'La longitud debe ser un número finito mayor o igual que cero.',
       );
     }
@@ -97,9 +96,8 @@ class MeasurementUnits {
     int inchDecimals = 2,
   }) {
     if (!meters.isFinite || meters < 0) {
-      throw ArgumentError.value(
-        meters,
-        'meters',
+      throw DomainError(
+        DomainErrorCode.invalidMeasurement,
         'La longitud debe ser un número finito mayor o igual que cero.',
       );
     }
