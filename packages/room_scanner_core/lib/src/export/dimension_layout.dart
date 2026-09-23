@@ -64,7 +64,10 @@ class DimensionLayout {
   static List<DimensionSegment> deduplicate(Iterable<DimensionSegment> input) {
     final byGeometry = <String, DimensionSegment>{};
     for (final dimension in input) {
-      if (!_isFiniteGeometry(dimension) || dimension.length < kGeometryEpsilon) continue;
+      if (!_isFiniteGeometry(dimension) ||
+          dimension.length < kGeometryEpsilon) {
+        continue;
+      }
       final key = _canonicalGeometryKey(dimension);
       final current = byGeometry[key];
       if (current == null || _comparePriority(dimension, current) < 0) {
@@ -240,7 +243,8 @@ class DimensionLayout {
         final parallel =
             (tangent.x * totalTangent.x + tangent.y * totalTangent.y).abs() >
             0.9999;
-        final sameLength = (dimension.length - total.length).abs() < kGeometryEpsilon;
+        final sameLength =
+            (dimension.length - total.length).abs() < kGeometryEpsilon;
         return parallel && sameLength;
       });
     }).toList(growable: false);
