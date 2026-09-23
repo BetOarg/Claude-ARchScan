@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import '../utils/geometry_tolerance.dart';
+
 /// CAD dimension classification.
 enum DimensionKind { opening, wall, total }
 
@@ -62,7 +64,7 @@ class DimensionLayout {
   static List<DimensionSegment> deduplicate(Iterable<DimensionSegment> input) {
     final byGeometry = <String, DimensionSegment>{};
     for (final dimension in input) {
-      if (!_isFiniteGeometry(dimension) || dimension.length < 0.000001) continue;
+      if (!_isFiniteGeometry(dimension) || dimension.length < kGeometryEpsilon) continue;
       final key = _canonicalGeometryKey(dimension);
       final current = byGeometry[key];
       if (current == null || _comparePriority(dimension, current) < 0) {
@@ -238,7 +240,7 @@ class DimensionLayout {
         final parallel =
             (tangent.x * totalTangent.x + tangent.y * totalTangent.y).abs() >
             0.9999;
-        final sameLength = (dimension.length - total.length).abs() < 0.000001;
+        final sameLength = (dimension.length - total.length).abs() < kGeometryEpsilon;
         return parallel && sameLength;
       });
     }).toList(growable: false);
@@ -379,7 +381,7 @@ class DimensionLayout {
   }
 
   static _Vector _tangent(DimensionSegment d) {
-    final length = math.max(d.length, 0.000001).toDouble();
+    final length = math.max(d.length, kGeometryEpsilon).toDouble();
     return _Vector(d.dx / length, d.dy / length);
   }
 
