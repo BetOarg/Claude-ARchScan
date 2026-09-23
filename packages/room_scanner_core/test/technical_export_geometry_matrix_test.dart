@@ -6,7 +6,10 @@ import 'package:test/test.dart';
 void main() {
   test('rectangular plan keeps walls, room name, dimensions and metadata', () {
     final room = _rectangle('rect', 'Living', 3, 2);
-    final svg = PlanExportBuilder.buildFloorPlanSvg([room], MeasurementSystem.metric);
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      [room],
+      MeasurementSystem.metric,
+    );
     final dxf = DxfExportBuilder.build([room]);
 
     expect(RegExp(r'<polygon ').allMatches(svg).length, 1);
@@ -17,9 +20,18 @@ void main() {
     expect(PlanExportBuilder.parseProjectSvg(svg)?.rooms.single.id, 'rect');
 
     final entities = _entities(dxf);
-    expect(entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'), hasLength(4));
-    expect(entities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'), hasLength(1));
-    expect(entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'), isNotEmpty);
+    expect(
+      entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'),
+      hasLength(4),
+    );
+    expect(
+      entities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'),
+      hasLength(1),
+    );
+    expect(
+      entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'),
+      isNotEmpty,
+    );
   });
 
   test('DXF and SVG preserve the same geometric invariants', () {
@@ -42,14 +54,20 @@ void main() {
 
     final svgScale = svgLengths.first / dxfLengths.first;
     for (var i = 0; i < svgLengths.length; i++) {
-      expect(svgLengths[i] / dxfLengths[i], closeTo(svgScale, kGeometryEpsilon));
+      expect(
+        svgLengths[i] / dxfLengths[i],
+        closeTo(svgScale, kGeometryEpsilon),
+      );
     }
 
     final svgArea = _signedArea(svgPoints);
     final dxfArea = _signedArea([
       for (final segment in dxfSegments) segment.$1,
     ]);
-    expect(svgArea.abs() / dxfArea.abs(), closeTo(svgScale * svgScale, kGeometryEpsilon));
+    expect(
+      svgArea.abs() / dxfArea.abs(),
+      closeTo(svgScale * svgScale, kGeometryEpsilon),
+    );
   });
 
   test('PDF is generated from the same technical SVG geometry', () async {
@@ -70,7 +88,9 @@ void main() {
     expect(svg, contains('<polygon'));
   });
 
-  test('technical SVG auto-fits the complete drawing instead of a fixed viewport', () {
+  test(
+    'technical SVG auto-fits the complete drawing instead of a fixed viewport',
+    () {
     final room = _rectangle('fit', 'Fit', 3, 2);
     final svg = PlanExportBuilder.buildFloorPlanSvg(
       [room],
@@ -79,7 +99,10 @@ void main() {
 
     final match = RegExp(r'viewBox="([^"]+)"').firstMatch(svg);
     expect(match, isNotNull);
-    final viewBox = match!.group(1)!.split(RegExp(r'\s+')).map(double.parse).toList();
+    final viewBox = match!.group(1)!
+      .split(RegExp(r'\s+'))
+      .map(double.parse)
+      .toList();
 
     expect(viewBox, hasLength(4));
     expect(viewBox[2], isNot(900));
@@ -103,14 +126,23 @@ void main() {
       isClosed: true,
     );
 
-    final svg = PlanExportBuilder.buildFloorPlanSvg([room], MeasurementSystem.metric);
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      [room],
+      MeasurementSystem.metric,
+    );
     final dxf = DxfExportBuilder.build([room]);
 
     expect(RegExp(r'<polygon ').allMatches(svg).length, 1);
     expect(svg, contains('>L<'));
     final entities = _entities(dxf);
-    expect(entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'), hasLength(6));
-    expect(entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'), isNotEmpty);
+    expect(
+      entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'),
+      hasLength(6),
+    );
+    expect(
+      entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'),
+      isNotEmpty,
+    );
   });
 
   test('two adjacent rooms deduplicate the shared wall and shared opening', () {
@@ -135,7 +167,10 @@ void main() {
       isClosed: true,
     );
 
-    final svg = PlanExportBuilder.buildFloorPlanSvg([first, second], MeasurementSystem.metric);
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      [first, second],
+      MeasurementSystem.metric,
+    );
     final dxf = DxfExportBuilder.build([first, second]);
 
     expect(RegExp(r'<polygon ').allMatches(svg).length, 2);
@@ -144,8 +179,14 @@ void main() {
 
     final dxfEntities = _entities(dxf);
     expect(dxfEntities.where((e) => e[0] == 'ARC'), hasLength(1));
-    expect(dxfEntities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'), hasLength(2));
-    expect(dxfEntities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'), hasLength(8));
+    expect(
+      dxfEntities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'),
+      hasLength(2),
+    );
+    expect(
+      dxfEntities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'),
+      hasLength(8),
+    );
   });
 
   test('technical export remains stable for multiple rooms and openings', () {
@@ -180,7 +221,10 @@ void main() {
       ),
     ];
 
-    final svg = PlanExportBuilder.buildFloorPlanSvg(rooms, MeasurementSystem.metric);
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      rooms,
+      MeasurementSystem.metric,
+    );
     final dxf = DxfExportBuilder.build(rooms);
 
     expect(RegExp(r'<polygon ').allMatches(svg).length, 2);
@@ -246,7 +290,7 @@ List<_SvgPoint> _svgPolygonPoints(String svg) {
       .toList();
 }
 
-List<( _SvgPoint, _SvgPoint)> _dxfWallSegments(String dxf) {
+List<(_SvgPoint, _SvgPoint)> _dxfWallSegments(String dxf) {
   return _entities(dxf)
       .where((entity) => entity[0] == 'LINE' && entity[8] == 'WALLS')
       .map(
