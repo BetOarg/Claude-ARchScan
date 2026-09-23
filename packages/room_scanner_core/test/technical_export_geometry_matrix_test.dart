@@ -1,4 +1,7 @@
 import 'package:room_scanner_core/room_scanner_core.dart';
+import 'dart:math' as math;
+
+import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -18,6 +21,54 @@ void main() {
     expect(entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'), hasLength(4));
     expect(entities.where((e) => e[0] == 'TEXT' && e[8] == 'ROOM_NAMES'), hasLength(1));
     expect(entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'), isNotEmpty);
+  });
+
+  test('DXF and SVG preserve the same geometric invariants', () {
+    final room = _rectangle('invariant', 'Invariant', 4, 2);
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      [room],
+      MeasurementSystem.metric,
+    );
+    final dxf = DxfExportBuilder.build([room]);
+    final svgPoints = _svgPolygonPoints(svg);
+    final dxfSegments = _dxfWallSegments(dxf);
+
+    expect(svgPoints, hasLength(4));
+    expect(dxfSegments, hasLength(4));
+
+    final svgLengths = _edgeLengths(svgPoints);
+    final dxfLengths = dxfSegments
+        .map((segment) => _distance(segment.$1, segment.$2))
+        .toList();
+
+    final svgScale = svgLengths.first / dxfLengths.first;
+    for (var i = 0; i < svgLengths.length; i++) {
+      expect(svgLengths[i] / dxfLengths[i], closeTo(svgScale, 1e-6));
+    }
+
+    final svgArea = _signedArea(svgPoints);
+    final dxfArea = _signedArea([
+      for (final segment in dxfSegments) segment.$1,
+    ]);
+    expect(svgArea.abs() / dxfArea.abs(), closeTo(svgScale * svgScale, 1e-6));
+  });
+
+  test('PDF is generated from the same technical SVG geometry', () async {
+    final room = _rectangle('pdf', 'PDF', 3, 2);
+    final svg = PlanExportBuilder.buildFloorPlanSvg(
+      [room],
+      MeasurementSystem.metric,
+    );
+    final pdf = PlanExportBuilder.buildPdfDocument(
+      [room],
+      'PDF',
+      MeasurementSystem.metric,
+    );
+    final bytes = await pdf.save();
+
+    expect(svg, contains('data-generator="ARchScan"'));
+    expect(bytes, isNotEmpty);
+    expect(svg, contains('<polygon'));
   });
 
   test('technical SVG auto-fits the complete drawing instead of a fixed viewport', () {
@@ -179,4 +230,59 @@ List<Map<int, String>> _entities(String dxf) {
     current?[code] = value;
   }
   return result;
+}
+
+
+List<_SvgPoint> _svgPolygonPoints(String svg) {
+  final match = RegExp(r'<polygon points="([^"]+)"').firstMatch(svg);
+  if (match == null) return <_SvgPoint>[];
+  return match
+      .group(1)!
+      .trim()
+      .split(RegExp(r'\\s+'))
+      .map((pair) {
+        final values = pair.split(',');
+        return _SvgPoint(double.parse(values[0]), double.parse(values[1]));
+      })
+      .toList();
+}
+
+List<( _SvgPoint, _SvgPoint)> _dxfWallSegments(String dxf) {
+  return _entities(dxf)
+      .where((entity) => entity[0] == 'LINE' && entity[8] == 'WALLS')
+      .map(
+        (entity) => (
+          _SvgPoint(double.parse(entity[10]!), double.parse(entity[20]!)),
+          _SvgPoint(double.parse(entity[11]!), double.parse(entity[21]!)),
+        ),
+      )
+      .toList();
+}
+
+List<double> _edgeLengths(List<_SvgPoint> points) {
+  return [
+    for (var i = 0; i < points.length; i++)
+      _distance(points[i], points[(i + 1) % points.length]),
+  ];
+}
+
+double _distance(_SvgPoint a, _SvgPoint b) {
+  final dx = b.x - a.x;
+  final dy = b.y - a.y;
+  return math.sqrt(dx * dx + dy * dy);
+}
+
+double _signedArea(List<_SvgPoint> points) {
+  var sum = 0.0;
+  for (var i = 0; i < points.length; i++) {
+    final next = points[(i + 1) % points.length];
+    sum += points[i].x * next.y - next.x * points[i].y;
+  }
+  return sum / 2;
+}
+
+class _SvgPoint {
+  final double x;
+  final double y;
+  const _SvgPoint(this.x, this.y);
 }
