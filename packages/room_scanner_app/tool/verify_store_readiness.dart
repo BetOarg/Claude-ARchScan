@@ -24,13 +24,18 @@ void main(List<String> arguments) {
     }
   }
 
-  void requireText(String path, String expected) {
+  String readRequired(String path) {
     final file = File('${root.path}/$path');
     if (!file.existsSync()) {
       errors.add('Falta $path.');
-      return;
+      return '';
     }
-    if (!file.readAsStringSync().contains(expected)) {
+    return file.readAsStringSync();
+  }
+
+  void requireText(String path, String expected) {
+    final content = readRequired(path);
+    if (content.isNotEmpty && !content.contains(expected)) {
       errors.add('$path no contiene el valor esperado: $expected.');
     }
   }
@@ -80,6 +85,78 @@ void main(List<String> arguments) {
     'packages/room_scanner_app/ios/Runner/PrivacyInfo.xcprivacy',
     '<key>NSPrivacyTracking</key>',
   );
+
+  final androidManifest = readRequired(
+    'packages/room_scanner_app/android/app/src/main/AndroidManifest.xml',
+  );
+  if (androidManifest.isNotEmpty) {
+    for (final required in [
+      '<uses-permission android:name="android.permission.CAMERA" />',
+      'android:allowBackup="false"',
+      'android:fullBackupContent="false"',
+    ]) {
+      if (!androidManifest.contains(required)) {
+        errors.add(
+          'AndroidManifest.xml no contiene la protección requerida: $required.',
+        );
+      }
+    }
+    if (androidManifest.contains('android.permission.RECORD_AUDIO') &&
+        !androidManifest.contains(
+          '<uses-permission\n        android:name="android.permission.RECORD_AUDIO"\n        tools:node="remove"',
+        )) {
+      errors.add(
+        'AndroidManifest.xml declara un permiso incompatible: RECORD_AUDIO.',
+      );
+    }
+    if (androidManifest.contains('android.permission.INTERNET') &&
+        !androidManifest.contains(
+          '<uses-permission\n        android:name="android.permission.INTERNET"\n        tools:node="remove"',
+        )) {
+      errors.add(
+        'AndroidManifest.xml declara un permiso incompatible: INTERNET.',
+      );
+    }
+  }
+
+  final infoPlist = readRequired(
+    'packages/room_scanner_app/ios/Runner/Info.plist',
+  );
+  if (infoPlist.isNotEmpty) {
+    requireText(
+      'packages/room_scanner_app/ios/Runner/Info.plist',
+      '<key>NSCameraUsageDescription</key>',
+    );
+    for (final forbidden in [
+      'NSLocationWhenInUseUsageDescription',
+      'NSLocationAlwaysAndWhenInUseUsageDescription',
+      'NSUserTrackingUsageDescription',
+    ]) {
+      if (infoPlist.contains(forbidden)) {
+        errors.add(
+          'Info.plist contiene una declaración de privacidad no utilizada: $forbidden.',
+        );
+      }
+    }
+  }
+
+  final privacyManifest = readRequired(
+    'packages/room_scanner_app/ios/Runner/PrivacyInfo.xcprivacy',
+  );
+  if (privacyManifest.isNotEmpty) {
+    for (final required in [
+      '<key>NSPrivacyTracking</key>',
+      '<false/>',
+      'NSPrivacyAccessedAPICategoryUserDefaults',
+      '<string>CA92.1</string>',
+    ]) {
+      if (!privacyManifest.contains(required)) {
+        errors.add(
+          'PrivacyInfo.xcprivacy no contiene el requisito esperado: $required.',
+        );
+      }
+    }
+  }
 
   for (final locale in ['en-US', 'es-AR']) {
     final prefix = 'store_metadata/v2.7.0/$locale';
@@ -149,8 +226,7 @@ Directory _findRepositoryRoot() {
   var directory = Directory.current.absolute;
 
   while (true) {
-    final hasPackages =
-        Directory('${directory.path}/packages').existsSync();
+    final hasPackages = Directory('${directory.path}/packages').existsSync();
     final hasWorkflows =
         Directory('${directory.path}/.github/workflows').existsSync();
 
