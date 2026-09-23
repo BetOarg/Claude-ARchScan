@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../models/room_model.dart';
+import '../utils/geometry_tolerance.dart';
 
 enum SharedWallCoverage {
   complete,
@@ -117,7 +118,7 @@ class SharedWallService {
           final firstLength = math.sqrt(
             firstDx * firstDx + firstDz * firstDz,
           );
-          if (firstLength <= 0.000001) {
+          if (firstLength <= kGeometryEpsilon) {
             continue;
           }
           final unitX = firstDx / firstLength;
@@ -135,7 +136,7 @@ class SharedWallService {
             final secondLength = math.sqrt(
               secondDx * secondDx + secondDz * secondDz,
             );
-            if (secondLength <= 0.000001) {
+            if (secondLength <= kGeometryEpsilon) {
               continue;
             }
             final secondUnitX = secondDx / secondLength;
