@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../models/room_model.dart';
+import 'geometry_tolerance.dart';
 
 enum ValidationErrorCode {
   tooCloseToPreviousPoint,
@@ -302,7 +303,7 @@ class ScanValidator {
     double px,
     double pz,
   ) {
-    const double epsilon = 1e-9;
+    const double epsilon = kGeometryEpsilon;
     final bool withinBounds = min(sx, ex) <= px &&
         px <= max(sx, ex) &&
         min(sz, ez) <= pz &&
@@ -363,7 +364,7 @@ class ScanValidator {
       final secondDz = endB.z - startB.z;
       final firstLength = sqrt(firstDx * firstDx + firstDz * firstDz);
       final secondLength = sqrt(secondDx * secondDx + secondDz * secondDz);
-      if (firstLength <= 0.000001 || secondLength <= 0.000001) {
+      if (firstLength <= kGeometryEpsilon || secondLength <= kGeometryEpsilon) {
         return double.infinity;
       }
       return ((firstDx * secondDx + firstDz * secondDz) /
