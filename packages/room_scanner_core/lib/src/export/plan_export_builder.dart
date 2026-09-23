@@ -426,8 +426,12 @@ class PlanExportBuilder {
     final tangentX = placement.tangentX;
     final tangentY = placement.tangentY;
     final tangentLength = math.sqrt(tangentX * tangentX + tangentY * tangentY);
-    final tx = tangentLength > kGeometryEpsilon ? tangentX / tangentLength : 1.0;
-    final ty = tangentLength > kGeometryEpsilon ? tangentY / tangentLength : 0.0;
+    final tx = tangentLength > kGeometryEpsilon
+        ? tangentX / tangentLength
+        : 1.0;
+    final ty = tangentLength > kGeometryEpsilon
+        ? tangentY / tangentLength
+        : 0.0;
     final middleX = (segment.x1 + segment.x2) / 2.0;
     final middleY = (segment.y1 + segment.y2) / 2.0;
     final actualOffset = placement.offset;
