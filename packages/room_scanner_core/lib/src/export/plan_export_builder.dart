@@ -8,6 +8,7 @@ import '../utils/measurement_units.dart';
 import 'dimension_layout.dart';
 import 'technical_dimension_layout.dart';
 import 'technical_drawing_geometry.dart';
+import '../utils/geometry_tolerance.dart';
 
 /// Builds ARchScan project data and technical drawing exports.
 ///
@@ -425,8 +426,8 @@ class PlanExportBuilder {
     final tangentX = placement.tangentX;
     final tangentY = placement.tangentY;
     final tangentLength = math.sqrt(tangentX * tangentX + tangentY * tangentY);
-    final tx = tangentLength > 0.000001 ? tangentX / tangentLength : 1.0;
-    final ty = tangentLength > 0.000001 ? tangentY / tangentLength : 0.0;
+    final tx = tangentLength > kGeometryEpsilon ? tangentX / tangentLength : 1.0;
+    final ty = tangentLength > kGeometryEpsilon ? tangentY / tangentLength : 0.0;
     final middleX = (segment.x1 + segment.x2) / 2.0;
     final middleY = (segment.y1 + segment.y2) / 2.0;
     final actualOffset = placement.offset;
