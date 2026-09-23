@@ -40,13 +40,6 @@ void main(List<String> arguments) {
     }
   }
 
-  void forbidText(String path, String forbidden) {
-    final content = readRequired(path);
-    if (content.contains(forbidden)) {
-      errors.add('$path contiene un valor prohibido: $forbidden.');
-    }
-  }
-
   const requiredFiles = [
     'packages/room_scanner_app/android/app/src/main/AndroidManifest.xml',
     'packages/room_scanner_app/ios/Runner/PrivacyInfo.xcprivacy',
@@ -108,18 +101,21 @@ void main(List<String> arguments) {
         );
       }
     }
-    for (final forbidden in [
-      'android.permission.RECORD_AUDIO',
-      'android.permission.INTERNET',
-    ]) {
-      if (androidManifest.contains(forbidden) &&
-          !androidManifest.contains(
-            '<uses-permission\n        android:name="$forbidden"\n        tools:node="remove"',
-          )) {
-        errors.add(
-          'AndroidManifest.xml declara un permiso incompatible: $forbidden.',
-        );
-      }
+    if (androidManifest.contains('android.permission.RECORD_AUDIO') &&
+        !androidManifest.contains(
+          '<uses-permission\n        android:name="android.permission.RECORD_AUDIO"\n        tools:node="remove"',
+        )) {
+      errors.add(
+        'AndroidManifest.xml declara un permiso incompatible: RECORD_AUDIO.',
+      );
+    }
+    if (androidManifest.contains('android.permission.INTERNET') &&
+        !androidManifest.contains(
+          '<uses-permission\n        android:name="android.permission.INTERNET"\n        tools:node="remove"',
+        )) {
+      errors.add(
+        'AndroidManifest.xml declara un permiso incompatible: INTERNET.',
+      );
     }
   }
 
