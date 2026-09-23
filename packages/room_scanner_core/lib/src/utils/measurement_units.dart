@@ -1,3 +1,5 @@
+import '../errors/domain_error.dart';
+
 enum MeasurementSystem {
   metric,
   imperial,
