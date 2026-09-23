@@ -52,8 +52,8 @@ class MeasurementUnits {
     int decimals = 2,
   }) {
     if (!meters.isFinite || meters < 0) {
-      throw ArgumentError.value(
-        meters,
+      throw DomainError(
+        DomainErrorCode.invalidMeasurement, '');
         'meters',
         'La longitud debe ser un número finito mayor o igual que cero.',
       );
