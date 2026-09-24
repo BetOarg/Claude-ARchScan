@@ -1,18 +1,12 @@
 import '../errors/domain_error.dart';
 
-enum MeasurementSystem {
-  metric,
-  imperial,
-}
+enum MeasurementSystem { metric, imperial }
 
 class ImperialLength {
   final int feet;
   final double inches;
 
-  const ImperialLength({
-    required this.feet,
-    required this.inches,
-  });
+  const ImperialLength({required this.feet, required this.inches});
 }
 
 class MeasurementUnits {
@@ -20,28 +14,19 @@ class MeasurementUnits {
 
   static const double metersPerInch = 0.0254;
   static const double inchesPerFoot = 12.0;
-  static const double metersPerFoot =
-      metersPerInch * inchesPerFoot;
-  static const double squareFeetPerSquareMeter =
-      10.763910416709722;
+  static const double metersPerFoot = metersPerInch * inchesPerFoot;
+  static const double squareFeetPerSquareMeter = 10.763910416709722;
 
-  static double inchesToMeters(
-    double inches,
-  ) {
+  static double inchesToMeters(double inches) {
     return inches * metersPerInch;
   }
 
-  static double metersToInches(
-    double meters,
-  ) {
+  static double metersToInches(double meters) {
     return meters / metersPerInch;
   }
 
-  static double squareMetersToSquareFeet(
-    double squareMeters,
-  ) {
-    return squareMeters *
-        squareFeetPerSquareMeter;
+  static double squareMetersToSquareFeet(double squareMeters) {
+    return squareMeters * squareFeetPerSquareMeter;
   }
 
   static String formatLength(
@@ -65,10 +50,7 @@ class MeasurementUnits {
           '$metersLabel';
     }
 
-    final imperial = metersToFeetAndInches(
-      meters,
-      inchDecimals: decimals,
-    );
+    final imperial = metersToFeetAndInches(meters, inchDecimals: decimals);
     final parts = <String>[];
 
     if (imperial.feet > 0) {
@@ -89,8 +71,7 @@ class MeasurementUnits {
     required double feet,
     required double inches,
   }) {
-    return feet * metersPerFoot +
-        inchesToMeters(inches);
+    return feet * metersPerFoot + inchesToMeters(inches);
   }
 
   static ImperialLength metersToFeetAndInches(
@@ -104,15 +85,11 @@ class MeasurementUnits {
       );
     }
 
-    final totalInches =
-        metersToInches(meters);
-    var feet =
-        totalInches ~/ inchesPerFoot;
-    final factor =
-        _decimalFactor(inchDecimals);
+    final totalInches = metersToInches(meters);
+    var feet = totalInches ~/ inchesPerFoot;
+    final factor = _decimalFactor(inchDecimals);
     var inches =
-        ((totalInches - feet * inchesPerFoot) * factor)
-            .roundToDouble() /
+        ((totalInches - feet * inchesPerFoot) * factor).roundToDouble() /
         factor;
 
     if (inches >= inchesPerFoot) {
@@ -120,40 +97,27 @@ class MeasurementUnits {
       inches = 0;
     }
 
-    return ImperialLength(
-      feet: feet,
-      inches: inches,
-    );
+    return ImperialLength(feet: feet, inches: inches);
   }
 
-  static double? parseLocalizedNumber(
-    String value,
-  ) {
-    final normalized = value
-        .trim()
-        .replaceAll(' ', '')
-        .replaceAll(',', '.');
+  static double? parseLocalizedNumber(String value) {
+    final normalized = value.trim().replaceAll(' ', '').replaceAll(',', '.');
 
     if (normalized.isEmpty) {
       return null;
     }
 
-    final parsed =
-        double.tryParse(normalized);
+    final parsed = double.tryParse(normalized);
 
-    if (parsed == null ||
-        !parsed.isFinite) {
+    if (parsed == null || !parsed.isFinite) {
       return null;
     }
 
     return parsed;
   }
 
-  static double? metricInputToMeters(
-    String metersInput,
-  ) {
-    final meters =
-        parseLocalizedNumber(metersInput);
+  static double? metricInputToMeters(String metersInput) {
+    final meters = parseLocalizedNumber(metersInput);
 
     if (meters == null || meters < 0) {
       return null;
@@ -169,8 +133,7 @@ class MeasurementUnits {
     final normalizedFeet = feetInput.trim();
     final normalizedInches = inchesInput.trim();
 
-    if (normalizedFeet.isEmpty &&
-        normalizedInches.isEmpty) {
+    if (normalizedFeet.isEmpty && normalizedInches.isEmpty) {
       return null;
     }
 
@@ -181,36 +144,21 @@ class MeasurementUnits {
         ? 0.0
         : parseLocalizedNumber(normalizedInches);
 
-    if (feet == null ||
-        inches == null ||
-        feet < 0 ||
-        inches < 0) {
+    if (feet == null || inches == null || feet < 0 || inches < 0) {
       return null;
     }
 
-    return feetAndInchesToMeters(
-      feet: feet,
-      inches: inches,
-    );
+    return feetAndInchesToMeters(feet: feet, inches: inches);
   }
 
-  static double _decimalFactor(
-    int decimals,
-  ) {
+  static double _decimalFactor(int decimals) {
     if (decimals < 0 || decimals > 6) {
-      throw RangeError.range(
-        decimals,
-        0,
-        6,
-        'inchDecimals',
-      );
+      throw RangeError.range(decimals, 0, 6, 'inchDecimals');
     }
 
     var factor = 1.0;
 
-    for (var index = 0;
-        index < decimals;
-        index++) {
+    for (var index = 0; index < decimals; index++) {
       factor *= 10;
     }
 
@@ -223,8 +171,7 @@ class MeasurementUnits {
     String decimalSeparator,
   ) {
     final factor = _decimalFactor(decimals);
-    final formatted =
-        (value * factor).roundToDouble() / factor;
+    final formatted = (value * factor).roundToDouble() / factor;
     var text = formatted.toStringAsFixed(decimals);
 
     if (decimalSeparator != '.') {

@@ -21,7 +21,8 @@ class TechnicalDrawingGeometry {
       for (var index = 0; index < wallCount; index++) {
         final a = room.points[index];
         final b = room.points[(index + 1) % room.points.length];
-        final error = _pointSegmentDistance(feature.start, a, b) +
+        final error =
+            _pointSegmentDistance(feature.start, a, b) +
             _pointSegmentDistance(feature.end, a, b);
         if (error < bestError) {
           bestError = error;
@@ -80,8 +81,8 @@ class TechnicalDrawingGeometry {
         result.add(current);
         continue;
       }
-      final cosine = ((-firstDx * rawDx) + (-firstDz * rawDz)) /
-          (firstLength * rawLength);
+      final cosine =
+          ((-firstDx * rawDx) + (-firstDz * rawDz)) / (firstLength * rawLength);
       final angle = math.acos(cosine.clamp(-1.0, 1.0)) * 180 / math.pi;
       if (angle < 88 || angle > 92) {
         result.add(current);
@@ -90,11 +91,13 @@ class TechnicalDrawingGeometry {
       final leftX = -firstDz / firstLength;
       final leftZ = firstDx / firstLength;
       final direction = (leftX * rawDx) + (leftZ * rawDz) >= 0 ? 1.0 : -1.0;
-      result.add(ARPoint(
-        x: incoming.x + leftX * rawLength * direction,
-        y: current.y,
-        z: incoming.z + leftZ * rawLength * direction,
-      ));
+      result.add(
+        ARPoint(
+          x: incoming.x + leftX * rawLength * direction,
+          y: current.y,
+          z: incoming.z + leftZ * rawLength * direction,
+        ),
+      );
     }
 
     if (isClosed && result.length > 3) {
@@ -104,8 +107,10 @@ class TechnicalDrawingGeometry {
       final last = result.last;
       final closingAngle = _cornerAngle(beforeLast, last, first);
       final firstAngle = _cornerAngle(last, first, second);
-      if (closingAngle >= 88 && closingAngle <= 92 &&
-          firstAngle >= 88 && firstAngle <= 92) {
+      if (closingAngle >= 88 &&
+          closingAngle <= 92 &&
+          firstAngle >= 88 &&
+          firstAngle <= 92) {
         final intersection = _lineIntersection(
           beforeLast,
           last,
@@ -127,8 +132,8 @@ class TechnicalDrawingGeometry {
     final az = a.z - vertex.z;
     final bx = b.x - vertex.x;
     final bz = b.z - vertex.z;
-    final denominator = math.sqrt(ax * ax + az * az) *
-        math.sqrt(bx * bx + bz * bz);
+    final denominator =
+        math.sqrt(ax * ax + az * az) * math.sqrt(bx * bx + bz * bz);
     if (denominator < kGeometryEpsilon) return 0;
     return math.acos(((ax * bx + az * bz) / denominator).clamp(-1.0, 1.0)) *
         180 /
@@ -156,12 +161,12 @@ class TechnicalDrawingGeometry {
     final dz = b.z - a.z;
     final lengthSquared = dx * dx + dz * dz;
     if (lengthSquared < kGeometryEpsilon) {
-      return math.sqrt(
-        (p.x - a.x) * (p.x - a.x) + (p.z - a.z) * (p.z - a.z),
-      );
+      return math.sqrt((p.x - a.x) * (p.x - a.x) + (p.z - a.z) * (p.z - a.z));
     }
-    final t = (((p.x - a.x) * dx + (p.z - a.z) * dz) / lengthSquared)
-        .clamp(0.0, 1.0);
+    final t = (((p.x - a.x) * dx + (p.z - a.z) * dz) / lengthSquared).clamp(
+      0.0,
+      1.0,
+    );
     final projectedX = a.x + t * dx;
     final projectedZ = a.z + t * dz;
     return math.sqrt(
@@ -183,9 +188,9 @@ class TechnicalDrawingGeometry {
     final t = lengthSquared < kGeometryEpsilon
         ? 0.0
         : (((point.x - originalStart.x) * dx +
-                    (point.z - originalStart.z) * dz) /
-                lengthSquared)
-            .clamp(0.0, 1.0);
+                      (point.z - originalStart.z) * dz) /
+                  lengthSquared)
+              .clamp(0.0, 1.0);
     return ARPoint(
       x: snappedStart.x + (snappedEnd.x - snappedStart.x) * t,
       y: point.y,

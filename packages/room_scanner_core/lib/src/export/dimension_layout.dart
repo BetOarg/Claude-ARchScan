@@ -128,7 +128,9 @@ class DimensionLayout {
         final normal = _outwardNormal(dimension);
         final tangent = _tangent(dimension);
         var placed = false;
-        final minimumLevel = strictHierarchy ? _minimumLevel(dimension.kind) : 0;
+        final minimumLevel = strictHierarchy
+            ? _minimumLevel(dimension.kind)
+            : 0;
 
         for (var level = minimumLevel; level < maxLevels; level++) {
           final offset = baseOffset + level * spacing;
@@ -145,24 +147,22 @@ class DimensionLayout {
             continue;
           }
 
-          if (_crossesAnotherWall(
-            dimension,
-            corridor,
-            allWalls,
-          )) {
+          if (_crossesAnotherWall(dimension, corridor, allWalls)) {
             continue;
           }
 
           occupied.add(corridor);
-          result.add(DimensionPlacement(
-            segment: dimension,
-            offset: offset,
-            level: level,
-            normalX: normal.x,
-            normalY: normal.y,
-            tangentX: tangent.x,
-            tangentY: tangent.y,
-          ));
+          result.add(
+            DimensionPlacement(
+              segment: dimension,
+              offset: offset,
+              level: level,
+              normalX: normal.x,
+              normalY: normal.y,
+              tangentX: tangent.x,
+              tangentY: tangent.y,
+            ),
+          );
           placed = true;
           break;
         }
@@ -179,7 +179,8 @@ class DimensionLayout {
     result.sort((a, b) {
       final length = a.segment.length.compareTo(b.segment.length);
       if (length != 0) return length;
-      final kind = _kindOrder(a.segment.kind).compareTo(_kindOrder(b.segment.kind));
+      final kind = _kindOrder(a.segment.kind)
+          .compareTo(_kindOrder(b.segment.kind));
       if (kind != 0) return kind;
       return a.segment.id.compareTo(b.segment.id);
     });
@@ -204,21 +205,16 @@ class DimensionLayout {
     return '${x.toStringAsFixed(3)},${y.toStringAsFixed(3)}';
   }
 
-  static int _compareLayoutOrder(
-    DimensionSegment a,
-    DimensionSegment b,
-  ) {
+  static int _compareLayoutOrder(DimensionSegment a, DimensionSegment b) {
     final kind = _kindOrder(a.kind).compareTo(_kindOrder(b.kind));
     if (kind != 0) return kind;
 
     final tangentA = _tangent(a);
     final tangentB = _tangent(b);
     final positionA =
-        ((a.x1 + a.x2) / 2.0) * tangentA.x +
-        ((a.y1 + a.y2) / 2.0) * tangentA.y;
+        ((a.x1 + a.x2) / 2.0) * tangentA.x + ((a.y1 + a.y2) / 2.0) * tangentA.y;
     final positionB =
-        ((b.x1 + b.x2) / 2.0) * tangentB.x +
-        ((b.y1 + b.y2) / 2.0) * tangentB.y;
+        ((b.x1 + b.x2) / 2.0) * tangentB.x + ((b.y1 + b.y2) / 2.0) * tangentB.y;
     final position = positionA.compareTo(positionB);
     if (position != 0) return position;
 
@@ -235,19 +231,22 @@ class DimensionLayout {
         .toList(growable: false);
     if (totals.isEmpty) return dimensions;
 
-    return dimensions.where((dimension) {
-      if (dimension.kind != DimensionKind.wall) return true;
-      final tangent = _tangent(dimension);
-      return !totals.any((total) {
-        final totalTangent = _tangent(total);
-        final parallel =
-            (tangent.x * totalTangent.x + tangent.y * totalTangent.y).abs() >
-            0.9999;
-        final sameLength =
-            (dimension.length - total.length).abs() < kGeometryEpsilon;
-        return parallel && sameLength;
-      });
-    }).toList(growable: false);
+    return dimensions
+        .where((dimension) {
+          if (dimension.kind != DimensionKind.wall) return true;
+          final tangent = _tangent(dimension);
+          return !totals.any((total) {
+            final totalTangent = _tangent(total);
+            final parallel =
+                (tangent.x * totalTangent.x + tangent.y * totalTangent.y)
+                    .abs() >
+                0.9999;
+            final sameLength =
+                (dimension.length - total.length).abs() < kGeometryEpsilon;
+            return parallel && sameLength;
+          });
+        })
+        .toList(growable: false);
   }
 
   static bool _crossesAnotherWall(
@@ -264,17 +263,12 @@ class DimensionLayout {
     return false;
   }
 
-  static bool _sameGeometry(
-    DimensionSegment a,
-    DimensionSegment b,
-  ) {
+  static bool _sameGeometry(DimensionSegment a, DimensionSegment b) {
     const epsilon = 0.00001;
     bool same(double x1, double y1, double x2, double y2) =>
         (x1 - x2).abs() < epsilon && (y1 - y2).abs() < epsilon;
-    return same(a.x1, a.y1, b.x1, b.y1) &&
-            same(a.x2, a.y2, b.x2, b.y2) ||
-        same(a.x1, a.y1, b.x2, b.y2) &&
-            same(a.x2, a.y2, b.x1, b.y1);
+    return same(a.x1, a.y1, b.x1, b.y1) && same(a.x2, a.y2, b.x2, b.y2) ||
+        same(a.x1, a.y1, b.x2, b.y2) && same(a.x2, a.y2, b.x1, b.y1);
   }
 
   static bool _segmentsIntersect(
@@ -331,9 +325,8 @@ class DimensionLayout {
   }
 
   static int _comparePriority(DimensionSegment a, DimensionSegment b) {
-    final kind = _deduplicationPriority(a.kind).compareTo(
-      _deduplicationPriority(b.kind),
-    );
+    final kind = _deduplicationPriority(a.kind)
+        .compareTo(_deduplicationPriority(b.kind));
     if (kind != 0) return kind;
     return a.id.compareTo(b.id);
   }
@@ -399,10 +392,7 @@ class DimensionLayout {
         normal = _Vector(-normal.x, -normal.y);
       }
     }
-    return _Vector(
-      normal.x * d.normalDirection,
-      normal.y * d.normalDirection,
-    );
+    return _Vector(normal.x * d.normalDirection, normal.y * d.normalDirection);
   }
 }
 
@@ -454,12 +444,7 @@ class _DimensionCorridor {
   }
 
   bool overlaps(_DimensionCorridor other) {
-    final axes = <_Vector>[
-      tangent,
-      normal,
-      other.tangent,
-      other.normal,
-    ];
+    final axes = <_Vector>[tangent, normal, other.tangent, other.normal];
 
     for (final axis in axes) {
       final thisRadius =
@@ -469,10 +454,7 @@ class _DimensionCorridor {
           other.halfTangent * _dot(other.tangent, axis).abs() +
           other.halfNormal * _dot(other.normal, axis).abs();
       final centerDistance = _dot(
-        _Vector(
-          center.x - other.center.x,
-          center.y - other.center.y,
-        ),
+        _Vector(center.x - other.center.x, center.y - other.center.y),
         axis,
       ).abs();
 
@@ -483,12 +465,7 @@ class _DimensionCorridor {
     return true;
   }
 
-  bool intersectsSegment(
-    double x1,
-    double y1,
-    double x2,
-    double y2,
-  ) {
+  bool intersectsSegment(double x1, double y1, double x2, double y2) {
     final corners = <_Point>[
       _Point(
         center.x + tangent.x * halfTangent + normal.x * halfNormal,
@@ -512,7 +489,14 @@ class _DimensionCorridor {
       final a = corners[i];
       final b = corners[(i + 1) % corners.length];
       if (DimensionLayout._segmentsIntersect(
-        x1, y1, x2, y2, a.x, a.y, b.x, b.y,
+        x1,
+        y1,
+        x2,
+        y2,
+        a.x,
+        a.y,
+        b.x,
+        b.y,
       )) {
         return true;
       }
@@ -527,8 +511,7 @@ class _DimensionCorridor {
       _Vector(midpoint.x - center.x, midpoint.y - center.y),
       normal,
     );
-    return localX.abs() <= halfTangent &&
-        localY.abs() <= halfNormal;
+    return localX.abs() <= halfTangent && localY.abs() <= halfNormal;
   }
 
   static double _dot(_Vector a, _Vector b) => a.x * b.x + a.y * b.y;

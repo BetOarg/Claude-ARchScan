@@ -38,12 +38,11 @@ class ValidationResult {
   static ValidationResult invalid(
     String message, {
     ValidationErrorCode? code,
-  }) =>
-      ValidationResult._(
-        isValid: false,
-        errorCode: code,
-        errorMessage: message,
-      );
+  }) => ValidationResult._(
+    isValid: false,
+    errorCode: code,
+    errorMessage: message,
+  );
 
   static ValidationResult warning(String message, {ARPoint? suggestion}) =>
       ValidationResult._(
@@ -311,10 +310,8 @@ class ScanValidator {
         pz <= max(sz, ez);
     if (!withinBounds) return false;
 
-    final bool isStart =
-        (px - sx).abs() < epsilon && (pz - sz).abs() < epsilon;
-    final bool isEnd =
-        (px - ex).abs() < epsilon && (pz - ez).abs() < epsilon;
+    final bool isStart = (px - sx).abs() < epsilon && (pz - sz).abs() < epsilon;
+    final bool isEnd = (px - ex).abs() < epsilon && (pz - ez).abs() < epsilon;
     return !isStart && !isEnd;
   }
 
@@ -367,8 +364,7 @@ class ScanValidator {
       final secondDz = endB.z - startB.z;
       final firstLength = sqrt(firstDx * firstDx + firstDz * firstDz);
       final secondLength = sqrt(secondDx * secondDx + secondDz * secondDz);
-      if (firstLength <= kGeometryEpsilon ||
-          secondLength <= kGeometryEpsilon) {
+      if (firstLength <= kGeometryEpsilon || secondLength <= kGeometryEpsilon) {
         return double.infinity;
       }
       return ((firstDx * secondDx + firstDz * secondDz) /
@@ -388,7 +384,8 @@ class ScanValidator {
         continue;
       }
 
-      final score = perpendicularDeviation(previous, last, last, candidate) +
+      final score =
+          perpendicularDeviation(previous, last, last, candidate) +
           perpendicularDeviation(candidate, first, first, second);
       if (score > maximumOrthogonalDeviation) {
         continue;

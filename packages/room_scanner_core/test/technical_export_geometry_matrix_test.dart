@@ -6,10 +6,9 @@ import 'package:test/test.dart';
 void main() {
   test('rectangular plan keeps walls, room name, dimensions and metadata', () {
     final room = _rectangle('rect', 'Living', 3, 2);
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [room],
-      MeasurementSystem.metric,
-    );
+    final svg = PlanExportBuilder.buildFloorPlanSvg([
+      room,
+    ], MeasurementSystem.metric);
     final dxf = DxfExportBuilder.build([room]);
 
     expect(RegExp(r'<polygon ').allMatches(svg).length, 1);
@@ -36,10 +35,9 @@ void main() {
 
   test('DXF and SVG preserve the same geometric invariants', () {
     final room = _rectangle('invariant', 'Invariant', 4, 2);
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [room],
-      MeasurementSystem.metric,
-    );
+    final svg = PlanExportBuilder.buildFloorPlanSvg([
+      room,
+    ], MeasurementSystem.metric);
     final dxf = DxfExportBuilder.build([room]);
     final svgPoints = _svgPolygonPoints(svg);
     final dxfSegments = _dxfWallSegments(dxf);
@@ -72,10 +70,9 @@ void main() {
 
   test('PDF is generated from the same technical SVG geometry', () async {
     final room = _rectangle('pdf', 'PDF', 3, 2);
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [room],
-      MeasurementSystem.metric,
-    );
+    final svg = PlanExportBuilder.buildFloorPlanSvg([
+      room,
+    ], MeasurementSystem.metric);
     final pdf = PlanExportBuilder.buildPdfDocument(
       [room],
       'PDF',
@@ -92,58 +89,61 @@ void main() {
     'technical SVG auto-fits the complete drawing instead of a fixed viewport',
     () {
       final room = _rectangle('fit', 'Fit', 3, 2);
-      final svg = PlanExportBuilder.buildFloorPlanSvg(
-        [room],
-        MeasurementSystem.metric,
-      );
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        room,
+      ], MeasurementSystem.metric);
 
       final match = RegExp(r'viewBox="([^"]+)"').firstMatch(svg);
       expect(match, isNotNull);
-      final viewBox = match!.group(1)!
-      .split(RegExp(r'\s+'))
-      .map(double.parse)
-      .toList();
+      final viewBox = match!
+          .group(1)!
+          .split(RegExp(r'\s+'))
+          .map(double.parse)
+          .toList();
 
       expect(viewBox, hasLength(4));
       expect(viewBox[2], isNot(900));
-    expect(viewBox[3], isNot(600));
-    expect(svg, contains('id="cotas"'));
-  });
+      expect(viewBox[3], isNot(600));
+      expect(svg, contains('id="cotas"'));
+    },
+  );
 
-  test('L-shaped plan preserves all perimeter edges and technical dimensions', () {
-    final room = RoomModel(
-      id: 'l',
-      name: 'L',
-      type: RoomType.living,
-      points: [
-        ARPoint(x: 0, y: 0, z: 0),
-        ARPoint(x: 4, y: 0, z: 0),
-        ARPoint(x: 4, y: 0, z: 1),
-        ARPoint(x: 2, y: 0, z: 1),
-        ARPoint(x: 2, y: 0, z: 3),
-        ARPoint(x: 0, y: 0, z: 3),
-      ],
-      isClosed: true,
-    );
+  test(
+    'L-shaped plan preserves all perimeter edges and technical dimensions',
+    () {
+      final room = RoomModel(
+        id: 'l',
+        name: 'L',
+        type: RoomType.living,
+        points: [
+          ARPoint(x: 0, y: 0, z: 0),
+          ARPoint(x: 4, y: 0, z: 0),
+          ARPoint(x: 4, y: 0, z: 1),
+          ARPoint(x: 2, y: 0, z: 1),
+          ARPoint(x: 2, y: 0, z: 3),
+          ARPoint(x: 0, y: 0, z: 3),
+        ],
+        isClosed: true,
+      );
 
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [room],
-      MeasurementSystem.metric,
-    );
-    final dxf = DxfExportBuilder.build([room]);
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        room,
+      ], MeasurementSystem.metric);
+      final dxf = DxfExportBuilder.build([room]);
 
-    expect(RegExp(r'<polygon ').allMatches(svg).length, 1);
-    expect(svg, contains('>L<'));
-    final entities = _entities(dxf);
-    expect(
-      entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'),
-      hasLength(6),
-    );
-    expect(
-      entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'),
-      isNotEmpty,
-    );
-  });
+      expect(RegExp(r'<polygon ').allMatches(svg).length, 1);
+      expect(svg, contains('>L<'));
+      final entities = _entities(dxf);
+      expect(
+        entities.where((e) => e[0] == 'LINE' && e[8] == 'WALLS'),
+        hasLength(6),
+      );
+      expect(
+        entities.where((e) => e[0] == 'LINE' && e[8] == 'MEASUREMENTS'),
+        isNotEmpty,
+      );
+    },
+  );
 
   test('two adjacent rooms deduplicate the shared wall and shared opening', () {
     final sharedDoor = WallFeature(
@@ -167,10 +167,10 @@ void main() {
       isClosed: true,
     );
 
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [first, second],
-      MeasurementSystem.metric,
-    );
+    final svg = PlanExportBuilder.buildFloorPlanSvg([
+      first,
+      second,
+    ], MeasurementSystem.metric);
     final dxf = DxfExportBuilder.build([first, second]);
 
     expect(RegExp(r'<polygon ').allMatches(svg).length, 2);
@@ -191,14 +191,16 @@ void main() {
 
   test('technical export remains stable for multiple rooms and openings', () {
     final rooms = [
-      _rectangle('a', 'A', 3, 2).copyWith(features: [
-        WallFeature(
-          id: 'door-a',
-          type: FeatureType.door,
-          start: ARPoint(x: 0.8, y: 0, z: 0),
-          end: ARPoint(x: 1.6, y: 0, z: 0),
-        ),
-      ]),
+      _rectangle('a', 'A', 3, 2).copyWith(
+        features: [
+          WallFeature(
+            id: 'door-a',
+            type: FeatureType.door,
+            start: ARPoint(x: 0.8, y: 0, z: 0),
+            end: ARPoint(x: 1.6, y: 0, z: 0),
+          ),
+        ],
+      ),
       RoomModel(
         id: 'b',
         name: 'B',
@@ -278,15 +280,10 @@ List<Map<int, String>> _entities(String dxf) {
 List<_SvgPoint> _svgPolygonPoints(String svg) {
   final match = RegExp(r'<polygon points="([^"]+)"').firstMatch(svg);
   if (match == null) return <_SvgPoint>[];
-  return match
-      .group(1)!
-      .trim()
-      .split(RegExp(r'\s+'))
-      .map((pair) {
-        final values = pair.split(',');
-        return _SvgPoint(double.parse(values[0]), double.parse(values[1]));
-      })
-      .toList();
+  return match.group(1)!.trim().split(RegExp(r'\s+')).map((pair) {
+    final values = pair.split(',');
+    return _SvgPoint(double.parse(values[0]), double.parse(values[1]));
+  }).toList();
 }
 
 List<(_SvgPoint, _SvgPoint)> _dxfWallSegments(String dxf) {

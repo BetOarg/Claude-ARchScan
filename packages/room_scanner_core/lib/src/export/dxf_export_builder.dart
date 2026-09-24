@@ -14,8 +14,9 @@ class DxfExportBuilder {
     final imperial =
         languageCode.toLowerCase().split(RegExp('[-_]')).first == 'en';
     final drawing = _DxfWriter(imperial: imperial);
-    final drawingRooms =
-        rooms.map(TechnicalDrawingGeometry.normalizeRoom).toList();
+    final drawingRooms = rooms
+        .map(TechnicalDrawingGeometry.normalizeRoom)
+        .toList();
     final walls = <_Segment>[];
     final openings = <String, WallFeature>{};
 
@@ -31,10 +32,7 @@ class DxfExportBuilder {
       final count = room.isClosed ? room.points.length : room.points.length - 1;
       for (var i = 0; i < count; i++) {
         walls.add(
-          _Segment(
-            room.points[i],
-            room.points[(i + 1) % room.points.length],
-          ),
+          _Segment(room.points[i], room.points[(i + 1) % room.points.length]),
         );
       }
     }
@@ -67,23 +65,17 @@ class DxfExportBuilder {
         final part = _Segment(wall.at(cuts[i - 1]), wall.at(cuts[i]));
         if (drawn.add(part.key)) drawing.line('WALLS', part.a, part.b);
       }
-
     }
 
     for (final room in drawingRooms) {
       if (room.points.isEmpty || room.name.trim().isEmpty) continue;
-      final x = room.points.fold<double>(0, (sum, p) => sum + p.x) /
+      final x =
+          room.points.fold<double>(0, (sum, p) => sum + p.x) /
           room.points.length;
-      final z = room.points.fold<double>(0, (sum, p) => sum + p.z) /
+      final z =
+          room.points.fold<double>(0, (sum, p) => sum + p.z) /
           room.points.length;
-      drawing.text(
-        'ROOM_NAMES',
-        x,
-        z,
-        room.name.trim(),
-        0.18,
-        centered: true,
-      );
+      drawing.text('ROOM_NAMES', x, z, room.name.trim(), 0.18, centered: true);
     }
 
     for (final feature in openings.values) {
@@ -126,7 +118,6 @@ class DxfExportBuilder {
           sign > 0 ? angle + 90 : angle,
         );
       }
-
     }
 
     // Use the same CAD dimension engine as the on-screen painter.
@@ -161,8 +152,7 @@ class DxfExportBuilder {
         final marker = ':opening:';
         final markerIndex = segment.id.indexOf(marker);
         if (markerIndex >= 0) {
-          final featureId =
-              segment.id.substring(markerIndex + marker.length);
+          final featureId = segment.id.substring(markerIndex + marker.length);
           final feature = openings[featureId];
           if (feature != null) {
             label = _formatLength(
@@ -175,10 +165,7 @@ class DxfExportBuilder {
           }
         }
       } else {
-        label = _formatLength(
-          _segmentLengthMeters(segment),
-          imperial,
-        );
+        label = _formatLength(_segmentLengthMeters(segment), imperial);
       }
 
       if (label == null || label.isEmpty) continue;
