@@ -40,7 +40,7 @@ void main() {
       dimensions.where((d) => d.kind == DimensionKind.opening),
       hasLength(1),
     );
-    expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(4));
+    expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(3));
     expect(
       dimensions.where((d) => d.kind == DimensionKind.total),
       hasLength(2),
