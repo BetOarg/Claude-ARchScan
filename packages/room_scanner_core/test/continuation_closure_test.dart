@@ -10,8 +10,7 @@ void main() {
         ARPoint(x: 4, y: 0, z: 3),
       ];
 
-      final suggestion =
-          ScanValidator.suggestOrthogonalClosurePoint(points);
+      final suggestion = ScanValidator.suggestOrthogonalClosurePoint(points);
 
       expect(suggestion, isNotNull);
       expect(suggestion!.x, closeTo(0, 0.000001));
@@ -30,10 +29,7 @@ void main() {
         ARPoint(x: 0, y: 0, z: 3),
       ];
 
-      expect(
-        ScanValidator.suggestOrthogonalClosurePoint(points),
-        isNull,
-      );
+      expect(ScanValidator.suggestOrthogonalClosurePoint(points), isNull);
     });
 
     test('no fuerza una esquina en un ambiente triangular', () {
@@ -43,10 +39,7 @@ void main() {
         ARPoint(x: 2, y: 0, z: 3),
       ];
 
-      expect(
-        ScanValidator.suggestOrthogonalClosurePoint(points),
-        isNull,
-      );
+      expect(ScanValidator.suggestOrthogonalClosurePoint(points), isNull);
     });
 
     test('la sugerencia no modifica los puntos medidos', () {
@@ -100,5 +93,4 @@ void main() {
       expect(result.isValid, isFalse);
     });
   });
-
 }

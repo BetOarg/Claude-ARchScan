@@ -97,8 +97,11 @@ class IsarWallFeature {
 }
 
 enum IsarFeatureType { door, window }
+
 enum IsarDoorHingeSide { start, end }
+
 enum IsarDoorSwingSide { left, right }
+
 enum IsarDoorOpeningDirection { interior, exterior }
 
 // ==========================================
@@ -117,7 +120,9 @@ extension WallFeatureIsarMapper on WallFeature {
   IsarWallFeature toIsar() {
     return IsarWallFeature()
       ..id = id
-      ..type = type == FeatureType.door ? IsarFeatureType.door : IsarFeatureType.window
+      ..type = type == FeatureType.door
+          ? IsarFeatureType.door
+          : IsarFeatureType.window
       ..start = start.toIsar()
       ..end = end.toIsar()
       ..doorHingeSide = doorHingeSide == DoorHingeSide.start
@@ -128,8 +133,8 @@ extension WallFeatureIsarMapper on WallFeature {
           : IsarDoorSwingSide.right
       ..doorOpeningDirection =
           doorOpeningDirection == DoorOpeningDirection.interior
-              ? IsarDoorOpeningDirection.interior
-              : IsarDoorOpeningDirection.exterior
+          ? IsarDoorOpeningDirection.interior
+          : IsarDoorOpeningDirection.exterior
       ..openingHeightMeters = openingHeightMeters
       ..sillHeightMeters = sillHeightMeters;
   }
@@ -139,7 +144,9 @@ extension IsarWallFeatureMapper on IsarWallFeature {
   WallFeature toDomain() {
     return WallFeature(
       id: id ?? '',
-      type: type == IsarFeatureType.door ? FeatureType.door : FeatureType.window,
+      type: type == IsarFeatureType.door
+          ? FeatureType.door
+          : FeatureType.window,
       start: start.toDomain(),
       end: end.toDomain(),
       doorHingeSide: doorHingeSide == IsarDoorHingeSide.start
@@ -150,8 +157,8 @@ extension IsarWallFeatureMapper on IsarWallFeature {
           : DoorSwingSide.right,
       doorOpeningDirection:
           doorOpeningDirection == IsarDoorOpeningDirection.interior
-              ? DoorOpeningDirection.interior
-              : DoorOpeningDirection.exterior,
+          ? DoorOpeningDirection.interior
+          : DoorOpeningDirection.exterior,
       openingHeightMeters: openingHeightMeters,
       sillHeightMeters: sillHeightMeters,
     );

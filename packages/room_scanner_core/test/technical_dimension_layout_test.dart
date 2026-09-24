@@ -4,25 +4,25 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 
 void main() {
   RoomModel roomWithOpening() => RoomModel(
-        id: 'room-1',
-        name: 'Living',
-        type: RoomType.living,
-        isClosed: true,
-        points: [
-          ARPoint(x: 0, y: 0, z: 0),
-          ARPoint(x: 4, y: 0, z: 0),
-          ARPoint(x: 4, y: 0, z: 3),
-          ARPoint(x: 0, y: 0, z: 3),
-        ],
-        features: [
-          WallFeature(
-            id: 'door-1',
-            type: FeatureType.door,
-            start: ARPoint(x: 1, y: 0, z: 0),
-            end: ARPoint(x: 1.8, y: 0, z: 0),
-          ),
-        ],
-      );
+    id: 'room-1',
+    name: 'Living',
+    type: RoomType.living,
+    isClosed: true,
+    points: [
+      ARPoint(x: 0, y: 0, z: 0),
+      ARPoint(x: 4, y: 0, z: 0),
+      ARPoint(x: 4, y: 0, z: 3),
+      ARPoint(x: 0, y: 0, z: 3),
+    ],
+    features: [
+      WallFeature(
+        id: 'door-1',
+        type: FeatureType.door,
+        start: ARPoint(x: 1, y: 0, z: 0),
+        end: ARPoint(x: 1.8, y: 0, z: 0),
+      ),
+    ],
+  );
 
   test('creates opening, wall and total dimensions without mutating room', () {
     final room = roomWithOpening();
@@ -36,9 +36,15 @@ void main() {
     );
 
     expect(dimensions, hasLength(7));
-    expect(dimensions.where((d) => d.kind == DimensionKind.opening), hasLength(1));
+    expect(
+      dimensions.where((d) => d.kind == DimensionKind.opening),
+      hasLength(1),
+    );
     expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(4));
-    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(2));
+    expect(
+      dimensions.where((d) => d.kind == DimensionKind.total),
+      hasLength(2),
+    );
     expect(dimensions.first.kind, DimensionKind.opening);
     expect(dimensions.last.kind, DimensionKind.total);
     expect(room.points, orderedEquals(originalPoints));
@@ -54,8 +60,14 @@ void main() {
     );
 
     expect(dimensions.where((d) => d.kind == DimensionKind.wall), hasLength(3));
-    expect(dimensions.where((d) => d.kind == DimensionKind.opening), hasLength(1));
-    expect(dimensions.where((d) => d.kind == DimensionKind.total), hasLength(2));
+    expect(
+      dimensions.where((d) => d.kind == DimensionKind.opening),
+      hasLength(1),
+    );
+    expect(
+      dimensions.where((d) => d.kind == DimensionKind.total),
+      hasLength(2),
+    );
   });
 
   test('places opening dimensions with the interior normal direction', () {

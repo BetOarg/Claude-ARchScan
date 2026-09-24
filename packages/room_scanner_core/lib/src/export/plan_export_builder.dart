@@ -8,6 +8,7 @@ import '../utils/measurement_units.dart';
 import 'dimension_layout.dart';
 import 'technical_dimension_layout.dart';
 import 'technical_drawing_geometry.dart';
+import '../utils/geometry_tolerance.dart';
 
 /// Builds ARchScan project data and technical drawing exports.
 ///
@@ -21,14 +22,17 @@ class PlanExportBuilder {
   static const int maxImportFeatures = 10000;
   static const int maxImportPointsPerRoom = 500;
 
-  static Map<String, dynamic> buildJsonData(List<RoomModel> rooms, String projectName) => {
-        'application': 'ARchScan',
-        'generator': 'ARchScan',
-        'formatVersion': 2,
-        'lengthUnit': 'meters',
-        'projectName': projectName,
-        'rooms': rooms.map((r) => r.toJson()).toList(),
-      };
+  static Map<String, dynamic> buildJsonData(
+    List<RoomModel> rooms,
+    String projectName,
+  ) => {
+    'application': 'ARchScan',
+    'generator': 'ARchScan',
+    'formatVersion': 2,
+    'lengthUnit': 'meters',
+    'projectName': projectName,
+    'rooms': rooms.map((r) => r.toJson()).toList(),
+  };
 
   static String buildJsonFileName(String projectName) {
     var safeName = projectName.trim();
@@ -50,7 +54,9 @@ class PlanExportBuilder {
     return '${jsonFileName.substring(0, jsonFileName.length - 5)}.svg';
   }
 
-  static ({List<RoomModel> rooms, String projectName})? parseProjectSvg(String svgString) {
+  static ({List<RoomModel> rooms, String projectName})? parseProjectSvg(
+    String svgString,
+  ) {
     if (svgString.length > maxImportBytes) return null;
     final match = RegExp(
       r'<metadata\s+id="archscan-project"\s+data-format="json-base64-v1"(?:\s+data-generator="ARchScan")?>([A-Za-z0-9+/=\s]+)</metadata>',
@@ -64,7 +70,9 @@ class PlanExportBuilder {
     }
   }
 
-  static ({List<RoomModel> rooms, String projectName})? parseProjectJson(String jsonString) {
+  static ({List<RoomModel> rooms, String projectName})? parseProjectJson(
+    String jsonString,
+  ) {
     if (jsonString.length > maxImportBytes) return null;
     var source = jsonString;
     if (source.startsWith('\uFEFF')) {
@@ -76,9 +84,12 @@ class PlanExportBuilder {
       if (decoded is! Map<String, dynamic>) return null;
       final formatVersion = decoded['formatVersion'];
       if (formatVersion != null &&
-          (formatVersion is! num || !formatVersion.isFinite ||
+          (formatVersion is! num ||
+              !formatVersion.isFinite ||
               formatVersion != formatVersion.roundToDouble() ||
-              formatVersion < 1 || formatVersion > 2)) return null;
+              formatVersion < 1 ||
+              formatVersion > 2))
+        return null;
       final lengthUnit = decoded['lengthUnit'];
       if (lengthUnit != null && lengthUnit != 'meters') return null;
       final roomsData = decoded['rooms'];
@@ -89,11 +100,13 @@ class PlanExportBuilder {
         if (room is! Map) return null;
         final points = room['points'];
         final features = room['features'];
-        if (points is! List || (features != null && features is! List)) return null;
+        if (points is! List || (features != null && features is! List))
+          return null;
         if (points.length > maxImportPointsPerRoom) return null;
         pointCount += points.length;
         featureCount += features is List ? features.length : 0;
-        if (pointCount > maxImportPoints || featureCount > maxImportFeatures) return null;
+        if (pointCount > maxImportPoints || featureCount > maxImportFeatures)
+          return null;
       }
       final rawProjectName = decoded['projectName'];
       if (rawProjectName != null && rawProjectName is! String) {
@@ -101,7 +114,10 @@ class PlanExportBuilder {
       }
       final projectName = rawProjectName as String? ?? 'Proyecto Importado';
       final rooms = roomsData
-          .map((room) => RoomModel.fromJson(Map<String, dynamic>.from(room as Map)))
+          .map(
+            (room) =>
+                RoomModel.fromJson(Map<String, dynamic>.from(room as Map)),
+          )
           .toList(growable: false);
       if (rooms.any((room) => !_hasFiniteGeometry(room))) return null;
       return (rooms: rooms, projectName: projectName);
@@ -117,12 +133,17 @@ class PlanExportBuilder {
   }
 
   static bool _hasFiniteGeometry(RoomModel room) {
-    bool pointIsFinite(ARPoint point) => point.x.isFinite && point.y.isFinite && point.z.isFinite;
+    bool pointIsFinite(ARPoint point) =>
+        point.x.isFinite && point.y.isFinite && point.z.isFinite;
     if (!room.points.every(pointIsFinite)) return false;
     for (final feature in room.features) {
-      if (!pointIsFinite(feature.start) || !pointIsFinite(feature.end) ||
-          !feature.openingHeightMeters.isFinite || feature.openingHeightMeters < 0 ||
-          !feature.sillHeightMeters.isFinite || feature.sillHeightMeters < 0) return false;
+      if (!pointIsFinite(feature.start) ||
+          !pointIsFinite(feature.end) ||
+          !feature.openingHeightMeters.isFinite ||
+          feature.openingHeightMeters < 0 ||
+          !feature.sillHeightMeters.isFinite ||
+          feature.sillHeightMeters < 0)
+        return false;
     }
     return true;
   }
@@ -169,11 +190,15 @@ class PlanExportBuilder {
     String languageCode = 'es',
     String projectName = 'Plano 2D',
   }) {
-    final drawingRooms = rooms.map(TechnicalDrawingGeometry.normalizeRoom).toList();
+    final drawingRooms = rooms
+        .map(TechnicalDrawingGeometry.normalizeRoom)
+        .toList();
     const canvasWidth = 900.0;
     const canvasHeight = 600.0;
     const padding = 72.0;
-    final decimalSeparator = languageCode.toLowerCase().startsWith('en') ? '.' : ',';
+    final decimalSeparator = languageCode.toLowerCase().startsWith('en')
+        ? '.'
+        : ',';
 
     final points = <ARPoint>[
       for (final room in drawingRooms) ...room.points,
@@ -199,13 +224,16 @@ class PlanExportBuilder {
     final planHeight = math.max(maxZ - minZ, 0.01);
     final availableWidth = canvasWidth - padding * 2;
     final availableHeight = canvasHeight - padding * 2;
-    final scale = math.min(availableWidth / planWidth, availableHeight / planHeight);
+    final scale = math.min(
+      availableWidth / planWidth,
+      availableHeight / planHeight,
+    );
     final offsetX = padding + (availableWidth - planWidth * scale) / 2.0;
     final offsetY = padding + (availableHeight - planHeight * scale) / 2.0;
     _SvgPoint transform(ARPoint point) => _SvgPoint(
-          offsetX + (point.x - minX) * scale,
-          offsetY + (point.z - minZ) * scale,
-        );
+      offsetX + (point.x - minX) * scale,
+      offsetY + (point.z - minZ) * scale,
+    );
 
     final contentSvg = StringBuffer();
     final exportBounds = _SvgBounds();
@@ -222,16 +250,29 @@ class PlanExportBuilder {
       for (final point in transformed) {
         exportBounds.includePoint(point.x, point.y);
       }
-      final outlinePoints = transformed.map((point) => '${_svgNumber(point.x)},${_svgNumber(point.y)}').join(' ');
+      final outlinePoints = transformed
+          .map((point) => '${_svgNumber(point.x)},${_svgNumber(point.y)}')
+          .join(' ');
       if (room.isClosed) {
-        wallsSvg.writeln('<polygon points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round"/>');
+        wallsSvg.writeln(
+          '<polygon points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round"/>',
+        );
       } else {
-        wallsSvg.writeln('<polyline points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>');
+        wallsSvg.writeln(
+          '<polyline points="$outlinePoints" fill="none" stroke="#000000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>',
+        );
       }
       final center = _roomCenter(transformed);
-      exportBounds.includeRect(center.x - 40.0, center.y - 10.0, center.x + 40.0, center.y + 10.0);
+      exportBounds.includeRect(
+        center.x - 40.0,
+        center.y - 10.0,
+        center.x + 40.0,
+        center.y + 10.0,
+      );
       if (room.name.trim().isNotEmpty) {
-        roomNamesSvg.writeln('<text x="${_svgNumber(center.x)}" y="${_svgNumber(center.y + 3)}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="bold" fill="#000000">${_escapeSvg(room.name.trim())}</text>');
+        roomNamesSvg.writeln(
+          '<text x="${_svgNumber(center.x)}" y="${_svgNumber(center.y + 3)}" text-anchor="middle" font-family="Helvetica" font-size="9" font-weight="bold" fill="#000000">${_escapeSvg(room.name.trim())}</text>',
+        );
       }
     }
 
@@ -244,7 +285,12 @@ class PlanExportBuilder {
         exportBounds.includePoint(start.x, start.y);
         exportBounds.includePoint(end.x, end.y);
         if (feature.type == FeatureType.door) {
-          final radius = math.max(math.sqrt(math.pow(end.x - start.x, 2) + math.pow(end.y - start.y, 2)), 8.0);
+          final radius = math.max(
+            math.sqrt(
+              math.pow(end.x - start.x, 2) + math.pow(end.y - start.y, 2),
+            ),
+            8.0,
+          );
           exportBounds.includeRect(
             math.min(start.x, end.x) - radius,
             math.min(start.y, end.y) - radius,
@@ -282,23 +328,23 @@ class PlanExportBuilder {
         final end = transform(ARPoint(x: semantic.x2, y: 0, z: semantic.y2));
         final center = semantic.centerX == null || semantic.centerY == null
             ? null
-            : transform(ARPoint(
-                x: semantic.centerX!,
-                y: 0,
-                z: semantic.centerY!,
-              ));
-        dimensionSegments.add(DimensionSegment(
-          x1: start.x,
-          y1: start.y,
-          x2: end.x,
-          y2: end.y,
-          kind: semantic.kind,
-          id: semantic.id,
-          centerX: center?.x,
-          centerY: center?.y,
-          normalDirection: semantic.normalDirection,
-          labelHalfWidth: 19.0,
-        ));
+            : transform(
+                ARPoint(x: semantic.centerX!, y: 0, z: semantic.centerY!),
+              );
+        dimensionSegments.add(
+          DimensionSegment(
+            x1: start.x,
+            y1: start.y,
+            x2: end.x,
+            y2: end.y,
+            kind: semantic.kind,
+            id: semantic.id,
+            centerX: center?.x,
+            centerY: center?.y,
+            normalDirection: semantic.normalDirection,
+            labelHalfWidth: 19.0,
+          ),
+        );
         dimensionLabels[semantic.id] = _formatCompactLength(
           semantic.length,
           measurementSystem,
@@ -323,9 +369,24 @@ class PlanExportBuilder {
       final labelWidth = math.max(38.0, segment.labelHalfWidth * 2.0);
       final labelX = (dimensionX1 + dimensionX2) / 2.0;
       final labelY = (dimensionY1 + dimensionY2) / 2.0;
-      exportBounds.includeSegment(segment.x1, segment.y1, dimensionX1, dimensionY1);
-      exportBounds.includeSegment(segment.x2, segment.y2, dimensionX2, dimensionY2);
-      exportBounds.includeSegment(dimensionX1, dimensionY1, dimensionX2, dimensionY2);
+      exportBounds.includeSegment(
+        segment.x1,
+        segment.y1,
+        dimensionX1,
+        dimensionY1,
+      );
+      exportBounds.includeSegment(
+        segment.x2,
+        segment.y2,
+        dimensionX2,
+        dimensionY2,
+      );
+      exportBounds.includeSegment(
+        dimensionX1,
+        dimensionY1,
+        dimensionX2,
+        dimensionY2,
+      );
       exportBounds.includeRect(
         labelX - labelWidth / 2.0 - 8.0,
         labelY - 10.0,
@@ -378,40 +439,75 @@ class PlanExportBuilder {
 
   static _SvgPoint _roomCenter(List<_SvgPoint> points) {
     if (points.isEmpty) return const _SvgPoint(450, 300);
-    final x = points.fold<double>(0, (sum, point) => sum + point.x) / points.length;
-    final y = points.fold<double>(0, (sum, point) => sum + point.y) / points.length;
+    final x =
+        points.fold<double>(0, (sum, point) => sum + point.x) / points.length;
+    final y =
+        points.fold<double>(0, (sum, point) => sum + point.y) / points.length;
     return _SvgPoint(x, y);
   }
 
-  static void _writeDoorSvg(StringBuffer svg, WallFeature feature, _SvgPoint start, _SvgPoint end) {
+  static void _writeDoorSvg(
+    StringBuffer svg,
+    WallFeature feature,
+    _SvgPoint start,
+    _SvgPoint end,
+  ) {
     final hinge = feature.doorHingeSide == DoorHingeSide.start ? start : end;
-    final closedEnd = feature.doorHingeSide == DoorHingeSide.start ? end : start;
+    final closedEnd = feature.doorHingeSide == DoorHingeSide.start
+        ? end
+        : start;
     final dx = closedEnd.x - hinge.x;
     final dy = closedEnd.y - hinge.y;
     var direction = feature.doorSwingSide == DoorSwingSide.left ? -1.0 : 1.0;
-    if (feature.doorOpeningDirection == DoorOpeningDirection.exterior) direction = -direction;
-    final openEnd = _SvgPoint(hinge.x + direction * -dy, hinge.y + direction * dx);
+    if (feature.doorOpeningDirection == DoorOpeningDirection.exterior)
+      direction = -direction;
+    final openEnd = _SvgPoint(
+      hinge.x + direction * -dy,
+      hinge.y + direction * dx,
+    );
     final radius = math.sqrt(dx * dx + dy * dy);
     final sweep = direction > 0 ? 1 : 0;
     svg
-      ..writeln('<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" stroke="white" stroke-width="8"/>')
-      ..writeln('<line x1="${_svgNumber(hinge.x)}" y1="${_svgNumber(hinge.y)}" x2="${_svgNumber(openEnd.x)}" y2="${_svgNumber(openEnd.y)}" stroke="#000000" stroke-width="1.4"/>')
-      ..writeln('<path d="M ${_svgNumber(closedEnd.x)} ${_svgNumber(closedEnd.y)} A ${_svgNumber(radius)} ${_svgNumber(radius)} 0 0 $sweep ${_svgNumber(openEnd.x)} ${_svgNumber(openEnd.y)}" fill="none" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<circle cx="${_svgNumber(hinge.x)}" cy="${_svgNumber(hinge.y)}" r="2" fill="#000000"/>');
+      ..writeln(
+        '<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" stroke="white" stroke-width="8"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(hinge.x)}" y1="${_svgNumber(hinge.y)}" x2="${_svgNumber(openEnd.x)}" y2="${_svgNumber(openEnd.y)}" stroke="#000000" stroke-width="1.4"/>',
+      )
+      ..writeln(
+        '<path d="M ${_svgNumber(closedEnd.x)} ${_svgNumber(closedEnd.y)} A ${_svgNumber(radius)} ${_svgNumber(radius)} 0 0 $sweep ${_svgNumber(openEnd.x)} ${_svgNumber(openEnd.y)}" fill="none" stroke="#000000" stroke-width="1"/>',
+      )
+      ..writeln(
+        '<circle cx="${_svgNumber(hinge.x)}" cy="${_svgNumber(hinge.y)}" r="2" fill="#000000"/>',
+      );
   }
 
-  static void _writeWindowSvg(StringBuffer svg, _SvgPoint start, _SvgPoint end) {
+  static void _writeWindowSvg(
+    StringBuffer svg,
+    _SvgPoint start,
+    _SvgPoint end,
+  ) {
     final dx = end.x - start.x;
     final dy = end.y - start.y;
     final length = math.max(math.sqrt(dx * dx + dy * dy), 0.01);
     final normalX = (-dy / length) * 2.4;
     final normalY = (dx / length) * 2.4;
     svg
-      ..writeln('<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" stroke="white" stroke-width="8"/>')
-      ..writeln('<line x1="${_svgNumber(start.x + normalX)}" y1="${_svgNumber(start.y + normalY)}" x2="${_svgNumber(end.x + normalX)}" y2="${_svgNumber(end.y + normalY)}" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<line x1="${_svgNumber(start.x - normalX)}" y1="${_svgNumber(start.y - normalY)}" x2="${_svgNumber(end.x - normalX)}" y2="${_svgNumber(end.y - normalY)}" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<line x1="${_svgNumber(start.x + normalX)}" y1="${_svgNumber(start.y + normalY)}" x2="${_svgNumber(start.x - normalX)}" y2="${_svgNumber(start.y - normalY)}" stroke="#000000" stroke-width="1"/>')
-      ..writeln('<line x1="${_svgNumber(end.x + normalX)}" y1="${_svgNumber(end.y + normalY)}" x2="${_svgNumber(end.x - normalX)}" y2="${_svgNumber(end.y - normalY)}" stroke="#000000" stroke-width="1"/>');
+      ..writeln(
+        '<line x1="${_svgNumber(start.x)}" y1="${_svgNumber(start.y)}" x2="${_svgNumber(end.x)}" y2="${_svgNumber(end.y)}" stroke="white" stroke-width="8"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(start.x + normalX)}" y1="${_svgNumber(start.y + normalY)}" x2="${_svgNumber(end.x + normalX)}" y2="${_svgNumber(end.y + normalY)}" stroke="#000000" stroke-width="1"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(start.x - normalX)}" y1="${_svgNumber(start.y - normalY)}" x2="${_svgNumber(end.x - normalX)}" y2="${_svgNumber(end.y - normalY)}" stroke="#000000" stroke-width="1"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(start.x + normalX)}" y1="${_svgNumber(start.y + normalY)}" x2="${_svgNumber(start.x - normalX)}" y2="${_svgNumber(start.y - normalY)}" stroke="#000000" stroke-width="1"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(end.x + normalX)}" y1="${_svgNumber(end.y + normalY)}" x2="${_svgNumber(end.x - normalX)}" y2="${_svgNumber(end.y - normalY)}" stroke="#000000" stroke-width="1"/>',
+      );
   }
 
   static void _writeDimensionSvg({
@@ -425,8 +521,12 @@ class PlanExportBuilder {
     final tangentX = placement.tangentX;
     final tangentY = placement.tangentY;
     final tangentLength = math.sqrt(tangentX * tangentX + tangentY * tangentY);
-    final tx = tangentLength > 0.000001 ? tangentX / tangentLength : 1.0;
-    final ty = tangentLength > 0.000001 ? tangentY / tangentLength : 0.0;
+    final tx = tangentLength > kGeometryEpsilon
+        ? tangentX / tangentLength
+        : 1.0;
+    final ty = tangentLength > kGeometryEpsilon
+        ? tangentY / tangentLength
+        : 0.0;
     final middleX = (segment.x1 + segment.x2) / 2.0;
     final middleY = (segment.y1 + segment.y2) / 2.0;
     final actualOffset = placement.offset;
@@ -447,26 +547,44 @@ class PlanExportBuilder {
     }
 
     svg
-      ..writeln('<line x1="${_svgNumber(segment.x1)}" y1="${_svgNumber(segment.y1)}" x2="${_svgNumber(segment.x1 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y1 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
-      ..writeln('<line x1="${_svgNumber(segment.x2)}" y1="${_svgNumber(segment.y2)}" x2="${_svgNumber(segment.x2 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y2 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>')
-      ..writeln('<line x1="${_svgNumber(segment.x1 + normalX * actualOffset)}" y1="${_svgNumber(segment.y1 + normalY * actualOffset)}" x2="${_svgNumber(segment.x2 + normalX * actualOffset)}" y2="${_svgNumber(segment.y2 + normalY * actualOffset)}" stroke="#000000" stroke-width="0.7"/>')
-      ..writeln(arrow(
-        segment.x1 + normalX * actualOffset,
-        segment.y1 + normalY * actualOffset,
-        tx,
-        ty,
-      ))
-      ..writeln(arrow(
-        segment.x2 + normalX * actualOffset,
-        segment.y2 + normalY * actualOffset,
-        -tx,
-        -ty,
-      ))
-      ..writeln('<rect x="${_svgNumber(labelX - labelWidth / 2)}" y="${_svgNumber(labelY - 8)}" width="${_svgNumber(labelWidth)}" height="14" fill="white" fill-opacity="0.96"/>')
-      ..writeln('<text data-dimension-label="${_escapeSvg(label)}" data-layout-index="${placement.level}" x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 3)}" text-anchor="middle" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="#000000">${_escapeSvg(label)}</text>');
+      ..writeln(
+        '<line x1="${_svgNumber(segment.x1)}" y1="${_svgNumber(segment.y1)}" x2="${_svgNumber(segment.x1 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y1 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(segment.x2)}" y1="${_svgNumber(segment.y2)}" x2="${_svgNumber(segment.x2 + normalX * extensionOffset)}" y2="${_svgNumber(segment.y2 + normalY * extensionOffset)}" stroke="#000000" stroke-width="0.7"/>',
+      )
+      ..writeln(
+        '<line x1="${_svgNumber(segment.x1 + normalX * actualOffset)}" y1="${_svgNumber(segment.y1 + normalY * actualOffset)}" x2="${_svgNumber(segment.x2 + normalX * actualOffset)}" y2="${_svgNumber(segment.y2 + normalY * actualOffset)}" stroke="#000000" stroke-width="0.7"/>',
+      )
+      ..writeln(
+        arrow(
+          segment.x1 + normalX * actualOffset,
+          segment.y1 + normalY * actualOffset,
+          tx,
+          ty,
+        ),
+      )
+      ..writeln(
+        arrow(
+          segment.x2 + normalX * actualOffset,
+          segment.y2 + normalY * actualOffset,
+          -tx,
+          -ty,
+        ),
+      )
+      ..writeln(
+        '<rect x="${_svgNumber(labelX - labelWidth / 2)}" y="${_svgNumber(labelY - 8)}" width="${_svgNumber(labelWidth)}" height="14" fill="white" fill-opacity="0.96"/>',
+      )
+      ..writeln(
+        '<text data-dimension-label="${_escapeSvg(label)}" data-layout-index="${placement.level}" x="${_svgNumber(labelX)}" y="${_svgNumber(labelY + 3)}" text-anchor="middle" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="#000000">${_escapeSvg(label)}</text>',
+      );
   }
 
-  static String _formatCompactLength(double meters, MeasurementSystem measurementSystem, {required String decimalSeparator}) {
+  static String _formatCompactLength(
+    double meters,
+    MeasurementSystem measurementSystem, {
+    required String decimalSeparator,
+  }) {
     return MeasurementUnits.formatLength(
       meters,
       measurementSystem,
@@ -536,4 +654,3 @@ class _SvgPoint {
   final double y;
   const _SvgPoint(this.x, this.y);
 }
-

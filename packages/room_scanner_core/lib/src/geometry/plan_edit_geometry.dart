@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'geometry_service.dart';
 import '../models/room_model.dart';
 import '../utils/scan_validator.dart';
@@ -10,8 +11,10 @@ class PlanEditGeometry {
   static double perimeter(RoomModel room) {
     var result = 0.0;
     for (var i = 0; i < wallCount(room); i++) {
-      result +=
-          distance(room.points[i], room.points[(i + 1) % room.points.length]);
+      result += distance(
+        room.points[i],
+        room.points[(i + 1) % room.points.length],
+      );
     }
     return result;
   }
@@ -29,10 +32,10 @@ class PlanEditGeometry {
   }
 
   static ARPoint interpolate(ARPoint a, ARPoint b, double t) => ARPoint(
-        x: a.x + (b.x - a.x) * t,
-        y: a.y + (b.y - a.y) * t,
-        z: a.z + (b.z - a.z) * t,
-      );
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+    z: a.z + (b.z - a.z) * t,
+  );
   static bool onSegment(
     ARPoint p,
     ARPoint a,
@@ -56,14 +59,18 @@ class PlanEditGeometry {
 
   /// Snaps a dragged corner to the nearest real boundary within touch range.
   static ARPoint snapPoint(
-      ARPoint point, Iterable<RoomModel> neighbours, double radius) {
+    ARPoint point,
+    Iterable<RoomModel> neighbours,
+    double radius,
+  ) {
     var nearest = point, best = radius;
     for (final room in neighbours) {
       final candidates = <ARPoint>[...room.points];
       for (var i = 0; i < wallCount(room); i++) {
         final a = room.points[i], b = room.points[(i + 1) % room.points.length];
-        candidates.add(interpolate(
-            a, b, fraction(point, a, b).clamp(0.0, 1.0).toDouble()));
+        candidates.add(
+          interpolate(a, b, fraction(point, a, b).clamp(0.0, 1.0).toDouble()),
+        );
       }
       for (final candidate in candidates) {
         final d = distance(point, candidate);
@@ -153,13 +160,13 @@ class PlanEditGeometry {
       final a = points[wall], b = points[(wall + 1) % points.length];
       final first = [
         fraction(features[i].start, a, b),
-        fraction(features[i].end, a, b)
+        fraction(features[i].end, a, b),
       ]..sort();
       for (var j = i + 1; j < features.length; j++) {
         if (featureWall(result, features[j]) != wall) continue;
         final second = [
           fraction(features[j].start, a, b),
-          fraction(features[j].end, a, b)
+          fraction(features[j].end, a, b),
         ]..sort();
         if (math.min(first.last, second.last) -
                 math.max(first.first, second.first) >
@@ -226,7 +233,8 @@ class PlanEditGeometry {
           final shared = j == i + 1 ? b : a;
           final left = j == i + 1 ? a : b;
           final right = j == i + 1 ? d : c;
-          if (onSegment(left, shared, right) || onSegment(right, shared, left)) {
+          if (onSegment(left, shared, right) ||
+              onSegment(right, shared, left)) {
             return false;
           }
         } else if (_crosses(a, b, c, d) ||
@@ -287,9 +295,10 @@ class PlanEditGeometry {
         if (length < 1e-8) continue;
         for (final sign in [-1.0, 1.0]) {
           final sample = ARPoint(
-              x: mid.x - sign * (b.z - a.z) / length * 0.0001,
-              y: 0,
-              z: mid.z + sign * (b.x - a.x) / length * 0.0001);
+            x: mid.x - sign * (b.z - a.z) / length * 0.0001,
+            y: 0,
+            z: mid.z + sign * (b.x - a.x) / length * 0.0001,
+          );
           if (inside(sample, room.points) && inside(sample, other.points)) {
             return true;
           }

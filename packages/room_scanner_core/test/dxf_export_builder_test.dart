@@ -4,30 +4,33 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('metric DXF contains walls, room names, openings and dimensions only', () {
-    final door = WallFeature(
-      id: 'door',
-      type: FeatureType.door,
-      start: ARPoint(x: 0.5, y: 0, z: 0),
-      end: ARPoint(x: 1.5, y: 0, z: 0),
-    );
-    final window = WallFeature(
-      id: 'window',
-      type: FeatureType.window,
-      start: ARPoint(x: 2, y: 0, z: 0.5),
-      end: ARPoint(x: 2, y: 0, z: 1.5),
-    );
-    final room = _room().copyWith(features: [door, window]);
-    final dxf = DxfExportBuilder.build([room]);
+  test(
+    'metric DXF contains walls, room names, openings and dimensions only',
+    () {
+      final door = WallFeature(
+        id: 'door',
+        type: FeatureType.door,
+        start: ARPoint(x: 0.5, y: 0, z: 0),
+        end: ARPoint(x: 1.5, y: 0, z: 0),
+      );
+      final window = WallFeature(
+        id: 'window',
+        type: FeatureType.window,
+        start: ARPoint(x: 2, y: 0, z: 0.5),
+        end: ARPoint(x: 2, y: 0, z: 1.5),
+      );
+      final room = _room().copyWith(features: [door, window]);
+      final dxf = DxfExportBuilder.build([room]);
 
-    expect(dxf, contains('\$INSUNITS\r\n70\r\n6\r\n'));
-    expect(dxf, contains('2\r\nWALLS\r\n'));
-    expect(dxf, contains('2\r\nDOORS\r\n'));
-    expect(dxf, contains('2\r\nWINDOWS\r\n'));
-    expect(dxf, contains('2\r\nROOM_NAMES\r\n'));
-    expect(dxf, contains('2\r\nMEASUREMENTS\r\n'));
-    expect(dxf, contains('Dormitorio'));
-  });
+      expect(dxf, contains('\$INSUNITS\r\n70\r\n6\r\n'));
+      expect(dxf, contains('2\r\nWALLS\r\n'));
+      expect(dxf, contains('2\r\nDOORS\r\n'));
+      expect(dxf, contains('2\r\nWINDOWS\r\n'));
+      expect(dxf, contains('2\r\nROOM_NAMES\r\n'));
+      expect(dxf, contains('2\r\nMEASUREMENTS\r\n'));
+      expect(dxf, contains('Dormitorio'));
+    },
+  );
 
   test('dimension geometry is separated from the wall', () {
     final entities = _entities(DxfExportBuilder.build([_room()]));
@@ -115,17 +118,17 @@ void main() {
 }
 
 RoomModel _room() => RoomModel(
-      id: 'r',
-      name: 'Dormitorio',
-      type: RoomType.dormitorio,
-      points: [
-        ARPoint(x: 0, y: 0, z: 0),
-        ARPoint(x: 3, y: 0, z: 0),
-        ARPoint(x: 3, y: 0, z: 2),
-        ARPoint(x: 0, y: 0, z: 2),
-      ],
-      isClosed: true,
-    );
+  id: 'r',
+  name: 'Dormitorio',
+  type: RoomType.dormitorio,
+  points: [
+    ARPoint(x: 0, y: 0, z: 0),
+    ARPoint(x: 3, y: 0, z: 0),
+    ARPoint(x: 3, y: 0, z: 2),
+    ARPoint(x: 0, y: 0, z: 2),
+  ],
+  isClosed: true,
+);
 
 List<Map<int, String>> _entities(String dxf) {
   final lines = dxf.split('\r\n');

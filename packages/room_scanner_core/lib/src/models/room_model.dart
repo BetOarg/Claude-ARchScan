@@ -59,44 +59,26 @@ extension RoomTypeDisplay on RoomType {
   }
 }
 
-enum FeatureType {
-  door,
-  window,
-}
+enum FeatureType { door, window }
 
 /// Extremo de la puerta en el que se ubica la bisagra.
-enum DoorHingeSide {
-  start,
-  end,
-}
+enum DoorHingeSide { start, end }
 
 /// Lado hacia el que gira la hoja respecto de start → end.
-enum DoorSwingSide {
-  left,
-  right,
-}
+enum DoorSwingSide { left, right }
 
 /// Indica si la hoja abre hacia el interior o el exterior de la vivienda.
-enum DoorOpeningDirection {
-  interior,
-  exterior,
-}
+enum DoorOpeningDirection { interior, exterior }
 
 /// Lado de la abertura en el que se encuentra el ambiente por escanear.
 ///
 /// Se interpreta observando la abertura desde [WallFeature.start] hacia
 /// [WallFeature.end]. Esta convención permite reconstruir la orientación
 /// elegida aunque el proyecto se cierre y vuelva a abrirse.
-enum OpeningConnectionSide {
-  left,
-  right,
-}
+enum OpeningConnectionSide { left, right }
 
 /// Extremo de la abertura desde el que comienza el nuevo relevamiento.
-enum ContinuationStartEndpoint {
-  start,
-  end,
-}
+enum ContinuationStartEndpoint { start, end }
 
 /// Punto en el espacio 3D.
 class ARPoint {
@@ -104,33 +86,17 @@ class ARPoint {
   final double y;
   final double z;
 
-  ARPoint({
-    required this.x,
-    required this.y,
-    required this.z,
-  });
+  ARPoint({required this.x, required this.y, required this.z});
 
-  factory ARPoint.fromVector3(
-    vector.Vector3 v,
-  ) {
-    return ARPoint(
-      x: v.x,
-      y: v.y,
-      z: v.z,
-    );
+  factory ARPoint.fromVector3(vector.Vector3 v) {
+    return ARPoint(x: v.x, y: v.y, z: v.z);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'x': x,
-      'y': y,
-      'z': z,
-    };
+    return {'x': x, 'y': y, 'z': z};
   }
 
-  factory ARPoint.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory ARPoint.fromJson(Map<String, dynamic> json) {
     return ARPoint(
       x: (json['x'] as num).toDouble(),
       y: (json['y'] as num).toDouble(),
@@ -169,10 +135,10 @@ class WallFeature {
     this.doorOpeningDirection = DoorOpeningDirection.interior,
     double? openingHeightMeters,
     double? sillHeightMeters,
-  })  : openingHeightMeters = openingHeightMeters ??
-            (type == FeatureType.door ? 2.10 : 1.20),
-        sillHeightMeters = sillHeightMeters ??
-            (type == FeatureType.door ? 0.0 : 0.90);
+  }) : openingHeightMeters =
+           openingHeightMeters ?? (type == FeatureType.door ? 2.10 : 1.20),
+       sillHeightMeters =
+           sillHeightMeters ?? (type == FeatureType.door ? 0.0 : 0.90);
 
   bool get isConnected =>
       connectedRoomId != null && connectedRoomId!.trim().isNotEmpty;
@@ -199,10 +165,8 @@ class WallFeature {
       connectionSide: connectionSide ?? this.connectionSide,
       doorHingeSide: doorHingeSide ?? this.doorHingeSide,
       doorSwingSide: doorSwingSide ?? this.doorSwingSide,
-      doorOpeningDirection:
-          doorOpeningDirection ?? this.doorOpeningDirection,
-      openingHeightMeters:
-          openingHeightMeters ?? this.openingHeightMeters,
+      doorOpeningDirection: doorOpeningDirection ?? this.doorOpeningDirection,
+      openingHeightMeters: openingHeightMeters ?? this.openingHeightMeters,
       sillHeightMeters: sillHeightMeters ?? this.sillHeightMeters,
     );
   }
@@ -213,10 +177,8 @@ class WallFeature {
       'type': type.name,
       'start': start.toJson(),
       'end': end.toJson(),
-      if (connectedRoomId != null)
-        'connectedRoomId': connectedRoomId,
-      if (connectionSide != null)
-        'connectionSide': connectionSide!.name,
+      if (connectedRoomId != null) 'connectedRoomId': connectedRoomId,
+      if (connectionSide != null) 'connectionSide': connectionSide!.name,
       'doorHingeSide': doorHingeSide.name,
       'doorSwingSide': doorSwingSide.name,
       'doorOpeningDirection': doorOpeningDirection.name,
@@ -225,14 +187,11 @@ class WallFeature {
     };
   }
 
-  factory WallFeature.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory WallFeature.fromJson(Map<String, dynamic> json) {
     final sideName = json['connectionSide'] as String?;
     final hingeName = json['doorHingeSide'] as String?;
     final swingName = json['doorSwingSide'] as String?;
-    final openingDirectionName =
-        json['doorOpeningDirection'] as String?;
+    final openingDirectionName = json['doorOpeningDirection'] as String?;
 
     OpeningConnectionSide? side;
 
@@ -247,15 +206,9 @@ class WallFeature {
 
     return WallFeature(
       id: json['id'] as String,
-      type: FeatureType.values.firstWhere(
-        (e) => e.name == json['type'],
-      ),
-      start: ARPoint.fromJson(
-        json['start'] as Map<String, dynamic>,
-      ),
-      end: ARPoint.fromJson(
-        json['end'] as Map<String, dynamic>,
-      ),
+      type: FeatureType.values.firstWhere((e) => e.name == json['type']),
+      start: ARPoint.fromJson(json['start'] as Map<String, dynamic>),
+      end: ARPoint.fromJson(json['end'] as Map<String, dynamic>),
       connectedRoomId: json['connectedRoomId'] as String?,
       connectionSide: side,
       doorHingeSide: DoorHingeSide.values.firstWhere(
@@ -270,10 +223,8 @@ class WallFeature {
         (candidate) => candidate.name == openingDirectionName,
         orElse: () => DoorOpeningDirection.interior,
       ),
-      openingHeightMeters:
-          (json['openingHeightMeters'] as num?)?.toDouble(),
-      sillHeightMeters:
-          (json['sillHeightMeters'] as num?)?.toDouble(),
+      openingHeightMeters: (json['openingHeightMeters'] as num?)?.toDouble(),
+      sillHeightMeters: (json['sillHeightMeters'] as num?)?.toDouble(),
     );
   }
 }
@@ -330,10 +281,9 @@ class ScanContinuationReference {
   }
 
   /// Punto global que se utiliza como origen local del nuevo escaneo.
-  ARPoint get origin =>
-      startEndpoint == ContinuationStartEndpoint.start
-          ? globalStart
-          : globalEnd;
+  ARPoint get origin => startEndpoint == ContinuationStartEndpoint.start
+      ? globalStart
+      : globalEnd;
 
   double get width {
     final dx = globalEnd.x - globalStart.x;
@@ -391,9 +341,7 @@ class RoomModel {
     };
   }
 
-  factory RoomModel.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory RoomModel.fromJson(Map<String, dynamic> json) {
     return RoomModel(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -402,20 +350,12 @@ class RoomModel {
         orElse: () => RoomType.living,
       ),
       points: (json['points'] as List)
-          .map(
-            (p) => ARPoint.fromJson(
-              p as Map<String, dynamic>,
-            ),
-          )
+          .map((p) => ARPoint.fromJson(p as Map<String, dynamic>))
           .toList(),
       features: json['features'] != null
           ? (json['features'] as List)
-              .map(
-                (f) => WallFeature.fromJson(
-                  f as Map<String, dynamic>,
-                ),
-              )
-              .toList()
+                .map((f) => WallFeature.fromJson(f as Map<String, dynamic>))
+                .toList()
           : [],
       isClosed: json['isClosed'] as bool? ?? false,
     );

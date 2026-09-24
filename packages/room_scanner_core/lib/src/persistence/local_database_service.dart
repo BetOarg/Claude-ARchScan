@@ -14,13 +14,10 @@ class LocalDatabaseService {
   /// la aplicación y lo pasa ya armado. Esto mantiene el paquete core como
   /// Dart puro, sin dependencias de plugins de Flutter.
   Future<void> init({required String directoryPath}) async {
-    _isar = await Isar.open(
-      [
-        IsarProjectSchema,
-        IsarRoomSchema,
-      ],
-      directory: directoryPath,
-    );
+    _isar = await Isar.open([
+      IsarProjectSchema,
+      IsarRoomSchema,
+    ], directory: directoryPath);
   }
 
   /// Guarda o actualiza un proyecto completo.
@@ -35,17 +32,16 @@ class LocalDatabaseService {
   }) async {
     final now = DateTime.now();
 
-    final existingProject =
-        await _isar.isarProjects
-            .filter()
-            .uuidEqualTo(uuid)
-            .findFirst();
+    final existingProject = await _isar.isarProjects
+        .filter()
+        .uuidEqualTo(uuid)
+        .findFirst();
 
     final projectToSave =
         existingProject ??
-            (IsarProject()
-              ..uuid = uuid
-              ..createdAt = now);
+        (IsarProject()
+          ..uuid = uuid
+          ..createdAt = now);
 
     projectToSave.name = name;
     projectToSave.updatedAt = now;
@@ -58,24 +54,15 @@ class LocalDatabaseService {
       // y cada guardado termina agregando nuevas copias.
       await existingProject.rooms.load();
 
-      oldRoomDatabaseIds.addAll(
-        existingProject.rooms.map(
-          (room) => room.id,
-        ),
-      );
+      oldRoomDatabaseIds.addAll(existingProject.rooms.map((room) => room.id));
     }
 
-    final roomsToSave =
-        rooms.map(
-      (room) => room.toIsar(),
-    ).toList();
+    final roomsToSave = rooms.map((room) => room.toIsar()).toList();
 
     await _isar.writeTxn(() async {
       // Primero guardamos el proyecto para garantizar que tenga
       // un identificador válido.
-      await _isar.isarProjects.put(
-        projectToSave,
-      );
+      await _isar.isarProjects.put(projectToSave);
 
       if (existingProject != null) {
         projectToSave.rooms.clear();
@@ -83,20 +70,14 @@ class LocalDatabaseService {
         await projectToSave.rooms.save();
 
         if (oldRoomDatabaseIds.isNotEmpty) {
-          await _isar.isarRooms.deleteAll(
-            oldRoomDatabaseIds,
-          );
+          await _isar.isarRooms.deleteAll(oldRoomDatabaseIds);
         }
       }
 
       if (roomsToSave.isNotEmpty) {
-        await _isar.isarRooms.putAll(
-          roomsToSave,
-        );
+        await _isar.isarRooms.putAll(roomsToSave);
 
-        projectToSave.rooms.addAll(
-          roomsToSave,
-        );
+        projectToSave.rooms.addAll(roomsToSave);
 
         await projectToSave.rooms.save();
       }
@@ -105,25 +86,17 @@ class LocalDatabaseService {
 
   /// Obtiene todos los proyectos ordenados por fecha
   /// de actualización descendente.
-  Future<List<IsarProject>>
-      getAllProjects() async {
-    return _isar.isarProjects
-        .where()
-        .sortByUpdatedAtDesc()
-        .findAll();
+  Future<List<IsarProject>> getAllProjects() async {
+    return _isar.isarProjects.where().sortByUpdatedAtDesc().findAll();
   }
 
   /// Obtiene únicamente los ambientes vinculados
   /// al proyecto solicitado.
-  Future<List<RoomModel>>
-      getRoomsForProject(
-    String uuid,
-  ) async {
-    final project =
-        await _isar.isarProjects
-            .filter()
-            .uuidEqualTo(uuid)
-            .findFirst();
+  Future<List<RoomModel>> getRoomsForProject(String uuid) async {
+    final project = await _isar.isarProjects
+        .filter()
+        .uuidEqualTo(uuid)
+        .findFirst();
 
     if (project == null) {
       return [];
@@ -131,23 +104,16 @@ class LocalDatabaseService {
 
     await project.rooms.load();
 
-    return project.rooms
-        .map(
-          (room) => room.toDomain(),
-        )
-        .toList();
+    return project.rooms.map((room) => room.toDomain()).toList();
   }
 
   /// Elimina un proyecto y todas las habitaciones
   /// que le pertenecen.
-  Future<void> deleteProject(
-    String uuid,
-  ) async {
-    final project =
-        await _isar.isarProjects
-            .filter()
-            .uuidEqualTo(uuid)
-            .findFirst();
+  Future<void> deleteProject(String uuid) async {
+    final project = await _isar.isarProjects
+        .filter()
+        .uuidEqualTo(uuid)
+        .findFirst();
 
     if (project == null) {
       return;
@@ -155,12 +121,7 @@ class LocalDatabaseService {
 
     await project.rooms.load();
 
-    final roomIds =
-        project.rooms
-            .map(
-              (room) => room.id,
-            )
-            .toList();
+    final roomIds = project.rooms.map((room) => room.id).toList();
 
     await _isar.writeTxn(() async {
       project.rooms.clear();
@@ -168,14 +129,10 @@ class LocalDatabaseService {
       await project.rooms.save();
 
       if (roomIds.isNotEmpty) {
-        await _isar.isarRooms.deleteAll(
-          roomIds,
-        );
+        await _isar.isarRooms.deleteAll(roomIds);
       }
 
-      await _isar.isarProjects.delete(
-        project.id,
-      );
+      await _isar.isarProjects.delete(project.id);
     });
   }
 }

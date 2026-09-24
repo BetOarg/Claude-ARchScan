@@ -31,10 +31,11 @@ void main() {
       ),
     ];
 
-    expect(
-      DimensionLayout.sort(dimensions).map((d) => d.id).toList(),
-      ['door', 'wall', 'total'],
-    );
+    expect(DimensionLayout.sort(dimensions).map((d) => d.id).toList(), [
+      'door',
+      'wall',
+      'total',
+    ]);
   });
 
   test('removes reversed duplicates on the same axis', () {
@@ -162,41 +163,44 @@ void main() {
     final result = DimensionLayout.deduplicate([wall, total]);
 
     expect(result, hasLength(2));
-    expect(result.map((d) => d.kind), containsAll([
-      DimensionKind.wall,
-      DimensionKind.total,
-    ]));
+    expect(
+      result.map((d) => d.kind),
+      containsAll([DimensionKind.wall, DimensionKind.total]),
+    );
   });
 
-  test('does not collide only because rotated corridor bounding boxes overlap', () {
-    const first = DimensionSegment(
-      x1: 0,
-      y1: 0,
-      x2: 10,
-      y2: 10,
-      kind: DimensionKind.opening,
-      id: 'diagonal-a',
-    );
-    const second = DimensionSegment(
-      x1: 0,
-      y1: 8,
-      x2: 10,
-      y2: 18,
-      kind: DimensionKind.opening,
-      id: 'diagonal-b',
-    );
+  test(
+    'does not collide only because rotated corridor bounding boxes overlap',
+    () {
+      const first = DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 10,
+        y2: 10,
+        kind: DimensionKind.opening,
+        id: 'diagonal-a',
+      );
+      const second = DimensionSegment(
+        x1: 0,
+        y1: 8,
+        x2: 10,
+        y2: 18,
+        kind: DimensionKind.opening,
+        id: 'diagonal-b',
+      );
 
-    final placements = DimensionLayout.layout(
-      [first, second],
-      baseOffset: 0,
-      gap: 1,
-      textHeight: 1,
-      labelHalfWidth: 0.5,
-    );
+      final placements = DimensionLayout.layout(
+        [first, second],
+        baseOffset: 0,
+        gap: 1,
+        textHeight: 1,
+        labelHalfWidth: 0.5,
+      );
 
-    expect(placements, hasLength(2));
-    expect(placements.map((p) => p.level), [0, 0]);
-  });
+      expect(placements, hasLength(2));
+      expect(placements.map((p) => p.level), [0, 0]);
+    },
+  );
 
   test('moves a dimension outward when its corridor crosses another wall', () {
     const dimension = DimensionSegment(
@@ -335,24 +339,97 @@ void main() {
 
   test('geometry matrix preserves rectangular perimeter dimensions', () {
     const rectangle = [
-      DimensionSegment(x1: 0, y1: 0, x2: 6, y2: 0, kind: DimensionKind.wall, id: 'bottom'),
-      DimensionSegment(x1: 6, y1: 0, x2: 6, y2: 4, kind: DimensionKind.wall, id: 'right'),
-      DimensionSegment(x1: 6, y1: 4, x2: 0, y2: 4, kind: DimensionKind.wall, id: 'top'),
-      DimensionSegment(x1: 0, y1: 4, x2: 0, y2: 0, kind: DimensionKind.wall, id: 'left'),
+      DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 6,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'bottom',
+      ),
+      DimensionSegment(
+        x1: 6,
+        y1: 0,
+        x2: 6,
+        y2: 4,
+        kind: DimensionKind.wall,
+        id: 'right',
+      ),
+      DimensionSegment(
+        x1: 6,
+        y1: 4,
+        x2: 0,
+        y2: 4,
+        kind: DimensionKind.wall,
+        id: 'top',
+      ),
+      DimensionSegment(
+        x1: 0,
+        y1: 4,
+        x2: 0,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'left',
+      ),
     ];
     final result = DimensionLayout.deduplicate(rectangle);
     expect(result, hasLength(4));
-    expect(result.map((d) => d.id), containsAll(['bottom', 'right', 'top', 'left']));
+    expect(
+      result.map((d) => d.id),
+      containsAll(['bottom', 'right', 'top', 'left']),
+    );
   });
 
   test('geometry matrix preserves an L-shaped perimeter', () {
     const lShape = [
-      DimensionSegment(x1: 0, y1: 0, x2: 5, y2: 0, kind: DimensionKind.wall, id: 'bottom'),
-      DimensionSegment(x1: 5, y1: 0, x2: 5, y2: 3, kind: DimensionKind.wall, id: 'right'),
-      DimensionSegment(x1: 5, y1: 3, x2: 2, y2: 3, kind: DimensionKind.wall, id: 'step'),
-      DimensionSegment(x1: 2, y1: 3, x2: 2, y2: 6, kind: DimensionKind.wall, id: 'inner'),
-      DimensionSegment(x1: 2, y1: 6, x2: 0, y2: 6, kind: DimensionKind.wall, id: 'top'),
-      DimensionSegment(x1: 0, y1: 6, x2: 0, y2: 0, kind: DimensionKind.wall, id: 'left'),
+      DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 5,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'bottom',
+      ),
+      DimensionSegment(
+        x1: 5,
+        y1: 0,
+        x2: 5,
+        y2: 3,
+        kind: DimensionKind.wall,
+        id: 'right',
+      ),
+      DimensionSegment(
+        x1: 5,
+        y1: 3,
+        x2: 2,
+        y2: 3,
+        kind: DimensionKind.wall,
+        id: 'step',
+      ),
+      DimensionSegment(
+        x1: 2,
+        y1: 3,
+        x2: 2,
+        y2: 6,
+        kind: DimensionKind.wall,
+        id: 'inner',
+      ),
+      DimensionSegment(
+        x1: 2,
+        y1: 6,
+        x2: 0,
+        y2: 6,
+        kind: DimensionKind.wall,
+        id: 'top',
+      ),
+      DimensionSegment(
+        x1: 0,
+        y1: 6,
+        x2: 0,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'left',
+      ),
     ];
     final result = DimensionLayout.sort(lShape);
     expect(result, hasLength(6));
@@ -361,8 +438,22 @@ void main() {
 
   test('geometry matrix keeps slanted wall dimensions distinct', () {
     const slanted = [
-      DimensionSegment(x1: 0, y1: 0, x2: 4, y2: 3, kind: DimensionKind.wall, id: 'diagonal-a'),
-      DimensionSegment(x1: 0, y1: 4, x2: 4, y2: 7, kind: DimensionKind.wall, id: 'diagonal-b'),
+      DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 4,
+        y2: 3,
+        kind: DimensionKind.wall,
+        id: 'diagonal-a',
+      ),
+      DimensionSegment(
+        x1: 0,
+        y1: 4,
+        x2: 4,
+        y2: 7,
+        kind: DimensionKind.wall,
+        id: 'diagonal-b',
+      ),
     ];
     final result = DimensionLayout.deduplicate(slanted);
     expect(result, hasLength(2));
@@ -370,9 +461,30 @@ void main() {
   });
 
   test('geometry matrix preserves opening, wall and total semantics', () {
-    const opening = DimensionSegment(x1: 1, y1: 0, x2: 2, y2: 0, kind: DimensionKind.opening, id: 'door');
-    const wall = DimensionSegment(x1: 0, y1: 0, x2: 4, y2: 0, kind: DimensionKind.wall, id: 'wall');
-    const total = DimensionSegment(x1: 0, y1: 0, x2: 4, y2: 0, kind: DimensionKind.total, id: 'total');
+    const opening = DimensionSegment(
+      x1: 1,
+      y1: 0,
+      x2: 2,
+      y2: 0,
+      kind: DimensionKind.opening,
+      id: 'door',
+    );
+    const wall = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'wall',
+    );
+    const total = DimensionSegment(
+      x1: 0,
+      y1: 0,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.total,
+      id: 'total',
+    );
     final result = DimensionLayout.sort([total, wall, opening]);
     expect(result.map((d) => d.kind), [
       DimensionKind.opening,
@@ -382,59 +494,78 @@ void main() {
   });
 
   test('geometry matrix deduplicates a shared wall between adjacent rooms', () {
-    const roomA = DimensionSegment(x1: 4, y1: 0, x2: 4, y2: 4, kind: DimensionKind.wall, id: 'room-a-shared');
-    const roomB = DimensionSegment(x1: 4, y1: 4, x2: 4, y2: 0, kind: DimensionKind.wall, id: 'room-b-shared');
+    const roomA = DimensionSegment(
+      x1: 4,
+      y1: 0,
+      x2: 4,
+      y2: 4,
+      kind: DimensionKind.wall,
+      id: 'room-a-shared',
+    );
+    const roomB = DimensionSegment(
+      x1: 4,
+      y1: 4,
+      x2: 4,
+      y2: 0,
+      kind: DimensionKind.wall,
+      id: 'room-b-shared',
+    );
     final result = DimensionLayout.deduplicate([roomA, roomB]);
     expect(result, hasLength(1));
   });
 
+  test(
+    'geometry integrity keeps distinct segments closer than one centimeter',
+    () {
+      const first = DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 1,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'first',
+      );
+      const second = DimensionSegment(
+        x1: 0,
+        y1: 0.004,
+        x2: 1,
+        y2: 0.004,
+        kind: DimensionKind.wall,
+        id: 'second',
+      );
 
-  test('geometry integrity keeps distinct segments closer than one centimeter', () {
-    const first = DimensionSegment(
-      x1: 0,
-      y1: 0,
-      x2: 1,
-      y2: 0,
-      kind: DimensionKind.wall,
-      id: 'first',
-    );
-    const second = DimensionSegment(
-      x1: 0,
-      y1: 0.004,
-      x2: 1,
-      y2: 0.004,
-      kind: DimensionKind.wall,
-      id: 'second',
-    );
+      final result = DimensionLayout.deduplicate([first, second]);
 
-    final result = DimensionLayout.deduplicate([first, second]);
+      expect(result, hasLength(2));
+    },
+  );
 
-    expect(result, hasLength(2));
-  });
+  test(
+    'geometry integrity ignores non-finite segments without poisoning layout',
+    () {
+      const invalid = DimensionSegment(
+        x1: double.nan,
+        y1: 0,
+        x2: 1,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'invalid',
+      );
+      const valid = DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 2,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'valid',
+      );
 
-  test('geometry integrity ignores non-finite segments without poisoning layout', () {
-    const invalid = DimensionSegment(
-      x1: double.nan,
-      y1: 0,
-      x2: 1,
-      y2: 0,
-      kind: DimensionKind.wall,
-      id: 'invalid',
-    );
-    const valid = DimensionSegment(
-      x1: 0,
-      y1: 0,
-      x2: 2,
-      y2: 0,
-      kind: DimensionKind.wall,
-      id: 'valid',
-    );
+      final result = DimensionLayout.layout([invalid, valid]);
 
-    final result = DimensionLayout.layout([invalid, valid]);
-
-    expect(result, hasLength(1));
-    expect(result.single.segment.id, 'valid');
-  });
+      expect(result, hasLength(1));
+      expect(result.single.segment.id, 'valid');
+    },
+  );
 
   test('strict hierarchy creates separate facade bands', () {
     const opening = DimensionSegment(
@@ -468,10 +599,11 @@ void main() {
       centerY: 2,
     );
 
-    final placements = DimensionLayout.layout(
-      [total, wall, opening],
-      strictHierarchy: true,
-    );
+    final placements = DimensionLayout.layout([
+      total,
+      wall,
+      opening,
+    ], strictHierarchy: true);
 
     final byId = <String, DimensionPlacement>{
       for (final placement in placements) placement.segment.id: placement,
@@ -509,32 +641,33 @@ void main() {
     expect(placements.single.segment.kind, DimensionKind.total);
   });
 
-  test('renderer placement exposes the resolved tangent and outward normal', () {
-    const segment = DimensionSegment(
-      x1: 0,
-      y1: 0,
-      x2: 0,
-      y2: 4,
-      kind: DimensionKind.wall,
-      id: 'vertical',
-      centerX: 1,
-      centerY: 2,
-    );
+  test(
+    'renderer placement exposes the resolved tangent and outward normal',
+    () {
+      const segment = DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 4,
+        kind: DimensionKind.wall,
+        id: 'vertical',
+        centerX: 1,
+        centerY: 2,
+      );
 
-    final placement = DimensionLayout.layout(
-      [segment],
-      baseOffset: 2,
-      gap: 1,
-      textHeight: 1,
-      labelHalfWidth: 0.5,
-    ).single;
+      final placement = DimensionLayout.layout(
+        [segment],
+        baseOffset: 2,
+        gap: 1,
+        textHeight: 1,
+        labelHalfWidth: 0.5,
+      ).single;
 
-    expect(placement.tangentX, closeTo(0, 0.000001));
-    expect(placement.tangentY, closeTo(1, 0.000001));
-    expect(placement.normalX, closeTo(-1, 0.000001));
-    expect(placement.normalY, closeTo(0, 0.000001));
-    expect(placement.offset, 2);
-  });
-
-
+      expect(placement.tangentX, closeTo(0, 0.000001));
+      expect(placement.tangentY, closeTo(1, 0.000001));
+      expect(placement.normalX, closeTo(-1, 0.000001));
+      expect(placement.normalY, closeTo(0, 0.000001));
+      expect(placement.offset, 2);
+    },
+  );
 }

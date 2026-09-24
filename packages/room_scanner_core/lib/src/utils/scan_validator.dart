@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../models/room_model.dart';
+import 'geometry_tolerance.dart';
 
 enum ValidationErrorCode {
   tooCloseToPreviousPoint,
@@ -37,12 +38,11 @@ class ValidationResult {
   static ValidationResult invalid(
     String message, {
     ValidationErrorCode? code,
-  }) =>
-      ValidationResult._(
-        isValid: false,
-        errorCode: code,
-        errorMessage: message,
-      );
+  }) => ValidationResult._(
+    isValid: false,
+    errorCode: code,
+    errorMessage: message,
+  );
 
   static ValidationResult warning(String message, {ARPoint? suggestion}) =>
       ValidationResult._(
@@ -302,8 +302,9 @@ class ScanValidator {
     double px,
     double pz,
   ) {
-    const double epsilon = 1e-9;
-    final bool withinBounds = min(sx, ex) <= px &&
+    const double epsilon = kGeometryEpsilon;
+    final bool withinBounds =
+        min(sx, ex) <= px &&
         px <= max(sx, ex) &&
         min(sz, ez) <= pz &&
         pz <= max(sz, ez);
@@ -363,7 +364,7 @@ class ScanValidator {
       final secondDz = endB.z - startB.z;
       final firstLength = sqrt(firstDx * firstDx + firstDz * firstDz);
       final secondLength = sqrt(secondDx * secondDx + secondDz * secondDz);
-      if (firstLength <= 0.000001 || secondLength <= 0.000001) {
+      if (firstLength <= kGeometryEpsilon || secondLength <= kGeometryEpsilon) {
         return double.infinity;
       }
       return ((firstDx * secondDx + firstDz * secondDz) /
@@ -383,7 +384,8 @@ class ScanValidator {
         continue;
       }
 
-      final score = perpendicularDeviation(previous, last, last, candidate) +
+      final score =
+          perpendicularDeviation(previous, last, last, candidate) +
           perpendicularDeviation(candidate, first, first, second);
       if (score > maximumOrthogonalDeviation) {
         continue;

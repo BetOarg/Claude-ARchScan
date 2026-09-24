@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
+import '../errors/domain_error.dart';
 import '../models/room_model.dart';
-import 'technical_drawing_geometry.dart';
+import '../utils/geometry_tolerance.dart';
 import 'dimension_layout.dart';
 import 'technical_dimension_layout.dart';
+import 'technical_drawing_geometry.dart';
 
 /// AutoCAD 2000 ASCII DXF. Spanish uses metres; English uses inches.
 /// The visible drawing contains the plan, room names, openings and dimensions.
@@ -12,8 +14,9 @@ class DxfExportBuilder {
     final imperial =
         languageCode.toLowerCase().split(RegExp('[-_]')).first == 'en';
     final drawing = _DxfWriter(imperial: imperial);
-    final drawingRooms =
-        rooms.map(TechnicalDrawingGeometry.normalizeRoom).toList();
+    final drawingRooms = rooms
+        .map(TechnicalDrawingGeometry.normalizeRoom)
+        .toList();
     final walls = <_Segment>[];
     final openings = <String, WallFeature>{};
 
@@ -29,10 +32,7 @@ class DxfExportBuilder {
       final count = room.isClosed ? room.points.length : room.points.length - 1;
       for (var i = 0; i < count; i++) {
         walls.add(
-          _Segment(
-            room.points[i],
-            room.points[(i + 1) % room.points.length],
-          ),
+          _Segment(room.points[i], room.points[(i + 1) % room.points.length]),
         );
       }
     }
@@ -59,34 +59,28 @@ class DxfExportBuilder {
       }
       cuts.sort();
       for (var i = 1; i < cuts.length; i++) {
-        if (cuts[i] - cuts[i - 1] < 0.0000001) continue;
+        if (cuts[i] - cuts[i - 1] < kGeometryEpsilon) continue;
         final mid = (cuts[i] + cuts[i - 1]) / 2;
         if (gaps.any((gap) => mid > gap.$1 && mid < gap.$2)) continue;
         final part = _Segment(wall.at(cuts[i - 1]), wall.at(cuts[i]));
         if (drawn.add(part.key)) drawing.line('WALLS', part.a, part.b);
       }
-
     }
 
     for (final room in drawingRooms) {
       if (room.points.isEmpty || room.name.trim().isEmpty) continue;
-      final x = room.points.fold<double>(0, (sum, p) => sum + p.x) /
+      final x =
+          room.points.fold<double>(0, (sum, p) => sum + p.x) /
           room.points.length;
-      final z = room.points.fold<double>(0, (sum, p) => sum + p.z) /
+      final z =
+          room.points.fold<double>(0, (sum, p) => sum + p.z) /
           room.points.length;
-      drawing.text(
-        'ROOM_NAMES',
-        x,
-        z,
-        room.name.trim(),
-        0.18,
-        centered: true,
-      );
+      drawing.text('ROOM_NAMES', x, z, room.name.trim(), 0.18, centered: true);
     }
 
     for (final feature in openings.values) {
       final segment = _Segment(feature.start, feature.end);
-      if (segment.length <= 0.000001) continue;
+      if (segment.length <= kGeometryEpsilon) continue;
       if (feature.type == FeatureType.window) {
         for (final offset in [-0.03, 0.0, 0.03]) {
           final dx = -segment.dz / segment.length * offset;
@@ -124,7 +118,6 @@ class DxfExportBuilder {
           sign > 0 ? angle + 90 : angle,
         );
       }
-
     }
 
     // Use the same CAD dimension engine as the on-screen painter.
@@ -152,15 +145,14 @@ class DxfExportBuilder {
     );
     for (final placement in placements) {
       final segment = placement.segment;
-      if (segment.length <= 0.000001) continue;
+      if (segment.length <= kGeometryEpsilon) continue;
 
       String? label;
       if (segment.kind == DimensionKind.opening) {
         final marker = ':opening:';
         final markerIndex = segment.id.indexOf(marker);
         if (markerIndex >= 0) {
-          final featureId =
-              segment.id.substring(markerIndex + marker.length);
+          final featureId = segment.id.substring(markerIndex + marker.length);
           final feature = openings[featureId];
           if (feature != null) {
             label = _formatLength(
@@ -173,10 +165,7 @@ class DxfExportBuilder {
           }
         }
       } else {
-        label = _formatLength(
-          _segmentLengthMeters(segment),
-          imperial,
-        );
+        label = _formatLength(_segmentLengthMeters(segment), imperial);
       }
 
       if (label == null || label.isEmpty) continue;
@@ -216,7 +205,10 @@ class DxfExportBuilder {
 
   static void _validate(ARPoint point) {
     if (!point.x.isFinite || !point.y.isFinite || !point.z.isFinite) {
-      throw ArgumentError('DXF requires finite coordinates.');
+      throw DomainError(
+        DomainErrorCode.invalidExportGeometry,
+        'DXF requires finite coordinates.',
+      );
     }
   }
 }
@@ -231,7 +223,7 @@ class _Segment {
   double project(ARPoint p) =>
       ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz);
   bool onLine(ARPoint p) =>
-      ((p.x - a.x) * dz - (p.z - a.z) * dx).abs() / length < 0.00001;
+      ((p.x - a.x) * dz - (p.z - a.z) * dx).abs() / length < kGeometryEpsilon;
   ARPoint at(double t) => ARPoint(x: a.x + dx * t, y: 0, z: a.z + dz * t);
   String get key {
     final ends = [
@@ -315,7 +307,7 @@ class _DxfWriter {
     final dx = dimensionEnd.x - dimensionStart.x;
     final dz = dimensionEnd.z - dimensionStart.z;
     final length = math.sqrt(dx * dx + dz * dz);
-    if (length > 0.000001) {
+    if (length > kGeometryEpsilon) {
       final tx = dx / length;
       final tz = dz / length;
       const arrowLength = 0.07;
