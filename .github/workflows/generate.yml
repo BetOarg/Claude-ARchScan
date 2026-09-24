@@ -1,0 +1,24 @@
+name: Generate Keystore
+
+on: workflow_dispatch
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore release-keystore.jks \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -alias upload \
+            -dname "CN=ARchScan, O=ARchScan, C=AR" \
+            -storepass "MiContrasenaSegura123!" \
+            -keypass "MiContrasenaSegura123!"
+
+          base64 release-keystore.jks > keystore_base64.txt
+          
+          echo "=== COPIA EL SIGUIENTE TEXTO BASE64 ==="
+          cat keystore_base64.txt
