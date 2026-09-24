@@ -1,0 +1,51 @@
+name: Temporary formatter for release hardening
+
+on:
+  push:
+    branches:
+      - release/domain-export-hardening
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/domain-export-hardening
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.0
+          channel: stable
+          cache: true
+
+      - name: Format changed Dart files
+        run: |
+          set -euo pipefail
+          dart format packages/room_scanner_core/lib/src/export/dimension_layout.dart \
+            packages/room_scanner_core/lib/src/export/dxf_export_builder.dart \
+            packages/room_scanner_core/lib/src/export/plan_export_builder.dart \
+            packages/room_scanner_core/lib/src/export/technical_drawing_geometry.dart \
+            packages/room_scanner_core/lib/src/geometry/shared_wall_service.dart \
+            packages/room_scanner_core/lib/src/utils/measurement_units.dart \
+            packages/room_scanner_core/lib/src/utils/scan_validator.dart \
+            packages/room_scanner_core/test/technical_export_geometry_matrix_test.dart
+
+      - name: Commit formatted files
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git add packages/room_scanner_core
+          git commit -m "style: apply Dart formatter to release hardening changes"
+          git push origin HEAD:release/domain-export-hardening
