@@ -1,7 +1,7 @@
 # ARchScan — Secrets, security and release configuration audit
 
 Target release: **2.7.0**  
-Repository baseline: **main @ 58cfdd8c1d62b8c92445de478c8f329d19b142b6**
+Repository baseline: **main @ ae2e90ea5bb88a0ebf21ba9ab72e259bbaeef66f**
 
 ## Repository findings
 
