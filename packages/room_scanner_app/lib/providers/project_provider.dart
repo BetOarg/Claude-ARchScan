@@ -104,11 +104,13 @@ class ProjectProvider with ChangeNotifier {
         );
 
         if (_currentProject?.uuid == uuid) {
-          final refreshed = (await _dbService.getAllProjects())
-              .where((project) => project.uuid == uuid)
-              .cast<IsarProject>()
-              .firstOrNull;
-          _currentProject = refreshed;
+          final refreshedProjects = await _dbService.getAllProjects();
+          for (final project in refreshedProjects) {
+            if (project.uuid == uuid) {
+              _currentProject = project;
+              break;
+            }
+          }
         }
 
         await loadProjects();
