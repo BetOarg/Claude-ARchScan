@@ -1,9 +1,8 @@
 name: Temporary formatter for release hardening
 
 on:
-  push:
-    branches:
-      - release/domain-export-hardening
+  pull_request:
+    types: [opened, synchronize]
 
 permissions:
   contents: write
