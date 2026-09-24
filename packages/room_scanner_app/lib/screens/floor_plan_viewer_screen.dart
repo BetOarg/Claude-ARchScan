@@ -2239,6 +2239,7 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                   },
                 ),
           ],
+        ],
       ),
       bottomNavigationBar: widget.selectContinuationOpening
           ? null
