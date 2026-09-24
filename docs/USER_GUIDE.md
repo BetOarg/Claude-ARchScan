@@ -9,6 +9,14 @@
 
 # English — User Guide
 
+### Switch or rename a local project
+
+While a project is open, use **Close project** to return to **My projects** without closing ARchScan. From **My projects**, use **Rename** on a saved project to change only its name; the project UUID, rooms, geometry and local data remain unchanged.
+
+### Technical dimensions
+
+Technical drawings keep opening dimensions and overall dimensions while avoiding a redundant wall dimension on a wall segment occupied by a door. This prevents stacked or fragmented door/wall dimensions in the final plan.
+
 ## About this guide
 
 ARchScan surveys spaces with the device camera. On compatible devices it uses augmented reality through ARCore or ARKit. When augmented reality is unavailable, it uses Basic Scanner with camera guidance and manual measurements.
