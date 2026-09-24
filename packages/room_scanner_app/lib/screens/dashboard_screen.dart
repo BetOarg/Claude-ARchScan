@@ -102,55 +102,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _renameProject(IsarProject project) async {
-    final localizations = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: project.name);
-
-    final name = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(localizations.rename),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            hintText: localizations.projectNameExample,
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: (value) => Navigator.pop(
-            dialogContext,
-            value.trim(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(localizations.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(
-              dialogContext,
-              controller.text.trim(),
-            ),
-            child: Text(localizations.rename),
-          ),
-        ],
-      ),
-    );
-
-    controller.dispose();
-
-    if (!mounted || name == null || name.trim().isEmpty) {
-      return;
-    }
-
-    await context.read<ProjectProvider>().renameProject(
-      uuid: project.uuid,
-      name: name,
-    );
-  }
-
   Future<void> _openProject(
     IsarProject project,
   ) async {
@@ -370,39 +321,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     project,
                   ),
                 ),
-                PopupMenuButton<_ProjectAction>(
-                  tooltip: localizations.actions,
-                  onSelected: (action) async {
-                    switch (action) {
-                      case _ProjectAction.rename:
-                        await _renameProject(project);
-                        break;
-                      case _ProjectAction.delete:
-                        await provider.deleteProject(project.uuid);
-                        break;
-                    }
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                  ),
+                  tooltip: localizations.delete,
+                  onPressed: () async {
+                    await provider.deleteProject(
+                      project.uuid,
+                    );
                   },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: _ProjectAction.rename,
-                      child: ListTile(
-                        dense: true,
-                        leading: const Icon(Icons.edit_outlined),
-                        title: Text(localizations.rename),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: _ProjectAction.delete,
-                      child: ListTile(
-                        dense: true,
-                        leading: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
-                        title: Text(localizations.delete),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -415,6 +344,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
-
-
-enum _ProjectAction { rename, delete }
