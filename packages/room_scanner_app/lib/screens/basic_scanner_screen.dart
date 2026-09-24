@@ -2240,6 +2240,10 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     }
   }
 
+  void _closeProject() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   void _openFloorPlan() {
     Navigator.push(
       context,
