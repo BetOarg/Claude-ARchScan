@@ -372,6 +372,7 @@
   "roomNameMainBedroomExample": "Example: Main bedroom",
   "noScannedRooms": "There are no scanned spaces",
   "completeScanToViewPlan": "Complete a scan to view the overall floor plan.",
+  "closeProject": "Close project",
   "close": "Close",
   "roomSummary": "{area} · {perimeter} perimeter · {cornerCount, plural, =1{1 corner} other{{cornerCount} corners}}",
   "@roomSummary": {
