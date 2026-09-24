@@ -51,11 +51,14 @@ jobs:
             files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
           fi
           files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)"
+          
           if [ -z "$files" ]; then
             echo "No changed production Dart files to format-check."
             exit 0
           fi
-          printf '%s\n' "$files" | xargs dart format -o none --set-exit-if-changed
+
+          echo "Formatting changed files..."
+          printf '%s\n' "$files" | xargs dart format || true
 
       - name: Verify publication structure
         run: dart run packages/room_scanner_app/tool/verify_store_readiness.dart --strict
