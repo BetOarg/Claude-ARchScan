@@ -58,7 +58,11 @@ jobs:
           fi
 
           echo "Formatting changed files..."
-          printf '%s\n' "$files" | xargs dart format || true
+          echo "$files" | while IFS= read -r file; do
+            if [ -n "$file" ] && [ -f "$file" ]; then
+              dart format "$file" || true
+            fi
+          done
 
       - name: Verify publication structure
         run: dart run packages/room_scanner_app/tool/verify_store_readiness.dart --strict
