@@ -792,6 +792,12 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
                 tooltip: l10n.viewPlan,
                 onPressed: _openFloorPlan,
               ),
+              const SizedBox(width: 4),
+              _hudIconButton(
+                icon: Icons.close,
+                tooltip: l10n.closeProject,
+                onPressed: _closeProject,
+              ),
             ],
           ),
           const SizedBox(height: 8),
