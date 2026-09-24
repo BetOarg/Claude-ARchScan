@@ -77,6 +77,47 @@ class ProjectProvider with ChangeNotifier {
     return rooms;
   }
 
+  /// Cambia únicamente el nombre de un proyecto existente.
+  ///
+  /// Las habitaciones y el UUID permanecen intactos.
+  Future<void> renameProject({
+    required String uuid,
+    required String name,
+  }) async {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      return;
+    }
+
+    return _serialize(() async {
+      _setLoading(true);
+      try {
+        if (_deletedIds.contains(uuid)) {
+          throw StateError('Project was deleted.');
+        }
+
+        final rooms = await _dbService.getRoomsForProject(uuid);
+        await _dbService.saveProject(
+          uuid: uuid,
+          name: trimmedName,
+          rooms: rooms,
+        );
+
+        if (_currentProject?.uuid == uuid) {
+          final refreshed = (await _dbService.getAllProjects())
+              .where((project) => project.uuid == uuid)
+              .cast<IsarProject>()
+              .firstOrNull;
+          _currentProject = refreshed;
+        }
+
+        await loadProjects();
+      } finally {
+        _setLoading(false);
+      }
+    });
+  }
+
   /// Elimina un proyecto por su UUID
   Future<void> deleteProject(String uuid) async {
     _deletedIds.add(uuid);
