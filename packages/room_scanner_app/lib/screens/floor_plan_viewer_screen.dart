@@ -2122,6 +2122,10 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     );
   }
 
+  void _closeProject() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
     final measurementSystem = context
@@ -2138,9 +2142,13 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
               : localizations.floorPlan2D,
         ),
         centerTitle: true,
-        actions: widget.selectContinuationOpening
-            ? const []
-            : [
+        actions: [
+          IconButton(
+            tooltip: localizations.closeProject,
+            icon: const Icon(Icons.close),
+            onPressed: _closeProject,
+          ),
+          if (!widget.selectContinuationOpening) ...[
                 if (_roomPlanSupported)
                   IconButton(
                     icon: _roomPlanScanning
@@ -2230,7 +2238,7 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                     ];
                   },
                 ),
-              ],
+          ],
       ),
       bottomNavigationBar: widget.selectContinuationOpening
           ? null
