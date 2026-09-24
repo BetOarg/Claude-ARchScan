@@ -64,13 +64,10 @@ class PlanClosure {
           .any((f) => PlanEditGeometry.featureWall(result, f) < 0)) {
         continue;
       }
-      return PlanClosure(
-          result,
-          [
-            last,
-            ...route,
-          ],
-          PlanEditGeometry.distance(last, target));
+      return PlanClosure(result, [
+        last,
+        ...route,
+      ], PlanEditGeometry.distance(last, target));
     }
     return null;
   }

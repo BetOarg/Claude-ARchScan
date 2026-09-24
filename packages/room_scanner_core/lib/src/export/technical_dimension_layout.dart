@@ -27,30 +27,34 @@ class TechnicalDimensionLayout {
       if (hiddenWallIndexes.contains(index)) continue;
       final start = points[index];
       final end = points[(index + 1) % points.length];
-      segments.add(DimensionSegment(
-        x1: x(start),
-        y1: y(start),
-        x2: x(end),
-        y2: y(end),
-        kind: DimensionKind.wall,
-        id: '${room.id}:wall:$index',
-        centerX: center.x,
-        centerY: center.y,
-      ));
+      segments.add(
+        DimensionSegment(
+          x1: x(start),
+          y1: y(start),
+          x2: x(end),
+          y2: y(end),
+          kind: DimensionKind.wall,
+          id: '${room.id}:wall:$index',
+          centerX: center.x,
+          centerY: center.y,
+        ),
+      );
     }
 
     for (final feature in room.features) {
-      segments.add(DimensionSegment(
-        x1: x(feature.start),
-        y1: y(feature.start),
-        x2: x(feature.end),
-        y2: y(feature.end),
-        kind: DimensionKind.opening,
-        id: '${room.id}:opening:${feature.id}',
-        centerX: center.x,
-        centerY: center.y,
-        normalDirection: -1.0,
-      ));
+      segments.add(
+        DimensionSegment(
+          x1: x(feature.start),
+          y1: y(feature.start),
+          x2: x(feature.end),
+          y2: y(feature.end),
+          kind: DimensionKind.opening,
+          id: '${room.id}:opening:${feature.id}',
+          centerX: center.x,
+          centerY: center.y,
+          normalDirection: -1.0,
+        ),
+      );
     }
 
     if (includeTotals && room.isClosed && points.length >= 3) {
@@ -67,26 +71,30 @@ class TechnicalDimensionLayout {
         maxY = math.max(maxY, py);
       }
 
-      segments.add(DimensionSegment(
-        x1: minX,
-        y1: minY,
-        x2: maxX,
-        y2: minY,
-        kind: DimensionKind.total,
-        id: '${room.id}:total:horizontal',
-        centerX: center.x,
-        centerY: center.y,
-      ));
-      segments.add(DimensionSegment(
-        x1: maxX,
-        y1: minY,
-        x2: maxX,
-        y2: maxY,
-        kind: DimensionKind.total,
-        id: '${room.id}:total:vertical',
-        centerX: center.x,
-        centerY: center.y,
-      ));
+      segments.add(
+        DimensionSegment(
+          x1: minX,
+          y1: minY,
+          x2: maxX,
+          y2: minY,
+          kind: DimensionKind.total,
+          id: '${room.id}:total:horizontal',
+          centerX: center.x,
+          centerY: center.y,
+        ),
+      );
+      segments.add(
+        DimensionSegment(
+          x1: maxX,
+          y1: minY,
+          x2: maxX,
+          y2: maxY,
+          kind: DimensionKind.total,
+          id: '${room.id}:total:vertical',
+          centerX: center.x,
+          centerY: center.y,
+        ),
+      );
     }
 
     return DimensionLayout.sort(segments);

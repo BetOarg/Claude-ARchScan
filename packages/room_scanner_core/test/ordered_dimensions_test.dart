@@ -34,14 +34,17 @@ void main() {
   }
 
   test('orders dimension placement from shortest to longest', () {
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [roomWithFeatures()],
-      MeasurementSystem.metric,
-    );
+    final svg = PlanExportBuilder.buildFloorPlanSvg([
+      roomWithFeatures(),
+    ], MeasurementSystem.metric);
 
     int documentPositionFor(String label) {
       final position = svg.indexOf('data-dimension-label="$label"');
-      expect(position, greaterThanOrEqualTo(0), reason: 'Missing dimension $label');
+      expect(
+        position,
+        greaterThanOrEqualTo(0),
+        reason: 'Missing dimension $label',
+      );
       return position;
     }
 
@@ -56,32 +59,32 @@ void main() {
   });
 
   test('keeps the room name visible and other labels out of the drawing', () {
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [roomWithFeatures()],
-      MeasurementSystem.metric,
-    );
+    final svg = PlanExportBuilder.buildFloorPlanSvg([
+      roomWithFeatures(),
+    ], MeasurementSystem.metric);
     expect(svg, contains('>Dormitorio<'));
     expect(svg, isNot(contains('>Pared<')));
     expect(svg, isNot(contains('>Puerta<')));
     expect(svg, isNot(contains('>Ventana<')));
   });
-  test('renders ISO 128 dimension linework with extension lines and arrowheads', () {
-    final svg = PlanExportBuilder.buildFloorPlanSvg(
-      [roomWithFeatures()],
-      MeasurementSystem.metric,
-    );
+  test(
+    'renders ISO 128 dimension linework with extension lines and arrowheads',
+    () {
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        roomWithFeatures(),
+      ], MeasurementSystem.metric);
 
-    expect(svg, contains('stroke-width="0.7"'));
-    expect(svg, contains('data-dimension-label="0,80 m"'));
-    final dimensionSectionStart = svg.indexOf('<g id="cotas">');
-    expect(dimensionSectionStart, greaterThanOrEqualTo(0));
-    final dimensionSection = svg.substring(dimensionSectionStart);
-    expect(
-      RegExp(r'<line x1="[^"]+" y1="[^"]+" x2="[^"]+" y2="[^"]+"')
-          .allMatches(dimensionSection)
-          .length,
-      greaterThan(8),
-    );
-  });
-
+      expect(svg, contains('stroke-width="0.7"'));
+      expect(svg, contains('data-dimension-label="0,80 m"'));
+      final dimensionSectionStart = svg.indexOf('<g id="cotas">');
+      expect(dimensionSectionStart, greaterThanOrEqualTo(0));
+      final dimensionSection = svg.substring(dimensionSectionStart);
+      expect(
+        RegExp(r'<line x1="[^"]+" y1="[^"]+" x2="[^"]+" y2="[^"]+"')
+            .allMatches(dimensionSection)
+            .length,
+        greaterThan(8),
+      );
+    },
+  );
 }

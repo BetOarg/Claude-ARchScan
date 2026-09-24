@@ -64,7 +64,10 @@ class GeometryService {
   }
 
   /// Estima la altura promedio del techo si se escanean puntos superiores
-  static double estimateWallHeight(List<ARPoint> floorPoints, List<ARPoint> ceilingPoints) {
+  static double estimateWallHeight(
+    List<ARPoint> floorPoints,
+    List<ARPoint> ceilingPoints,
+  ) {
     if (floorPoints.isEmpty || ceilingPoints.isEmpty) return 2.40;
 
     double totalHeight = 0.0;
@@ -84,8 +87,11 @@ class GeometryService {
 
     for (int i = 0; i < polygon.length; i++) {
       if ((polygon[i].z > point.z) != (polygon[j].z > point.z) &&
-          (point.x < (polygon[j].x - polygon[i].x) * (point.z - polygon[i].z) / 
-          (polygon[j].z - polygon[i].z) + polygon[i].x)) {
+          (point.x <
+              (polygon[j].x - polygon[i].x) *
+                      (point.z - polygon[i].z) /
+                      (polygon[j].z - polygon[i].z) +
+                  polygon[i].x)) {
         inside = !inside;
       }
       j = i;

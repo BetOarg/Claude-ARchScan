@@ -37,10 +37,7 @@ void main() {
       expect(matches.single.coverage, SharedWallCoverage.partial);
       expect(matches.single.coversFirstWall, isFalse);
       expect(matches.single.coversSecondWall, isTrue);
-      expect(
-        matches.single.firstWallCoverage,
-        closeTo(1 / 3, 0.000001),
-      );
+      expect(matches.single.firstWallCoverage, closeTo(1 / 3, 0.000001));
       expect(matches.single.secondWallCoverage, closeTo(1, 0.000001));
     });
 
@@ -57,10 +54,7 @@ void main() {
       expect(matches.single.coversFirstWall, isTrue);
       expect(matches.single.coversSecondWall, isFalse);
       expect(matches.single.firstWallCoverage, closeTo(1, 0.000001));
-      expect(
-        matches.single.secondWallCoverage,
-        closeTo(1 / 3, 0.000001),
-      );
+      expect(matches.single.secondWallCoverage, closeTo(1 / 3, 0.000001));
     });
 
     test('ignora el cierre implícito de un ambiente abierto', () {
@@ -79,16 +73,11 @@ void main() {
         id: 'diagonal-room',
         name: 'Tramo diagonal',
         type: RoomType.other,
-        points: [
-          ARPoint(x: 0, y: 0, z: 0),
-          ARPoint(x: 2, y: 0, z: 2),
-        ],
+        points: [ARPoint(x: 0, y: 0, z: 0), ARPoint(x: 2, y: 0, z: 2)],
         isClosed: false,
       );
 
-      final matches = SharedWallService.detect(
-        rooms: [openRoom, diagonalRoom],
-      );
+      final matches = SharedWallService.detect(rooms: [openRoom, diagonalRoom]);
 
       expect(matches, isEmpty);
     });

@@ -1,7 +1,4 @@
-enum DomainErrorCode {
-  invalidMeasurement,
-  invalidExportGeometry,
-}
+enum DomainErrorCode { invalidMeasurement, invalidExportGeometry }
 
 /// Typed domain failure that preserves ArgumentError compatibility at API
 /// boundaries while exposing a stable machine-readable error code.

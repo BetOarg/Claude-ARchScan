@@ -26,8 +26,10 @@ void main() {
 
   group('import resource limits', () {
     test('rejects oversized JSON and SVG before decoding', () {
-      final oversized =
-          List.filled(PlanExportBuilder.maxImportBytes + 1, ' ').join();
+      final oversized = List.filled(
+        PlanExportBuilder.maxImportBytes + 1,
+        ' ',
+      ).join();
       expect(PlanExportBuilder.parseProjectJson(oversized), isNull);
       expect(PlanExportBuilder.parseProjectSvg(oversized), isNull);
     });
@@ -50,10 +52,11 @@ void main() {
         'rooms': List<Map<String, dynamic>>.generate(
           21,
           (_) => <String, dynamic>{
-            'points': List<Map<String, dynamic>>.filled(
-              500,
-              <String, dynamic>{'x': 0, 'y': 0, 'z': 0},
-            ),
+            'points': List<Map<String, dynamic>>.filled(500, <String, dynamic>{
+              'x': 0,
+              'y': 0,
+              'z': 0,
+            }),
             'features': <dynamic>[],
           },
         ),
@@ -122,10 +125,9 @@ void main() {
         ],
       );
 
-      final svg = PlanExportBuilder.buildFloorPlanSvg(
-        [room],
-        MeasurementSystem.metric,
-      );
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        room,
+      ], MeasurementSystem.metric);
 
       expect(svg, contains('<polygon'));
       expect(svg, contains('data-feature-id="door-svg"'));
@@ -157,10 +159,9 @@ void main() {
 
     test('uses shared CAD layout for wall and total dimensions', () {
       final room = rectangularRoom();
-      final svg = PlanExportBuilder.buildFloorPlanSvg(
-        [room],
-        MeasurementSystem.metric,
-      );
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        room,
+      ], MeasurementSystem.metric);
       expect(svg, contains('data-layout-index="2"'));
       expect(svg, contains('data-dimension-label="3,00 m"'));
       expect(svg, contains('data-dimension-label="2,00 m"'));
@@ -177,10 +178,9 @@ void main() {
           ),
         ],
       );
-      final svg = PlanExportBuilder.buildFloorPlanSvg(
-        [room],
-        MeasurementSystem.metric,
-      );
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        room,
+      ], MeasurementSystem.metric);
       expect(svg, contains('data-layout-index="0"'));
       expect(svg, contains('data-layout-index="2"'));
     });
@@ -219,14 +219,12 @@ void main() {
           ),
         ],
       );
-      final interiorSvg = PlanExportBuilder.buildFloorPlanSvg(
-        [interior],
-        MeasurementSystem.metric,
-      );
-      final exteriorSvg = PlanExportBuilder.buildFloorPlanSvg(
-        [exterior],
-        MeasurementSystem.metric,
-      );
+      final interiorSvg = PlanExportBuilder.buildFloorPlanSvg([
+        interior,
+      ], MeasurementSystem.metric);
+      final exteriorSvg = PlanExportBuilder.buildFloorPlanSvg([
+        exterior,
+      ], MeasurementSystem.metric);
       expect(interiorSvg, isNot(equals(exteriorSvg)));
     });
 
@@ -239,19 +237,17 @@ void main() {
       );
       final first = rectangularRoom(id: 'first', features: [opening]);
       final second = rectangularRoom(id: 'second', features: [opening]);
-      final svg = PlanExportBuilder.buildFloorPlanSvg(
-        [first, second],
-        MeasurementSystem.metric,
-      );
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        first,
+        second,
+      ], MeasurementSystem.metric);
       expect(
         RegExp('data-feature-id="shared-window"').allMatches(svg),
         hasLength(1),
       );
     });
 
-    test(
-      'preserves near-right-angle technical geometry without altering persisted data',
-      () {
+    test('preserves near-right-angle technical geometry without altering persisted data', () {
       final room = RoomModel(
         id: 'angled',
         name: 'Angulado',
@@ -265,19 +261,17 @@ void main() {
         features: const [],
         isClosed: true,
       );
-      final svg = PlanExportBuilder.buildFloorPlanSvg(
-        [room],
-        MeasurementSystem.metric,
-      );
+      final svg = PlanExportBuilder.buildFloorPlanSvg([
+        room,
+      ], MeasurementSystem.metric);
       expect(
         svg,
         contains(
           'points="108.04,72.00 791.96,72.00 791.96,528.00 108.04,528.00"',
         ),
       );
-        expect(room.points[2].x, 3.03);
-      },
-    );
+      expect(room.points[2].x, 3.03);
+    });
   });
 
   test('PDF contains a technical drawing page without report sections', () {
