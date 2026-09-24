@@ -1585,7 +1585,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   // PLANO
   // ================================================================
 
-  void void _closeProject() {
+  void _closeProject() {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
