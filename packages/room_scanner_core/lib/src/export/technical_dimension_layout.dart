@@ -27,6 +27,17 @@ class TechnicalDimensionLayout {
       if (hiddenWallIndexes.contains(index)) continue;
       final start = points[index];
       final end = points[(index + 1) % points.length];
+
+      // A wall segment that contains a door opening is not dimensioned as a
+      // separate wall fragment. The opening dimension remains the precise
+      // reference, avoiding stacked/fragmented dimensions around doors.
+      final hasDoorOpening = room.features.any(
+        (feature) =>
+            feature.type == FeatureType.door &&
+            _segmentContainsFeature(start, end, feature.start, feature.end),
+      );
+      if (hasDoorOpening) continue;
+
       segments.add(
         DimensionSegment(
           x1: x(start),
@@ -98,6 +109,40 @@ class TechnicalDimensionLayout {
     }
 
     return DimensionLayout.sort(segments);
+  }
+
+  static bool _segmentContainsFeature(
+    ARPoint wallStart,
+    ARPoint wallEnd,
+    ARPoint featureStart,
+    ARPoint featureEnd,
+  ) {
+    const epsilon = 0.00005;
+    final wallDx = wallEnd.x - wallStart.x;
+    final wallDz = wallEnd.z - wallStart.z;
+    final wallLengthSquared = wallDx * wallDx + wallDz * wallDz;
+    if (wallLengthSquared <= epsilon) return false;
+
+    double cross(ARPoint point) =>
+        (point.x - wallStart.x) * wallDz -
+        (point.z - wallStart.z) * wallDx;
+
+    if (cross(featureStart).abs() > epsilon ||
+        cross(featureEnd).abs() > epsilon) {
+      return false;
+    }
+
+    double projection(ARPoint point) =>
+        ((point.x - wallStart.x) * wallDx +
+                (point.z - wallStart.z) * wallDz) /
+            wallLengthSquared;
+
+    final startT = projection(featureStart);
+    final endT = projection(featureEnd);
+    return startT >= -epsilon &&
+        startT <= 1 + epsilon &&
+        endT >= -epsilon &&
+        endT <= 1 + epsilon;
   }
 
   static _Point _center(

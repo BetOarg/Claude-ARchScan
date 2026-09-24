@@ -48,8 +48,11 @@ Las siguientes herramientas se aplican a proyectos provenientes de Basic, ARCore
 - Movimiento y rotación de ambientes, grupos conectados y alineación de paredes.
 - Navegación con dos dedos y controles de acercar, alejar y restablecer la vista para mantener visible el plano durante la edición.
 - Acciones organizadas en pares consistentes: puerta/ventana y deshacer/rehacer.
+- Durante el uso de un proyecto existe una acción **Cerrar proyecto** para volver a la lista de proyectos y cambiar de proyecto sin cerrar la aplicación.
+- Desde la lista de proyectos se puede **Renombrar** un proyecto conservando su UUID, ambientes, geometría y datos locales.
 - Detección de paredes compartidas completas y parciales.
 - Historial reversible de edición; los contornos abiertos no suman superficie.
+- Las cotas técnicas evitan fragmentar la longitud de un muro en torno a una puerta: se conserva la cota de la abertura y se evita la cota redundante del fragmento de muro.
 
 Las conexiones se protegen: no se desplaza silenciosamente una abertura conectada al editar su pared. El historial de edición es por sesión, no una copia de seguridad permanente. Consultá la [guía de edición táctil](docs/plan-touch-editor.md).
 
@@ -98,7 +101,7 @@ Las herramientas de geometría y el editor común no dependen del modo de captur
 
 ## Desarrollo
 
-- Flutter **3.35.0 o superior**, conforme a `pubspec.yaml`; usar una versión compatible con las dependencias resueltas.
+- Flutter **3.47.0** en CI y workflows de release; mantener el toolchain alineado con los workflows versionados.
 - Java 17 para Android; macOS/Xcode y CocoaPods para iOS.
 - Android: mínimo API 28, compilación y destino API 36; ARCore opcional.
 - Identificadores actuales: Android e iOS `com.bet0.ARchScan`. No cambiarlos al publicar sin evaluar identidad de tienda y compatibilidad de actualizaciones.
@@ -149,7 +152,8 @@ Antes de enviar la beta a revisión todavía corresponde:
 - configurar Play App Signing, ficha, Seguridad de los datos, clasificación, países y canal de prueba;
 - preparar capturas obtenidas de la compilación final;
 - para iOS, configurar certificados, perfil, Team ID y App Store Connect antes de generar el IPA;
-- mantener públicas y coherentes las páginas de soporte, privacidad, eliminación local y guía de uso.
+- mantener públicas y coherentes las páginas de soporte, privacidad, eliminación local y guía de uso;
+- verificar en el plano final que las cotas de muros, aberturas y totales no se dupliquen ni se apilen innecesariamente.
 
 Un CI verde demuestra que el código compila y pasa las pruebas automatizadas configuradas; no equivale a una aprobación de Google Play o App Store.
 
