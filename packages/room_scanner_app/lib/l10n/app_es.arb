@@ -372,6 +372,7 @@
   "roomNameMainBedroomExample": "Ej. Dormitorio principal",
   "noScannedRooms": "No hay ambientes escaneados",
   "completeScanToViewPlan": "Completá un escaneo para visualizar el plano general.",
+  "closeProject": "Cerrar proyecto",
   "close": "Cerrar",
   "roomSummary": "{area} · {perimeter} de perímetro · {cornerCount, plural, =1{1 esquina} other{{cornerCount} esquinas}}",
   "@roomSummary": {
