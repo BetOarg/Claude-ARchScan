@@ -35,7 +35,7 @@ void main() {
       y: (point) => point.z,
     );
 
-    expect(dimensions, hasLength(7));
+    expect(dimensions, hasLength(6));
     expect(
       dimensions.where((d) => d.kind == DimensionKind.opening),
       hasLength(1),
