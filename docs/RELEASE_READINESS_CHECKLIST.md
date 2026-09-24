@@ -1,7 +1,7 @@
 # Lista de preparación para publicación — ARchScan
 
-**Última revisión:** 16/09/2026  
-**Main:** `a445e4903af7a4ffa80464c7971a625861f3841e`  
+**Última revisión:** 24/09/2026  
+**Main:** `ae2e90ea5bb88a0ebf21ba9ab72e259bbaeef66f`  
 **Versión declarada:** `2.7.0+4`
 
 ## Estado verificable en repositorio
@@ -21,16 +21,19 @@
 - [x] Exportaciones técnicas con cotas ordenadas de adentro hacia afuera.
 - [x] Nombre del ambiente conservado como texto visible en el plano; sin leyendas/reportes redundantes.
 - [x] CI con análisis, pruebas y verificaciones Android/iOS.
+- [x] Cerrar proyecto y cambiar de proyecto sin cerrar la aplicación.
+- [x] Renombrar proyectos conservando UUID y datos locales.
+- [x] Cotas de puertas sin fragmentación redundante del muro.
 - [x] Sitio público bilingüe, privacidad, soporte y eliminación de datos locales documentados.
 
 ## Estado administrativo
 
 - [x] No hay PR abiertos.
-- [ ] Eliminar físicamente las dos ramas fusionadas que todavía aparecen en GitHub:
-  - `fix/ordered-architectural-dimensions`
-  - `fix/professional-export-dimensions`
+- [ ] Eliminar físicamente la rama de trabajo fusionada que todavía aparece en GitHub: `fix/project-switch-rename-dimensions`.
 - [ ] Proteger `main`.
 - [ ] Activar eliminación automática de ramas fusionadas si se desea mantener el repositorio limpio.
+
+La rama de trabajo restante es administrativa; no forma parte del artefacto de publicación.
 
 ## Validación física final
 
