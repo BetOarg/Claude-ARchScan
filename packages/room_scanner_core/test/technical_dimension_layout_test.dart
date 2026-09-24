@@ -83,4 +83,43 @@ void main() {
     );
     expect(opening.normalDirection, -1.0);
   });
+  test('does not dimension a wall fragment that contains a door', () {
+    final room = RoomModel(
+      id: 'door-room',
+      name: 'Living',
+      type: RoomType.living,
+      points: [
+        ARPoint(x: 0, y: 0, z: 0),
+        ARPoint(x: 4, y: 0, z: 0),
+        ARPoint(x: 4, y: 0, z: 3),
+        ARPoint(x: 0, y: 0, z: 3),
+      ],
+      isClosed: true,
+      features: [
+        WallFeature(
+          id: 'door',
+          type: FeatureType.door,
+          start: ARPoint(x: 1, y: 0, z: 0),
+          end: ARPoint(x: 1.8, y: 0, z: 0),
+        ),
+      ],
+    );
+
+    final dimensions = TechnicalDimensionLayout.forRoom(
+      room: room,
+      x: (point) => point.x,
+      y: (point) => point.z,
+    );
+
+    expect(
+      dimensions.where((dimension) => dimension.kind == DimensionKind.wall),
+      hasLength(3),
+    );
+    expect(
+      dimensions.where((dimension) => dimension.kind == DimensionKind.opening),
+      hasLength(1),
+    );
+  });
+
+
 }
