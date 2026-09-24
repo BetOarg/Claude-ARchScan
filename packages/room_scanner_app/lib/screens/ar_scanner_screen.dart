@@ -946,6 +946,15 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         foregroundColor: Colors.white,
       ),
     );
+    final closeButton = IconButton.filledTonal(
+      tooltip: l10n.closeProject,
+      onPressed: _closeProject,
+      icon: const Icon(Icons.close),
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.black87,
+        foregroundColor: Colors.white,
+      ),
+    );
     final trackingChip = Chip(
       avatar: Icon(
         Icons.circle,
@@ -972,6 +981,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
                   Expanded(child: roomNameChip()),
                   const SizedBox(width: 8),
                   planButton,
+                  const SizedBox(width: 4),
+                  closeButton,
                 ],
               ),
               const SizedBox(height: 6),
@@ -985,6 +996,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
             Expanded(child: roomNameChip()),
             const SizedBox(width: 8),
             planButton,
+            const SizedBox(width: 4),
+            closeButton,
             const SizedBox(width: 8),
             Flexible(child: trackingChip),
           ],
