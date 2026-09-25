@@ -28,9 +28,11 @@ dev_dependencies:
   lints: ^3.0.0
 
   # Generador de código compatible con el fork comunitario de Isar.
-  build_runner: ^2.10.5
+  # 2.11.1 mantiene el modo de compilación anterior al cambio a AOT.
+  build_runner: 2.11.1
   isar_community_generator: ^3.3.2
 
   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
   # locales de integración de este paquete.
   isar_community_flutter_libs: ^3.3.2
+}
