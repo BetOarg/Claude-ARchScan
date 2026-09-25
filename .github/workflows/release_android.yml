@@ -75,6 +75,7 @@ jobs:
         run: |
           flutter pub get
           flutter gen-l10n
+          flutter build appbundle --config-only
           dart run tool/verify_store_readiness.dart --strict
           dart run tool/security_audit.dart
 
