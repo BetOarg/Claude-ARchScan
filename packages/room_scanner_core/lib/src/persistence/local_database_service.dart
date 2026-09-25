@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar_community.dart';
 
 import '../models/isar_models.dart';
 import '../models/room_model.dart';
