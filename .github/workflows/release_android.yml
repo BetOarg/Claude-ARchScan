@@ -75,9 +75,12 @@ jobs:
         run: |
           flutter pub get
           flutter gen-l10n
-          flutter build appbundle --config-only
           dart run tool/verify_store_readiness.dart --strict
           dart run tool/security_audit.dart
+
+      - name: Generate Gradle wrapper
+        working-directory: packages/room_scanner_app/android
+        run: gradle --no-daemon wrapper --gradle-version 8.14
 
       - name: Prepare signing
         working-directory: packages/room_scanner_app
@@ -96,8 +99,8 @@ jobs:
         run: gradle --no-daemon :app:verifyProductionSigning
 
       - name: Build signed App Bundle
-        working-directory: packages/room_scanner_app/android
-        run: gradle --no-daemon :app:bundleRelease
+        working-directory: packages/room_scanner_app
+        run: flutter build appbundle --release
 
       - name: Audit final App Bundle
         working-directory: packages/room_scanner_app
