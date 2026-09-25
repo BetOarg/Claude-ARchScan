@@ -12,10 +12,9 @@ environment:
   # requiere el SDK de Flutter para compilar.
 
 dependencies:
-  # Base de datos local NoSQL. Solo se declara el paquete de anotaciones y
-  # runtime; los binarios nativos (isar_flutter_libs) quedan del lado de
-  # room_scanner_app, que es quien tiene proyectos android/ios.
-  isar: ^3.1.0+1
+  # Base de datos local NoSQL. Los binarios nativos 16 KB se aportan
+  # mediante isar_community_flutter_libs en la app.
+  isar_community: ^3.3.2
 
   # Matemáticas vectoriales para los puntos 3D del plano.
   vector_math: ^2.1.4
@@ -28,11 +27,10 @@ dev_dependencies:
   test: ^1.25.0
   lints: ^3.0.0
 
-  # Generador de código para los modelos Isar.
+  # Generador de código compatible con el fork comunitario de Isar.
   build_runner: ^2.4.8
-  isar_generator: ^3.1.0+1
+  isar_community_generator: ^3.3.2
 
   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
-  # locales de integración de este paquete (no es necesaria para compilar
-  # ni para que room_scanner_app funcione).
-  isar_flutter_libs: ^3.1.0+1
+  # locales de integración de este paquete.
+  isar_community_flutter_libs: ^3.3.2
