@@ -2,9 +2,12 @@ name: ARchScan - Android Store Build
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   FLUTTER_VERSION: "3.47.0"
@@ -27,7 +30,7 @@ jobs:
         shell: bash
         run: |
           missing=0
-          for variable in             ANDROID_KEYSTORE_BASE64             ANDROID_STORE_PASSWORD             ANDROID_KEY_ALIAS             ANDROID_KEY_PASSWORD; do
+          for variable in ANDROID_KEYSTORE_BASE64 ANDROID_STORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
             if [ -z "${!variable}" ]; then
               echo "::error::Falta el secret $variable"
               missing=1
@@ -72,8 +75,7 @@ jobs:
         working-directory: packages/room_scanner_app
         shell: bash
         run: |
-          printf '%s' "$ANDROID_KEYSTORE_BASE64"             | base64 --decode > android/upload-keystore.jks
-
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
           {
             echo "storeFile=../upload-keystore.jks"
             echo "storePassword=$ANDROID_STORE_PASSWORD"
@@ -103,6 +105,7 @@ jobs:
             grep '^version:' pubspec.yaml
             echo "applicationId=com.bet0.ARchScan"
             echo "commit=${GITHUB_SHA}"
+            echo "tag=${GITHUB_REF_NAME}"
           } | tee "$report/build-identity.txt"
 
           manifest="$(find build/app/intermediates -path '*release*' -name AndroidManifest.xml -type f | head -n 1)"
@@ -111,28 +114,27 @@ jobs:
             exit 1
           fi
           cp "$manifest" "$report/AndroidManifest.xml"
-          grep -o 'uses-permission[^>]*' "$manifest"             | sort -u > "$report/permissions.txt" || true
+          grep -o 'uses-permission[^>]*' "$manifest" | sort -u > "$report/permissions.txt" || true
 
           grep -Fq 'android.permission.CAMERA' "$report/permissions.txt" || {
             echo "::error::El AAB final no declara el permiso de cámara"
             exit 1
           }
 
-          if grep -Eq 'android.permission.(RECORD_AUDIO|INTERNET)' \
-              "$report/permissions.txt"; then
+          if grep -Eq 'android.permission.(RECORD_AUDIO|INTERNET)' "$report/permissions.txt"; then
             echo "::error::El AAB contiene permisos incompatibles con la declaración de privacidad"
             exit 1
           fi
 
           unzip -q "$aab" 'base/lib/*/*.so' -d "$report/native"
-          find "$report/native" -type f -name '*.so'             | sort > "$report/native-libraries.txt"
+          find "$report/native" -type f -name '*.so' | sort > "$report/native-libraries.txt"
 
           incompatible=0
           : > "$report/page-alignment-16kb.txt"
           while IFS= read -r library; do
             relative="${library#"$report/native/"}"
-            alignments="$(readelf -lW "$library"               | awk '$1 == "LOAD" { print $NF }')"
-            printf '%s: %s\n' "$relative" "$alignments"               | tee -a "$report/page-alignment-16kb.txt"
+            alignments="$(readelf -lW "$library" | awk '$1 == "LOAD" { print $NF }')"
+            printf '%s: %s\n' "$relative" "$alignments" | tee -a "$report/page-alignment-16kb.txt"
             for alignment in $alignments; do
               if (( alignment < 0x4000 )); then
                 echo "::error::$relative usa alineación $alignment (< 0x4000)"
@@ -154,6 +156,18 @@ jobs:
             packages/room_scanner_app/build/store-audit
           if-no-files-found: error
           retention-days: 14
+
+      - name: Create GitHub Release for tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            packages/room_scanner_app/build/app/outputs/bundle/release/app-release.aab \
+            packages/room_scanner_app/build/store-audit/SHA256SUMS.txt \
+            packages/room_scanner_app/build/store-audit/build-identity.txt \
+            --title "ARchScan ${GITHUB_REF_NAME}" \
+            --generate-notes
 
       - name: Remove temporary credentials
         if: always()
