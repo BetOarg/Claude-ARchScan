@@ -59,6 +59,11 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14'
+
       - name: Generate core models
         working-directory: packages/room_scanner_core
         run: |
@@ -87,11 +92,11 @@ jobs:
 
       - name: Validate production signing
         working-directory: packages/room_scanner_app/android
-        run: ./gradlew :app:verifyProductionSigning
+        run: gradle --no-daemon :app:verifyProductionSigning
 
       - name: Build signed App Bundle
-        working-directory: packages/room_scanner_app
-        run: flutter build appbundle --release
+        working-directory: packages/room_scanner_app/android
+        run: gradle --no-daemon :app:bundleRelease
 
       - name: Audit final App Bundle
         working-directory: packages/room_scanner_app
