@@ -28,7 +28,7 @@ dev_dependencies:
   lints: ^3.0.0
 
   # Generador de código compatible con el fork comunitario de Isar.
-  build_runner: ^2.4.8
+  build_runner: ^2.10.5
   isar_community_generator: ^3.3.2
 
   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
