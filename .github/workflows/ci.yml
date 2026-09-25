@@ -204,6 +204,11 @@ jobs:
         run: flutter test
         working-directory: packages/room_scanner_app
 
+      - name: Decode Android Keystore
+        shell: bash
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > packages/room_scanner_app/android/app/release-keystore.jks
+
       - name: Verify Android Release App Bundle
         working-directory: packages/room_scanner_app
         run: flutter build appbundle --release
