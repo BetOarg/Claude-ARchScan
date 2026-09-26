@@ -36,3 +36,9 @@ dev_dependencies:
   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
   # locales de integración de este paquete.
   isar_community_flutter_libs: ^3.3.2
+
+# Isar Community 3.3.2 declara compatibilidad hasta analyzer <11,
+# pero Dart 3.13 requiere un analyzer que entienda su versión de lenguaje.
+# Se fuerza 11.0.0 mientras completamos la migración de persistencia.
+dependency_overrides:
+  analyzer: 11.0.0
