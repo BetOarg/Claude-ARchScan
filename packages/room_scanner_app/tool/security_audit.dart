@@ -5,6 +5,7 @@ void main() {
   final errors = <String>[];
 
   _scanForSecrets(root, errors);
+  _verifySigningMaterial(root, errors);
   _verifyPermissions(root, errors);
   _verifyBranding(root, errors);
 
@@ -213,6 +214,77 @@ void _verifyBranding(Directory root, List<String> errors) {
     }
     if (content.contains('Claude Room Scanner')) {
       errors.add('$locale contiene la marca anterior.');
+    }
+  }
+}
+
+/// Impide versionar material de firma de producción.
+///
+/// Solo revisa archivos versionados en git: un `key.properties` local sin
+/// versionar es el flujo esperado para firmar en una máquina de desarrollo.
+void _verifySigningMaterial(Directory root, List<String> errors) {
+  final result = Process.runSync(
+    'git',
+    ['ls-files'],
+    workingDirectory: root.path,
+  );
+  if (result.exitCode != 0) {
+    errors.add('No se pudo listar los archivos versionados con git.');
+    return;
+  }
+
+  final trackedFiles = (result.stdout as String)
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty);
+
+  // La única clave admitida es la de pruebas, pública por diseño.
+  final hardcodedKeytoolPassword = RegExp(
+    r'-(?:storepass|keypass)\s+"?(?!android\b)(?!\$)[^\s"]+',
+  );
+  final propertiesPassword = RegExp(
+    r'^\s*(?:storePassword|keyPassword)\s*=\s*(\S+)',
+    multiLine: true,
+  );
+
+  for (final relative in trackedFiles) {
+    final lower = relative.toLowerCase();
+
+    if (lower.endsWith('key.properties')) {
+      errors.add('Configuración de firma versionada: $relative.');
+      continue;
+    }
+
+    final file = File('${root.path}/$relative');
+    if (!file.existsSync()) continue;
+
+    if (lower.endsWith('.yml') ||
+        lower.endsWith('.yaml') ||
+        lower.endsWith('.sh')) {
+      String content;
+      try {
+        content = file.readAsStringSync();
+      } on FileSystemException {
+        continue;
+      }
+      if (hardcodedKeytoolPassword.hasMatch(content)) {
+        errors.add('Contraseña de keystore incorporada en $relative.');
+      }
+    }
+
+    if (lower.endsWith('.properties')) {
+      String content;
+      try {
+        content = file.readAsStringSync();
+      } on FileSystemException {
+        continue;
+      }
+      for (final match in propertiesPassword.allMatches(content)) {
+        final value = match.group(1)!;
+        if (value != 'REEMPLAZAR_LOCALMENTE' && !value.startsWith(r'$')) {
+          errors.add('Contraseña de firma incorporada en $relative.');
+        }
+      }
     }
   }
 }

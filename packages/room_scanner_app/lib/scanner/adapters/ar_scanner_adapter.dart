@@ -5,6 +5,7 @@ import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
+import '../ar/archscan_ar_session.dart';
 import '../engine/scanner_adapter.dart';
 import '../models/scanner_mode.dart';
 import '../models/scanner_point.dart';
@@ -37,6 +38,15 @@ class ARScannerAdapter implements ScannerAdapter {
 
   @override
   bool get isTracking => _tracking;
+
+  /// Conecta la sesión creada por `ArchScanArView`.
+  void attachSession(ArchScanArSession session) {
+    attachARSession(
+      viewId: session.viewId,
+      sessionManager: session.sessionManager,
+      objectManager: session.objectManager,
+    );
+  }
 
   /// El adapter AR necesita recibir los managers creados por ARView.
   ///

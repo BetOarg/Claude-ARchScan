@@ -16,6 +16,9 @@ export 'src/geometry/plan_edit_geometry.dart';
 export 'src/geometry/plan_closure.dart';
 
 export 'src/persistence/local_database_service.dart';
+export 'src/persistence/project_summary.dart';
+export 'src/persistence/project_repository.dart';
+export 'src/persistence/isar_project_repository.dart';
 
 export 'src/export/plan_export_builder.dart';
 export 'src/export/dimension_layout.dart';
