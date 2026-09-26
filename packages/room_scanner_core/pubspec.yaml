@@ -28,8 +28,9 @@ dev_dependencies:
   lints: ^3.0.0
 
   # Generador de código compatible con el fork comunitario de Isar.
-  # 2.11.1 mantiene el modo de compilación anterior al cambio a AOT.
-  build_runner: 2.11.1
+  # Se fija en 2.10.5 para mantener una combinación estable con
+  # isar_community_generator 3.3.2 durante la migración.
+  build_runner: 2.10.5
   isar_community_generator: ^3.3.2
 
   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
