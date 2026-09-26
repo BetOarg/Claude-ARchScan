@@ -1,0 +1,22 @@
+From dd97727ccab595eab2233bb36c35963ff9a2e82d Mon Sep 17 00:00:00 2001
+From: BetO <pepitero@gmail.com>
+Date: Sat, 26 Sep 2026 00:55:21 -0300
+Subject: [PATCH 03/10] refactor: expose scanner composition through feature
+ boundary
+
+---
+ .../room_scanner_app/lib/features/scanner/scanner_feature.dart   | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages/room_scanner_app/lib/features/scanner/scanner_feature.dart b/packages/room_scanner_app/lib/features/scanner/scanner_feature.dart
+index 0f76355..596752d 100644
+--- a/packages/room_scanner_app/lib/features/scanner/scanner_feature.dart
++++ b/packages/room_scanner_app/lib/features/scanner/scanner_feature.dart
+@@ -15,3 +15,4 @@ export '../../scanner/models/scanner_mode.dart';
+ export '../../scanner/models/scanner_point.dart';
+ export '../../scanner/models/scanner_sensor_state.dart';
+ export '../../scanner/navigation/scanner_launch_request.dart';
++export '../../scanner/scanner_composition.dart';
+-- 
+2.43.0
+

@@ -1,0 +1,217 @@
+From c12b630c20a4d955da695bae01c22c74d2c11819 Mon Sep 17 00:00:00 2001
+From: Claude <claude@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 13:33:35 +0000
+Subject: [PATCH 05/10] fix(security): stop versioning and using exposed
+ signing material
+
+- Untrack android/key.properties (contained a hardcoded password).
+- CI builds the release AAB unsigned; the production upload key is only
+  used by release_android.yml.
+- security_audit.dart fails on tracked key.properties files and on
+  hardcoded keystore passwords in workflows, scripts or properties.
+- Document the incident and the manual remediation steps.
+---
+ .github/workflows/ci.yml                      | 28 ++------
+ docs/SECURITY_INCIDENT_2026-09-signing.md     | 51 +++++++++++++
+ .../room_scanner_app/android/key.properties   |  4 --
+ .../room_scanner_app/tool/security_audit.dart | 72 +++++++++++++++++++
+ 4 files changed, 127 insertions(+), 28 deletions(-)
+ create mode 100644 docs/SECURITY_INCIDENT_2026-09-signing.md
+ delete mode 100644 packages/room_scanner_app/android/key.properties
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 6b1cd56..0f4a5f6 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -204,30 +204,10 @@ jobs:
+         run: flutter test
+         working-directory: packages/room_scanner_app
+ 
+-      - name: Decode Android Keystore
+-        shell: bash
+-        run: |
+-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > packages/room_scanner_app/android/app/release-keystore.jks
+-
+-      - name: Prepare Android release signing
+-        shell: bash
+-        env:
+-          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+-        run: |
+-          set -euo pipefail
+-          test -n "$ANDROID_STORE_PASSWORD"
+-          test -n "$ANDROID_KEY_ALIAS"
+-          test -n "$ANDROID_KEY_PASSWORD"
+-          cat > packages/room_scanner_app/android/key.properties <<EOF
+-          storeFile=release-keystore.jks
+-          storePassword=$ANDROID_STORE_PASSWORD
+-          keyAlias=$ANDROID_KEY_ALIAS
+-          keyPassword=$ANDROID_KEY_PASSWORD
+-          EOF
+-
+-      - name: Verify Android Release App Bundle
++      # CI compila el AAB de release SIN firmar: sin key.properties, el
++      # build.gradle deja la variante release sin signingConfig. La clave de
++      # carga de producción solo se usa en release_android.yml.
++      - name: Verify Android Release App Bundle (unsigned)
+         working-directory: packages/room_scanner_app
+         run: flutter build appbundle --release
+ 
+diff --git a/docs/SECURITY_INCIDENT_2026-09-signing.md b/docs/SECURITY_INCIDENT_2026-09-signing.md
+new file mode 100644
+index 0000000..e2b29b6
+--- /dev/null
++++ b/docs/SECURITY_INCIDENT_2026-09-signing.md
+@@ -0,0 +1,51 @@
++# Incidente: material de firma Android expuesto (2026-09-24)
++
++## Qué pasó
++
++- `f97fe18` agregó `.github/workflows/generate.yml`, que generó un keystore
++  de release con una contraseña fija en el YAML e imprimió el keystore en
++  base64 en los logs públicos de GitHub Actions.
++- `5a91175` versionó `packages/room_scanner_app/android/key.properties` con
++  esa misma contraseña (el archivo estaba en `.gitignore`, se agregó forzado).
++- `ci.yml` decodificaba el keystore de producción en cada push/PR.
++
++## Alcance
++
++La clave expuesta **no está registrada como upload key en Play Console**.
++No hay reset de Play pendiente. La clave queda, igual, **descartada para
++siempre**: su contraseña y su contenido son públicos.
++
++Riesgo residual: si el secret `ANDROID_KEYSTORE_BASE64` contiene ese
++keystore, la primera subida de un AAB firmado con él a Play lo registraría
++como upload key. Por eso los secrets se reemplazan antes de cualquier
++publicación.
++
++## Remediación en el repositorio
++
++- `key.properties` deja de estar versionado.
++- `ci.yml` compila el AAB de release sin firmar; la clave de producción solo
++  existe en `release_android.yml`, que la borra al terminar.
++- `tool/security_audit.dart` falla si se versiona un `key.properties` o una
++  contraseña de keystore en `.yml`, `.yaml`, `.sh` o `.properties`
++  (la clave pública de pruebas `android` sigue permitida).
++
++## Remediación manual (fuera del repositorio)
++
++1. Generar una clave nueva **en una máquina local**, nunca en CI:
++
++   ```bash
++   keytool -genkeypair -v -keystore archscan-upload.jks \
++     -keyalg RSA -keysize 4096 -validity 10000 -alias archscan-upload
++   base64 -w0 archscan-upload.jks > archscan-upload.jks.b64
++   ```
++
++   La contraseña se ingresa en el prompt interactivo de `keytool`.
++
++2. Reemplazar en *Settings → Secrets and variables → Actions*:
++   `ANDROID_KEYSTORE_BASE64`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
++   `ANDROID_KEY_PASSWORD`.
++3. Borrar los logs de las ejecuciones de "Generate Keystore" en la pestaña
++   Actions.
++4. Guardar el `.jks` y sus contraseñas en un gestor de contraseñas con
++   respaldo. Perder la upload key obliga a pedir un reset a Google.
++5. Borrar `archscan-upload.jks.b64` del disco local.
+diff --git a/packages/room_scanner_app/android/key.properties b/packages/room_scanner_app/android/key.properties
+deleted file mode 100644
+index 0b60c0d..0000000
+--- a/packages/room_scanner_app/android/key.properties
++++ /dev/null
+@@ -1,4 +0,0 @@
+-storePassword=MiContrasenaSegura123!
+-keyPassword=MiContrasenaSegura123!
+-keyAlias=upload
+-storeFile=release-keystore.jks
+diff --git a/packages/room_scanner_app/tool/security_audit.dart b/packages/room_scanner_app/tool/security_audit.dart
+index 73f088d..b96ef4f 100644
+--- a/packages/room_scanner_app/tool/security_audit.dart
++++ b/packages/room_scanner_app/tool/security_audit.dart
+@@ -5,6 +5,7 @@ void main() {
+   final errors = <String>[];
+ 
+   _scanForSecrets(root, errors);
++  _verifySigningMaterial(root, errors);
+   _verifyPermissions(root, errors);
+   _verifyBranding(root, errors);
+ 
+@@ -216,3 +217,74 @@ void _verifyBranding(Directory root, List<String> errors) {
+     }
+   }
+ }
++
++/// Impide versionar material de firma de producción.
++///
++/// Solo revisa archivos versionados en git: un `key.properties` local sin
++/// versionar es el flujo esperado para firmar en una máquina de desarrollo.
++void _verifySigningMaterial(Directory root, List<String> errors) {
++  final result = Process.runSync(
++    'git',
++    ['ls-files'],
++    workingDirectory: root.path,
++  );
++  if (result.exitCode != 0) {
++    errors.add('No se pudo listar los archivos versionados con git.');
++    return;
++  }
++
++  final trackedFiles = (result.stdout as String)
++      .split('\n')
++      .map((line) => line.trim())
++      .where((line) => line.isNotEmpty);
++
++  // La única clave admitida es la de pruebas, pública por diseño.
++  final hardcodedKeytoolPassword = RegExp(
++    r'-(?:storepass|keypass)\s+"?(?!android\b)(?!\$)[^\s"]+',
++  );
++  final propertiesPassword = RegExp(
++    r'^\s*(?:storePassword|keyPassword)\s*=\s*(\S+)',
++    multiLine: true,
++  );
++
++  for (final relative in trackedFiles) {
++    final lower = relative.toLowerCase();
++
++    if (lower.endsWith('key.properties')) {
++      errors.add('Configuración de firma versionada: $relative.');
++      continue;
++    }
++
++    final file = File('${root.path}/$relative');
++    if (!file.existsSync()) continue;
++
++    if (lower.endsWith('.yml') ||
++        lower.endsWith('.yaml') ||
++        lower.endsWith('.sh')) {
++      String content;
++      try {
++        content = file.readAsStringSync();
++      } on FileSystemException {
++        continue;
++      }
++      if (hardcodedKeytoolPassword.hasMatch(content)) {
++        errors.add('Contraseña de keystore incorporada en $relative.');
++      }
++    }
++
++    if (lower.endsWith('.properties')) {
++      String content;
++      try {
++        content = file.readAsStringSync();
++      } on FileSystemException {
++        continue;
++      }
++      for (final match in propertiesPassword.allMatches(content)) {
++        final value = match.group(1)!;
++        if (value != 'REEMPLAZAR_LOCALMENTE' && !value.startsWith(r'$')) {
++          errors.add('Contraseña de firma incorporada en $relative.');
++        }
++      }
++    }
++  }
++}
+-- 
+2.43.0
+

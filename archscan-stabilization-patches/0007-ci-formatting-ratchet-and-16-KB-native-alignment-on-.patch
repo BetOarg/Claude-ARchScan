@@ -1,0 +1,209 @@
+From 159b0c5e4ea6cffee0e668b3bbab764683d4efe3 Mon Sep 17 00:00:00 2001
+From: Claude <claude@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 13:34:53 +0000
+Subject: [PATCH 07/10] ci: formatting ratchet and 16 KB native alignment on
+ every build
+
+- Formatting: new Dart files must be formatted and modified files may not
+  regress from formatted to unformatted. Previously the step ran
+  'dart format ... || true' and never failed. Already-unformatted files
+  only emit a warning, so functional changes are not mixed with mass
+  reformatting.
+- Extract the readelf-based 16 KB alignment audit into
+  .github/scripts/audit_native_alignment.sh.
+- CI runs the audit on the unsigned release AAB and uploads the report;
+  release_android.yml reuses the same script.
+---
+ .github/scripts/audit_native_alignment.sh | 46 +++++++++++++++
+ .github/workflows/ci.yml                  | 70 +++++++++++++++++++----
+ .github/workflows/release_android.yml     | 21 +------
+ 3 files changed, 106 insertions(+), 31 deletions(-)
+ create mode 100755 .github/scripts/audit_native_alignment.sh
+
+diff --git a/.github/scripts/audit_native_alignment.sh b/.github/scripts/audit_native_alignment.sh
+new file mode 100755
+index 0000000..37e5f77
+--- /dev/null
++++ b/.github/scripts/audit_native_alignment.sh
+@@ -0,0 +1,46 @@
++#!/usr/bin/env bash
++# Verifica que todas las bibliotecas nativas (.so) de un AAB o APK estén
++# alineadas a 16 KB (LOAD segments >= 0x4000), requisito de Google Play
++# para Android 15+.
++#
++# Uso: audit_native_alignment.sh <archivo.aab|archivo.apk> <directorio-reporte>
++set -euo pipefail
++
++artifact="${1:?Falta la ruta del AAB/APK}"
++report="${2:?Falta el directorio de reporte}"
++
++if [ ! -f "$artifact" ]; then
++  echo "::error::No existe $artifact"
++  exit 1
++fi
++
++mkdir -p "$report/native"
++case "$artifact" in
++  *.aab) pattern='base/lib/*/*.so' ;;
++  *.apk) pattern='lib/*/*.so' ;;
++  *) echo "::error::Formato no soportado: $artifact"; exit 1 ;;
++esac
++
++unzip -q -o "$artifact" "$pattern" -d "$report/native" || true
++find "$report/native" -type f -name '*.so' | sort > "$report/native-libraries.txt"
++
++if [ ! -s "$report/native-libraries.txt" ]; then
++  echo "::error::El artefacto no contiene bibliotecas nativas; revisar el build"
++  exit 1
++fi
++
++incompatible=0
++: > "$report/page-alignment-16kb.txt"
++while IFS= read -r library; do
++  relative="${library#"$report/native/"}"
++  alignments="$(readelf -lW "$library" | awk '$1 == "LOAD" { print $NF }')"
++  printf '%s: %s\n' "$relative" "$alignments" | tee -a "$report/page-alignment-16kb.txt"
++  for alignment in $alignments; do
++    if (( alignment < 0x4000 )); then
++      echo "::error::$relative usa alineación $alignment (< 0x4000)"
++      incompatible=1
++    fi
++  done
++done < "$report/native-libraries.txt"
++
++exit "$incompatible"
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 10bce80..7400cb4 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -40,29 +40,61 @@ jobs:
+         run: flutter pub get
+         working-directory: packages/room_scanner_app
+ 
++      # Ratchet de formato: un archivo nuevo debe estar formateado; un
++      # archivo modificado no puede pasar de formateado a sin formatear.
++      # Los archivos que ya estaban sin formatear solo generan un aviso,
++      # para no mezclar reformateos masivos con cambios funcionales.
+       - name: Verify Dart formatting on changed files
+         shell: bash
+         run: |
+           set -euo pipefail
+           if [ "${{ github.event_name }}" = "pull_request" ]; then
+-            base_ref="origin/${{ github.base_ref }}"
+-            files="$(git diff --name-only "$base_ref"...HEAD -- '*.dart')"
++            base="$(git merge-base "origin/${{ github.base_ref }}" HEAD)"
+           else
+-            files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
++            base="$(git rev-parse HEAD~1 2>/dev/null || true)"
+           fi
+-          files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)"
+-          
++          if [ -z "$base" ]; then
++            echo "Sin commit base; se omite el control de formato."
++            exit 0
++          fi
++
++          files="$(git diff --name-only --diff-filter=AM "$base" HEAD -- '*.dart' \
++            | grep -v '\.g\.dart$' \
++            | grep -v '/l10n/generated/' || true)"
+           if [ -z "$files" ]; then
+-            echo "No changed production Dart files to format-check."
++            echo "No changed Dart files to format-check."
+             exit 0
+           fi
+ 
+-          echo "Formatting changed files..."
+-          echo "$files" | while IFS= read -r file; do
+-            if [ -n "$file" ] && [ -f "$file" ]; then
+-              dart format "$file" || true
++          is_formatted() {
++            dart format --output=none --set-exit-if-changed "$1" >/dev/null 2>&1
++          }
++
++          failed=0
++          while IFS= read -r file; do
++            [ -z "$file" ] && continue
++            [ -f "$file" ] || continue
++            if is_formatted "$file"; then
++              continue
++            fi
++            if git cat-file -e "$base:$file" 2>/dev/null; then
++              # Copia en el mismo directorio: mismo paquete, misma versión
++              # de lenguaje y, por lo tanto, mismo estilo de formato.
++              base_copy="${file%.dart}.__format_base__.dart"
++              git show "$base:$file" > "$base_copy"
++              if is_formatted "$base_copy"; then
++                echo "::error file=$file::Este cambio deja sin formatear un archivo que estaba formateado"
++                failed=1
++              else
++                echo "::warning file=$file::Archivo previamente sin formatear"
++              fi
++              rm -f "$base_copy"
++            else
++              echo "::error file=$file::Archivo nuevo sin formatear (dart format)"
++              failed=1
+             fi
+-          done
++          done <<< "$files"
++          exit "$failed"
+ 
+       - name: Verify publication structure
+         run: dart run packages/room_scanner_app/tool/verify_store_readiness.dart --strict
+@@ -208,6 +240,22 @@ jobs:
+         working-directory: packages/room_scanner_app
+         run: flutter build appbundle --release
+ 
++      - name: Audit 16 KB native alignment
++        working-directory: packages/room_scanner_app
++        run: |
++          bash "$GITHUB_WORKSPACE/.github/scripts/audit_native_alignment.sh" \
++            build/app/outputs/bundle/release/app-release.aab \
++            build/alignment-audit
++
++      - name: Upload alignment report
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: android-16kb-alignment
++          path: packages/room_scanner_app/build/alignment-audit/*.txt
++          if-no-files-found: ignore
++          retention-days: 7
++
+   check-ios:
+     name: Verify iOS Build
+     needs: test-core
+diff --git a/.github/workflows/release_android.yml b/.github/workflows/release_android.yml
+index ed1cdd7..cc8964d 100644
+--- a/.github/workflows/release_android.yml
++++ b/.github/workflows/release_android.yml
+@@ -136,26 +136,7 @@ jobs:
+             exit 1
+           fi
+ 
+-          unzip -q "$aab" 'base/lib/*/*.so' -d "$report/native"
+-          find "$report/native" -type f -name '*.so' | sort > "$report/native-libraries.txt"
+-
+-          incompatible=0
+-          : > "$report/page-alignment-16kb.txt"
+-          while IFS= read -r library; do
+-            relative="${library#"$report/native/"}"
+-            alignments="$(readelf -lW "$library" | awk '$1 == "LOAD" { print $NF }')"
+-            printf '%s: %s\n' "$relative" "$alignments" | tee -a "$report/page-alignment-16kb.txt"
+-            for alignment in $alignments; do
+-              if (( alignment < 0x4000 )); then
+-                echo "::error::$relative usa alineación $alignment (< 0x4000)"
+-                incompatible=1
+-              fi
+-            done
+-          done < "$report/native-libraries.txt"
+-
+-          if [ "$incompatible" -ne 0 ]; then
+-            exit 1
+-          fi
++          bash "$GITHUB_WORKSPACE/.github/scripts/audit_native_alignment.sh" "$aab" "$report"
+ 
+       - name: Upload Android App Bundle
+         uses: actions/upload-artifact@v4
+-- 
+2.43.0
+

@@ -1,0 +1,25 @@
+From 18dc1210fe172b6cad4c90ac34eb1f176b16c2d9 Mon Sep 17 00:00:00 2001
+From: BetO <pepitero@gmail.com>
+Date: Sat, 26 Sep 2026 00:55:26 -0300
+Subject: [PATCH 04/10] refactor: consume Scanner through feature boundary
+
+---
+ packages/room_scanner_app/lib/main.dart | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/room_scanner_app/lib/main.dart b/packages/room_scanner_app/lib/main.dart
+index abcc460..7e24427 100644
+--- a/packages/room_scanner_app/lib/main.dart
++++ b/packages/room_scanner_app/lib/main.dart
+@@ -9,7 +9,7 @@ import 'providers/measurement_settings_provider.dart';
+ import 'providers/project_provider.dart';
+ import 'providers/scanner_provider.dart';
+ import 'screens/dashboard_screen.dart';
+-import 'scanner/scanner_composition.dart';
++import 'features/scanner/scanner_feature.dart';
+ import 'widgets/archscan_logo.dart';
+ 
+ typedef RoomScannerInitializer =
+-- 
+2.43.0
+

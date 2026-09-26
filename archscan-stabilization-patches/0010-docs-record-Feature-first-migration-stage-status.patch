@@ -1,0 +1,36 @@
+From 0399b9163f2a1a3ca8fc83b554193ec62dfd4336 Mon Sep 17 00:00:00 2001
+From: Claude <claude@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 13:39:04 +0000
+Subject: [PATCH 10/10] docs: record Feature-first migration stage status
+
+---
+ docs/ARCHITECTURE_MIGRATION.md | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/docs/ARCHITECTURE_MIGRATION.md b/docs/ARCHITECTURE_MIGRATION.md
+index 9ea0188..252d9b4 100644
+--- a/docs/ARCHITECTURE_MIGRATION.md
++++ b/docs/ARCHITECTURE_MIGRATION.md
+@@ -74,3 +74,19 @@ without moving working implementation files. Existing imports remain valid.
+ 
+ Next stages will migrate Scanner presentation/domain/data behind this boundary,
+ then apply the same pattern to projects and floor plans.
++
++## Estado (rama `refactor/archscan-stabilization`)
++
++| Etapa | Estado |
++|---|---|
++| Seguridad de firma (ver `SECURITY_INCIDENT_2026-09-signing.md`) | hecho |
++| Toolchain Isar reproducible (ver `ISAR_TOOLCHAIN.md`) | hecho, pendiente CI |
++| CI: ratchet de formato y auditoría 16 KB en cada build | hecho, pendiente CI |
++| Frontera de persistencia: `ProjectRepository` / `ProjectSummary` | hecho, pendiente CI |
++| Frontera AR: la UI no importa `ar_flutter_plugin_2` | hecho, pendiente CI |
++| Descomposición de `FloorPlanProvider` | bloqueada hasta CI verde |
++| Descomposición de `floor_plan_viewer_screen` | bloqueada hasta CI verde |
++| Exportaciones detrás de interfaz | bloqueada hasta CI verde |
++| Actualización de dependencias (una por PR) | bloqueada hasta CI verde |
++
++Regla: no se avanza a la siguiente etapa con CI en rojo.
+-- 
+2.43.0
+

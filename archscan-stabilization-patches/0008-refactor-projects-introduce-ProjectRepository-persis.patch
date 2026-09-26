@@ -1,0 +1,553 @@
+From d1f222a70d0cc0ff5beea0986e11294c90260d72 Mon Sep 17 00:00:00 2001
+From: Claude <claude@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 13:36:40 +0000
+Subject: [PATCH 08/10] refactor(projects): introduce ProjectRepository
+ persistence boundary
+
+- core: ProjectSummary domain model, ProjectRepository interface and
+  IsarProjectRepository (delegates to LocalDatabaseService; persisted
+  format unchanged).
+- app: ProjectProvider depends on ProjectRepository (injectable, Isar by
+  default). Isar types no longer reach the UI (dashboard uses
+  ProjectSummary).
+- Tests for the Isar-to-domain mapping and for ProjectProvider over an
+  in-memory repository.
+---
+ .../lib/providers/project_provider.dart       | 120 +++++++++---------
+ .../lib/screens/dashboard_screen.dart         |   6 +-
+ .../project_provider_repository_test.dart     |  85 +++++++++++++
+ .../lib/room_scanner_core.dart                |   3 +
+ .../persistence/isar_project_repository.dart  |  59 +++++++++
+ .../src/persistence/project_repository.dart   |  28 ++++
+ .../lib/src/persistence/project_summary.dart  |  28 ++++
+ .../test/isar_project_repository_test.dart    |  50 ++++++++
+ 8 files changed, 318 insertions(+), 61 deletions(-)
+ create mode 100644 packages/room_scanner_app/test/project_provider_repository_test.dart
+ create mode 100644 packages/room_scanner_core/lib/src/persistence/isar_project_repository.dart
+ create mode 100644 packages/room_scanner_core/lib/src/persistence/project_repository.dart
+ create mode 100644 packages/room_scanner_core/lib/src/persistence/project_summary.dart
+ create mode 100644 packages/room_scanner_core/test/isar_project_repository_test.dart
+
+diff --git a/packages/room_scanner_app/lib/providers/project_provider.dart b/packages/room_scanner_app/lib/providers/project_provider.dart
+index da1d475..b430600 100644
+--- a/packages/room_scanner_app/lib/providers/project_provider.dart
++++ b/packages/room_scanner_app/lib/providers/project_provider.dart
+@@ -4,43 +4,50 @@ import 'package:room_scanner_core/room_scanner_core.dart';
+ import '../services/scan_draft_service.dart';
+ 
+ class ProjectProvider with ChangeNotifier {
+-  final LocalDatabaseService _dbService = LocalDatabaseService();
++  /// Frontera de persistencia. La UI no conoce el motor concreto (Isar).
++  late final ProjectRepository _repository;
+ 
+-  List<IsarProject> _projects = [];
+-  IsarProject? _currentProject;
++  ProjectProvider({ProjectRepository? repository}) {
++    _repository = repository ?? IsarProjectRepository.local();
++  }
++
++  List<ProjectSummary> _projects = [];
++  ProjectSummary? _currentProject;
+   bool _isLoading = false;
+   Future<void> _mutations = Future<void>.value();
+   final Set<String> _deletedIds = <String>{};
+ 
+   Future<void> _serialize(Future<void> Function() action) {
+     final result = _mutations.then((_) => action());
+-    _mutations = result.then<void>((_) {}, onError: (Object error, StackTrace stack) {});
++    _mutations = result.then<void>(
++      (_) {},
++      onError: (Object error, StackTrace stack) {},
++    );
+     return result;
+   }
+ 
+-  List<IsarProject> get projects => _projects;
+-  IsarProject? get currentProject => _currentProject;
++  List<ProjectSummary> get projects => _projects;
++  ProjectSummary? get currentProject => _currentProject;
+   bool get isLoading => _isLoading;
+ 
+-  /// Inicializa la base de datos y carga los proyectos guardados.
++  /// Inicializa el almacenamiento local y carga los proyectos guardados.
+   ///
+   /// `path_provider` (plugin de Flutter con canal nativo) vive acá: el
+-  /// core solo recibe el directorio ya resuelto, ver
+-  /// `LocalDatabaseService.init`.
++  /// repositorio solo recibe el directorio ya resuelto.
+   Future<void> init() async {
+     _setLoading(true);
+     try {
+       final dir = await getApplicationDocumentsDirectory();
+-      await _dbService.init(directoryPath: dir.path);
++      await _repository.open(directoryPath: dir.path);
+       await loadProjects();
+     } finally {
+       _setLoading(false);
+     }
+   }
+ 
+-  /// Carga la lista de proyectos desde Isar
++  /// Carga la lista de proyectos guardados.
+   Future<void> loadProjects() async {
+-    _projects = await _dbService.getAllProjects();
++    _projects = await _repository.getAllProjects();
+     notifyListeners();
+   }
+ 
+@@ -51,27 +58,24 @@ class ProjectProvider with ChangeNotifier {
+     required List<RoomModel> rooms,
+   }) async {
+     return _serialize(() async {
+-    _setLoading(true);
+-
+-    try {
+-      if (_deletedIds.contains(uuid)) throw StateError('Project was deleted.');
+-      await _dbService.saveProject(
+-        uuid: uuid,
+-        name: name,
+-        rooms: rooms,
+-      );
++      _setLoading(true);
+ 
+-      await loadProjects();
+-    } finally {
+-      _setLoading(false);
+-    }
++      try {
++        if (_deletedIds.contains(uuid)) {
++          throw StateError('Project was deleted.');
++        }
++        await _repository.saveProject(uuid: uuid, name: name, rooms: rooms);
+ 
++        await loadProjects();
++      } finally {
++        _setLoading(false);
++      }
+     });
+   }
+ 
+   /// Carga un proyecto para trabajar en él
+-  Future<List<RoomModel>> selectProject(IsarProject project) async {
+-    final rooms = await _dbService.getRoomsForProject(project.uuid);
++  Future<List<RoomModel>> selectProject(ProjectSummary project) async {
++    final rooms = await _repository.getRoomsForProject(project.uuid);
+     _currentProject = project;
+     notifyListeners();
+     return rooms;
+@@ -92,8 +96,8 @@ class ProjectProvider with ChangeNotifier {
+           throw StateError('Project was deleted.');
+         }
+ 
+-        final rooms = await _dbService.getRoomsForProject(uuid);
+-        await _dbService.saveProject(
++        final rooms = await _repository.getRoomsForProject(uuid);
++        await _repository.saveProject(
+           uuid: uuid,
+           name: trimmedName,
+           rooms: rooms,
+@@ -118,18 +122,17 @@ class ProjectProvider with ChangeNotifier {
+   Future<void> deleteProject(String uuid) async {
+     _deletedIds.add(uuid);
+     return _serialize(() async {
+-    _setLoading(true);
+-    try {
+-      await _dbService.deleteProject(uuid);
+-      await const ScanDraftService().clear(uuid, permanentlyDeleted: true);
+-      if (_currentProject?.uuid == uuid) {
+-        _currentProject = null;
++      _setLoading(true);
++      try {
++        await _repository.deleteProject(uuid);
++        await const ScanDraftService().clear(uuid, permanentlyDeleted: true);
++        if (_currentProject?.uuid == uuid) {
++          _currentProject = null;
++        }
++        await loadProjects();
++      } finally {
++        _setLoading(false);
+       }
+-      await loadProjects();
+-    } finally {
+-      _setLoading(false);
+-    }
+-
+     });
+   }
+ 
+@@ -137,28 +140,29 @@ class ProjectProvider with ChangeNotifier {
+   Future<void> deleteAllLocalProjects() async {
+     _deletedIds.addAll(_projects.map((project) => project.uuid));
+     return _serialize(() async {
+-    _setLoading(true);
+-
+-    try {
+-      final projectIds = _projects
+-          .map((project) => project.uuid)
+-          .toList(growable: false);
++      _setLoading(true);
+ 
+-      for (final projectId in projectIds) {
+-        await _dbService.deleteProject(projectId);
+-      }
++      try {
++        final projectIds =
++            _projects.map((project) => project.uuid).toList(growable: false);
+ 
+-      for (final projectId in projectIds) {
+-        await const ScanDraftService().clear(projectId, permanentlyDeleted: true);
+-      }
+-      await const ScanDraftService().clearAll();
++        for (final projectId in projectIds) {
++          await _repository.deleteProject(projectId);
++        }
+ 
+-      _projects = [];
+-      _currentProject = null;
+-    } finally {
+-      _setLoading(false);
+-    }
++        for (final projectId in projectIds) {
++          await const ScanDraftService().clear(
++            projectId,
++            permanentlyDeleted: true,
++          );
++        }
++        await const ScanDraftService().clearAll();
+ 
++        _projects = [];
++        _currentProject = null;
++      } finally {
++        _setLoading(false);
++      }
+     });
+   }
+ 
+diff --git a/packages/room_scanner_app/lib/screens/dashboard_screen.dart b/packages/room_scanner_app/lib/screens/dashboard_screen.dart
+index 4d5bb91..8010c21 100644
+--- a/packages/room_scanner_app/lib/screens/dashboard_screen.dart
++++ b/packages/room_scanner_app/lib/screens/dashboard_screen.dart
+@@ -102,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
+     );
+   }
+ 
+-  Future<void> _renameProject(IsarProject project) async {
++  Future<void> _renameProject(ProjectSummary project) async {
+     final localizations = AppLocalizations.of(context)!;
+     final controller = TextEditingController(text: project.name);
+ 
+@@ -152,7 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
+   }
+ 
+   Future<void> _openProject(
+-    IsarProject project,
++    ProjectSummary project,
+   ) async {
+     final provider = context.read<ProjectProvider>();
+ 
+@@ -180,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
+   }
+ 
+   Future<void> _viewFloorPlan(
+-    IsarProject project,
++    ProjectSummary project,
+   ) async {
+     final provider = context.read<ProjectProvider>();
+ 
+diff --git a/packages/room_scanner_app/test/project_provider_repository_test.dart b/packages/room_scanner_app/test/project_provider_repository_test.dart
+new file mode 100644
+index 0000000..cfbdc76
+--- /dev/null
++++ b/packages/room_scanner_app/test/project_provider_repository_test.dart
+@@ -0,0 +1,85 @@
++import 'package:flutter_test/flutter_test.dart';
++import 'package:room_scanner_ar/providers/project_provider.dart';
++import 'package:room_scanner_core/room_scanner_core.dart';
++
++class _InMemoryProjectRepository implements ProjectRepository {
++  final Map<String, ProjectSummary> projects = {};
++  final Map<String, List<RoomModel>> rooms = {};
++  int _clock = 0;
++
++  DateTime _tick() => DateTime(2026, 1, 1).add(Duration(minutes: _clock++));
++
++  @override
++  Future<void> open({required String directoryPath}) async {}
++
++  @override
++  Future<List<ProjectSummary>> getAllProjects() async {
++    final list = projects.values.toList();
++    list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
++    return list;
++  }
++
++  @override
++  Future<List<RoomModel>> getRoomsForProject(String uuid) async {
++    return List<RoomModel>.of(rooms[uuid] ?? const <RoomModel>[]);
++  }
++
++  @override
++  Future<void> saveProject({
++    required String uuid,
++    required String name,
++    required List<RoomModel> rooms,
++  }) async {
++    final now = _tick();
++    final existing = projects[uuid];
++    projects[uuid] = ProjectSummary(
++      uuid: uuid,
++      name: name,
++      createdAt: existing?.createdAt ?? now,
++      updatedAt: now,
++    );
++    this.rooms[uuid] = List<RoomModel>.of(rooms);
++  }
++
++  @override
++  Future<void> deleteProject(String uuid) async {
++    projects.remove(uuid);
++    rooms.remove(uuid);
++  }
++}
++
++void main() {
++  test('guarda y lista proyectos a través del repositorio', () async {
++    final repository = _InMemoryProjectRepository();
++    final provider = ProjectProvider(repository: repository);
++
++    await provider.saveCurrentProject(uuid: 'a', name: 'A', rooms: const []);
++    await provider.saveCurrentProject(uuid: 'b', name: 'B', rooms: const []);
++
++    expect(provider.projects.map((p) => p.uuid), ['b', 'a']);
++    expect(provider.isLoading, isFalse);
++  });
++
++  test('renombrar conserva UUID y actualiza el proyecto actual', () async {
++    final repository = _InMemoryProjectRepository();
++    final provider = ProjectProvider(repository: repository);
++
++    await provider.saveCurrentProject(uuid: 'a', name: 'A', rooms: const []);
++    await provider.selectProject(provider.projects.single);
++    await provider.renameProject(uuid: 'a', name: '  Living  ');
++
++    expect(provider.projects.single.uuid, 'a');
++    expect(provider.projects.single.name, 'Living');
++    expect(provider.currentProject?.name, 'Living');
++  });
++
++  test('un nombre vacío no modifica el proyecto', () async {
++    final repository = _InMemoryProjectRepository();
++    final provider = ProjectProvider(repository: repository);
++
++    await provider.saveCurrentProject(uuid: 'a', name: 'A', rooms: const []);
++    await provider.renameProject(uuid: 'a', name: '   ');
++
++    expect(provider.projects.single.name, 'A');
++  });
++}
+diff --git a/packages/room_scanner_core/lib/room_scanner_core.dart b/packages/room_scanner_core/lib/room_scanner_core.dart
+index e54abd1..b0d9aad 100644
+--- a/packages/room_scanner_core/lib/room_scanner_core.dart
++++ b/packages/room_scanner_core/lib/room_scanner_core.dart
+@@ -16,6 +16,9 @@ export 'src/geometry/plan_edit_geometry.dart';
+ export 'src/geometry/plan_closure.dart';
+ 
+ export 'src/persistence/local_database_service.dart';
++export 'src/persistence/project_summary.dart';
++export 'src/persistence/project_repository.dart';
++export 'src/persistence/isar_project_repository.dart';
+ 
+ export 'src/export/plan_export_builder.dart';
+ export 'src/export/dimension_layout.dart';
+diff --git a/packages/room_scanner_core/lib/src/persistence/isar_project_repository.dart b/packages/room_scanner_core/lib/src/persistence/isar_project_repository.dart
+new file mode 100644
+index 0000000..e0b474b
+--- /dev/null
++++ b/packages/room_scanner_core/lib/src/persistence/isar_project_repository.dart
+@@ -0,0 +1,59 @@
++import '../models/isar_models.dart';
++import '../models/room_model.dart';
++import 'local_database_service.dart';
++import 'project_repository.dart';
++import 'project_summary.dart';
++
++/// Implementación de [ProjectRepository] sobre Isar Community.
++///
++/// Delega en [LocalDatabaseService] sin cambiar el formato persistido.
++class IsarProjectRepository implements ProjectRepository {
++  final LocalDatabaseService _database;
++
++  IsarProjectRepository(this._database);
++
++  /// Repositorio sobre la base local por defecto de la aplicación.
++  factory IsarProjectRepository.local() {
++    return IsarProjectRepository(LocalDatabaseService());
++  }
++
++  @override
++  Future<void> open({required String directoryPath}) {
++    return _database.init(directoryPath: directoryPath);
++  }
++
++  @override
++  Future<List<ProjectSummary>> getAllProjects() async {
++    final projects = await _database.getAllProjects();
++    return projects.map(toSummary).toList(growable: false);
++  }
++
++  @override
++  Future<List<RoomModel>> getRoomsForProject(String uuid) {
++    return _database.getRoomsForProject(uuid);
++  }
++
++  @override
++  Future<void> saveProject({
++    required String uuid,
++    required String name,
++    required List<RoomModel> rooms,
++  }) {
++    return _database.saveProject(uuid: uuid, name: name, rooms: rooms);
++  }
++
++  @override
++  Future<void> deleteProject(String uuid) {
++    return _database.deleteProject(uuid);
++  }
++
++  /// Convierte la colección Isar al modelo de dominio.
++  static ProjectSummary toSummary(IsarProject project) {
++    return ProjectSummary(
++      uuid: project.uuid,
++      name: project.name,
++      createdAt: project.createdAt,
++      updatedAt: project.updatedAt,
++    );
++  }
++}
+diff --git a/packages/room_scanner_core/lib/src/persistence/project_repository.dart b/packages/room_scanner_core/lib/src/persistence/project_repository.dart
+new file mode 100644
+index 0000000..5ca2b50
+--- /dev/null
++++ b/packages/room_scanner_core/lib/src/persistence/project_repository.dart
+@@ -0,0 +1,28 @@
++import '../models/room_model.dart';
++import 'project_summary.dart';
++
++/// Contrato de persistencia local de proyectos.
++///
++/// Es la frontera entre la aplicación y el motor de almacenamiento. La
++/// implementación actual es [IsarProjectRepository]; un backend futuro debe
++/// respetar el mismo comportamiento observable.
++abstract interface class ProjectRepository {
++  /// Abre el almacenamiento local en [directoryPath].
++  Future<void> open({required String directoryPath});
++
++  /// Proyectos ordenados por fecha de actualización descendente.
++  Future<List<ProjectSummary>> getAllProjects();
++
++  /// Ambientes del proyecto [uuid], o una lista vacía si no existe.
++  Future<List<RoomModel>> getRoomsForProject(String uuid);
++
++  /// Crea o reemplaza el proyecto [uuid] con sus ambientes completos.
++  Future<void> saveProject({
++    required String uuid,
++    required String name,
++    required List<RoomModel> rooms,
++  });
++
++  /// Elimina el proyecto [uuid] y todos sus ambientes.
++  Future<void> deleteProject(String uuid);
++}
+diff --git a/packages/room_scanner_core/lib/src/persistence/project_summary.dart b/packages/room_scanner_core/lib/src/persistence/project_summary.dart
+new file mode 100644
+index 0000000..6e2be22
+--- /dev/null
++++ b/packages/room_scanner_core/lib/src/persistence/project_summary.dart
+@@ -0,0 +1,28 @@
++/// Resumen de un proyecto guardado, independiente del motor de persistencia.
++///
++/// La UI trabaja con este tipo en lugar de las colecciones Isar, de modo que
++/// cambiar el backend local no obliga a tocar pantallas ni providers.
++class ProjectSummary {
++  final String uuid;
++  final String name;
++  final DateTime createdAt;
++  final DateTime updatedAt;
++
++  const ProjectSummary({
++    required this.uuid,
++    required this.name,
++    required this.createdAt,
++    required this.updatedAt,
++  });
++
++  @override
++  bool operator ==(Object other) =>
++      other is ProjectSummary &&
++      other.uuid == uuid &&
++      other.name == name &&
++      other.createdAt == createdAt &&
++      other.updatedAt == updatedAt;
++
++  @override
++  int get hashCode => Object.hash(uuid, name, createdAt, updatedAt);
++}
+diff --git a/packages/room_scanner_core/test/isar_project_repository_test.dart b/packages/room_scanner_core/test/isar_project_repository_test.dart
+new file mode 100644
+index 0000000..cea586d
+--- /dev/null
++++ b/packages/room_scanner_core/test/isar_project_repository_test.dart
+@@ -0,0 +1,50 @@
++import 'package:room_scanner_core/room_scanner_core.dart';
++import 'package:test/test.dart';
++
++void main() {
++  test('convierte IsarProject en ProjectSummary sin perder datos', () {
++    final createdAt = DateTime(2026, 9, 1, 10, 30);
++    final updatedAt = DateTime(2026, 9, 20, 18, 5);
++    final project = IsarProject();
++    project.uuid = 'project-1';
++    project.name = 'Departamento Colegiales';
++    project.createdAt = createdAt;
++    project.updatedAt = updatedAt;
++
++    final summary = IsarProjectRepository.toSummary(project);
++
++    final expected = ProjectSummary(
++      uuid: 'project-1',
++      name: 'Departamento Colegiales',
++      createdAt: createdAt,
++      updatedAt: updatedAt,
++    );
++    expect(summary, expected);
++  });
++
++  test('ProjectSummary compara por valor', () {
++    final date = DateTime(2026, 1, 1);
++    final a = ProjectSummary(
++      uuid: 'a',
++      name: 'A',
++      createdAt: date,
++      updatedAt: date,
++    );
++    final b = ProjectSummary(
++      uuid: 'a',
++      name: 'A',
++      createdAt: date,
++      updatedAt: date,
++    );
++    final renamed = ProjectSummary(
++      uuid: 'a',
++      name: 'B',
++      createdAt: date,
++      updatedAt: date,
++    );
++
++    expect(a, b);
++    expect(a.hashCode, b.hashCode);
++    expect(a == renamed, isFalse);
++  });
++}
+-- 
+2.43.0
+

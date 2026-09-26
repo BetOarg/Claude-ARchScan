@@ -1,0 +1,298 @@
+From 469b48fcecebef41fb017f050a48235d113b3c30 Mon Sep 17 00:00:00 2001
+From: Claude <claude@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 13:38:56 +0000
+Subject: [PATCH 09/10] refactor(scanner): keep ar_flutter_plugin_2 types out
+ of the scanner UI
+
+- New ArchScanArSession: opaque handle carrying the native AR managers
+  from ArchScanArView to ARScannerAdapter.
+- ArchScanPlaneDetection replaces PlaneDetectionConfig at the UI level.
+- ARScannerScreen no longer imports the plugin. The removed
+  _arSessionManager/_arObjectManager fields were write-only.
+- Plugin imports now live only in scanner/ar, scanner/widgets and
+  scanner/adapters, so replacing the plugin does not touch screens.
+---
+ .../scanner/adapters/ar_scanner_adapter.dart  | 10 ++++
+ .../lib/scanner/ar/archscan_ar_session.dart   | 38 +++++++++++++
+ .../lib/scanner/widgets/archscan_ar_view.dart | 45 +++++++++++-----
+ .../lib/screens/ar_scanner_screen.dart        | 54 +++----------------
+ 4 files changed, 85 insertions(+), 62 deletions(-)
+ create mode 100644 packages/room_scanner_app/lib/scanner/ar/archscan_ar_session.dart
+
+diff --git a/packages/room_scanner_app/lib/scanner/adapters/ar_scanner_adapter.dart b/packages/room_scanner_app/lib/scanner/adapters/ar_scanner_adapter.dart
+index c4027ca..2e55a51 100644
+--- a/packages/room_scanner_app/lib/scanner/adapters/ar_scanner_adapter.dart
++++ b/packages/room_scanner_app/lib/scanner/adapters/ar_scanner_adapter.dart
+@@ -5,6 +5,7 @@ import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
+ import 'package:flutter/services.dart';
+ import 'package:vector_math/vector_math_64.dart' as vector;
+ 
++import '../ar/archscan_ar_session.dart';
+ import '../engine/scanner_adapter.dart';
+ import '../models/scanner_mode.dart';
+ import '../models/scanner_point.dart';
+@@ -38,6 +39,15 @@ class ARScannerAdapter implements ScannerAdapter {
+   @override
+   bool get isTracking => _tracking;
+ 
++  /// Conecta la sesión creada por `ArchScanArView`.
++  void attachSession(ArchScanArSession session) {
++    attachARSession(
++      viewId: session.viewId,
++      sessionManager: session.sessionManager,
++      objectManager: session.objectManager,
++    );
++  }
++
+   /// El adapter AR necesita recibir los managers creados por ARView.
+   ///
+   /// ARView sigue perteneciendo a la UI.
+diff --git a/packages/room_scanner_app/lib/scanner/ar/archscan_ar_session.dart b/packages/room_scanner_app/lib/scanner/ar/archscan_ar_session.dart
+new file mode 100644
+index 0000000..defb662
+--- /dev/null
++++ b/packages/room_scanner_app/lib/scanner/ar/archscan_ar_session.dart
+@@ -0,0 +1,38 @@
++import 'package:ar_flutter_plugin_2/managers/ar_anchor_manager.dart';
++import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
++import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
++import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
++
++/// Detección de planos solicitada a la sesión AR nativa.
++enum ArchScanPlaneDetection {
++  none,
++  horizontal,
++  vertical,
++  horizontalAndVertical,
++}
++
++/// Sesión AR nativa creada por `ArchScanArView`.
++///
++/// Es el único tipo que transporta los managers de `ar_flutter_plugin_2`
++/// entre la vista nativa y `ARScannerAdapter`. Las pantallas lo reciben como
++/// un handle opaco, de modo que reemplazar el plugin no obliga a tocar la UI.
++class ArchScanArSession {
++  final int viewId;
++  final ARSessionManager sessionManager;
++  final ARObjectManager objectManager;
++  final ARAnchorManager anchorManager;
++  final ARLocationManager locationManager;
++
++  const ArchScanArSession({
++    required this.viewId,
++    required this.sessionManager,
++    required this.objectManager,
++    required this.anchorManager,
++    required this.locationManager,
++  });
++
++  /// Libera la sesión nativa.
++  void dispose() {
++    sessionManager.dispose();
++  }
++}
+diff --git a/packages/room_scanner_app/lib/scanner/widgets/archscan_ar_view.dart b/packages/room_scanner_app/lib/scanner/widgets/archscan_ar_view.dart
+index 27bd7b8..8d4bbd4 100644
+--- a/packages/room_scanner_app/lib/scanner/widgets/archscan_ar_view.dart
++++ b/packages/room_scanner_app/lib/scanner/widgets/archscan_ar_view.dart
+@@ -7,37 +7,54 @@ import 'package:flutter/foundation.dart';
+ import 'package:flutter/material.dart';
+ import 'package:flutter/services.dart';
+ 
+-typedef ArchScanArViewCreatedCallback = void Function(
+-  int viewId,
+-  ARSessionManager sessionManager,
+-  ARObjectManager objectManager,
+-  ARAnchorManager anchorManager,
+-  ARLocationManager locationManager,
+-);
++import '../ar/archscan_ar_session.dart';
++
++typedef ArchScanArViewCreatedCallback =
++    void Function(ArchScanArSession session);
+ 
+ /// Thin platform-view bridge that exposes the native view id.
+ ///
+ /// `ar_flutter_plugin_2` hides this id, although Android's camera-pose channel
+ /// needs it. Camera permissions remain owned by the existing scanner flow.
++/// Plugin types stay inside this file and [ArchScanArSession].
+ class ArchScanArView extends StatelessWidget {
+   final ArchScanArViewCreatedCallback onCreated;
+-  final PlaneDetectionConfig planeDetectionConfig;
++  final ArchScanPlaneDetection planeDetection;
+ 
+   const ArchScanArView({
+     super.key,
+     required this.onCreated,
+-    this.planeDetectionConfig = PlaneDetectionConfig.none,
++    this.planeDetection = ArchScanPlaneDetection.none,
+   });
+ 
++  static PlaneDetectionConfig _toPluginConfig(ArchScanPlaneDetection value) {
++    switch (value) {
++      case ArchScanPlaneDetection.none:
++        return PlaneDetectionConfig.none;
++      case ArchScanPlaneDetection.horizontal:
++        return PlaneDetectionConfig.horizontal;
++      case ArchScanPlaneDetection.vertical:
++        return PlaneDetectionConfig.vertical;
++      case ArchScanPlaneDetection.horizontalAndVertical:
++        return PlaneDetectionConfig.horizontalAndVertical;
++    }
++  }
++
+   @override
+   Widget build(BuildContext context) {
+     void created(int id) {
+       onCreated(
+-        id,
+-        ARSessionManager(id, context, planeDetectionConfig),
+-        ARObjectManager(id),
+-        ARAnchorManager(id),
+-        ARLocationManager(),
++        ArchScanArSession(
++          viewId: id,
++          sessionManager: ARSessionManager(
++            id,
++            context,
++            _toPluginConfig(planeDetection),
++          ),
++          objectManager: ARObjectManager(id),
++          anchorManager: ARAnchorManager(id),
++          locationManager: ARLocationManager(),
++        ),
+       );
+     }
+ 
+diff --git a/packages/room_scanner_app/lib/screens/ar_scanner_screen.dart b/packages/room_scanner_app/lib/screens/ar_scanner_screen.dart
+index 6b4e487..2bb10cd 100644
+--- a/packages/room_scanner_app/lib/screens/ar_scanner_screen.dart
++++ b/packages/room_scanner_app/lib/screens/ar_scanner_screen.dart
+@@ -1,11 +1,6 @@
+ import 'dart:async';
+ import 'dart:convert';
+ 
+-import 'package:ar_flutter_plugin_2/datatypes/config_planedetection.dart';
+-import 'package:ar_flutter_plugin_2/managers/ar_anchor_manager.dart';
+-import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
+-import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
+-import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
+ import 'package:flutter/material.dart';
+ import 'package:flutter/services.dart';
+ import 'package:provider/provider.dart';
+@@ -28,6 +23,7 @@ import '../widgets/opening_placement_dialog.dart'
+ import '../widgets/scanner_plan_opening_hint.dart';
+ import '../widgets/scanner_guide_painter.dart';
+ import '../scanner/adapters/ar_scanner_adapter.dart';
++import '../scanner/ar/archscan_ar_session.dart';
+ import '../scanner/widgets/archscan_ar_view.dart';
+ import 'basic_scanner_screen.dart';
+ import 'floor_plan_viewer_screen.dart';
+@@ -90,8 +86,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
+   // CONTROLADORES AR
+   // ================================================================
+ 
+-  ARSessionManager? _arSessionManager;
+-  ARObjectManager? _arObjectManager;
+   static const Duration _arInitializationTimeout = Duration(seconds: 15);
+   Future<void> _arLifecycleTask = Future<void>.value();
+   Timer? _arInitializationTimer;
+@@ -336,8 +330,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
+       context.read<ScannerProvider>().updateTrackingStatus(false);
+     }
+ 
+-    _arSessionManager = null;
+-    _arObjectManager = null;
+     await _arScannerAdapter.dispose();
+   }
+ 
+@@ -365,9 +357,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
+ 
+     unawaited(_arScannerAdapter.dispose());
+ 
+-    _arSessionManager = null;
+-    _arObjectManager = null;
+-
+     super.dispose();
+   }
+ 
+@@ -375,30 +364,17 @@ class _ARScannerScreenState extends State<ARScannerScreen>
+   // AR VIEW
+   // ================================================================
+ 
+-  void _onARViewCreated(
+-    int generation,
+-    int viewId,
+-    ARSessionManager arSessionManager,
+-    ARObjectManager arObjectManager,
+-    ARAnchorManager arAnchorManager,
+-    ARLocationManager arLocationManager,
+-  ) {
++  void _onARViewCreated(int generation, ArchScanArSession session) {
+     if (!mounted || !_appIsResumed || generation != _arViewGeneration) {
+-      arSessionManager.dispose();
++      session.dispose();
+       return;
+     }
+ 
+     _arInitializationTimer?.cancel();
+     _arSessionReady = true;
+     _arInitializationFailed = false;
+-    _arSessionManager = arSessionManager;
+-    _arObjectManager = arObjectManager;
+ 
+-    _arScannerAdapter.attachARSession(
+-      viewId: viewId,
+-      sessionManager: arSessionManager,
+-      objectManager: arObjectManager,
+-    );
++    _arScannerAdapter.attachSession(session);
+ 
+     context.read<ScannerProvider>().updateTrackingStatus(true);
+   }
+@@ -419,8 +395,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
+         return;
+       }
+ 
+-      _arSessionManager = null;
+-      _arObjectManager = null;
+       unawaited(_arScannerAdapter.dispose());
+ 
+       setState(() {
+@@ -434,8 +408,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
+ 
+   Future<void> _retryArInitialization() async {
+     _arInitializationTimer?.cancel();
+-    _arSessionManager = null;
+-    _arObjectManager = null;
+     await _arScannerAdapter.dispose();
+ 
+     if (!mounted || !_appIsResumed) {
+@@ -589,22 +561,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
+ 
+           ArchScanArView(
+             key: ValueKey<int>(arViewGeneration),
+-            onCreated:
+-                (
+-                  viewId,
+-                  sessionManager,
+-                  objectManager,
+-                  anchorManager,
+-                  locationManager,
+-                ) => _onARViewCreated(
+-                  arViewGeneration,
+-                  viewId,
+-                  sessionManager,
+-                  objectManager,
+-                  anchorManager,
+-                  locationManager,
+-                ),
+-            planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
++            onCreated: (session) => _onARViewCreated(arViewGeneration, session),
++            planeDetection: ArchScanPlaneDetection.horizontalAndVertical,
+           ),
+ 
+           // ============================================================
+-- 
+2.43.0
+

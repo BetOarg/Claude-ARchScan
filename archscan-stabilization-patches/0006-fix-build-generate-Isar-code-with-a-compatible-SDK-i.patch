@@ -1,0 +1,299 @@
+From 9f0eb6b066bb780e9e108a90b78d6668bfdd64a6 Mon Sep 17 00:00:00 2001
+From: Claude <claude@users.noreply.github.com>
+Date: Sat, 26 Sep 2026 13:34:26 +0000
+Subject: [PATCH 06/10] fix(build): generate Isar code with a compatible SDK
+ instead of pinning analyzer
+
+isar_community_generator 3.3.2 only supports analyzer <11, which cannot
+process Dart 3.13 (Flutter 3.47). Every CI run since the Isar Community
+migration failed at code generation.
+
+- New composite action .github/actions/isar-codegen generates the models
+  with Flutter 3.41.4; the rest of each job keeps FLUTTER_VERSION.
+- Used by ci, build_apk, release_android and release_ios.
+- Pin isar_community, generator and flutter_libs to exactly 3.3.2.
+- build_runner ^2.15.1, no analyzer/dart_style pins, no overrides.
+- Replace deprecated 'flutter pub run'.
+- docs/ISAR_TOOLCHAIN.md documents evidence, sources and exit criteria.
+---
+ .github/actions/isar-codegen/action.yml | 30 ++++++++++++++
+ .github/workflows/build_apk.yml         | 11 +++--
+ .github/workflows/ci.yml                | 15 +++----
+ .github/workflows/release_android.yml   | 11 +++--
+ .github/workflows/release_ios.yml       | 11 +++--
+ docs/ISAR_TOOLCHAIN.md                  | 55 +++++++++++++++++++++++++
+ packages/room_scanner_app/pubspec.yaml  |  3 +-
+ packages/room_scanner_core/pubspec.yaml | 14 ++++---
+ 8 files changed, 116 insertions(+), 34 deletions(-)
+ create mode 100644 .github/actions/isar-codegen/action.yml
+ create mode 100644 docs/ISAR_TOOLCHAIN.md
+
+diff --git a/.github/actions/isar-codegen/action.yml b/.github/actions/isar-codegen/action.yml
+new file mode 100644
+index 0000000..31ba10f
+--- /dev/null
++++ b/.github/actions/isar-codegen/action.yml
+@@ -0,0 +1,30 @@
++name: Isar code generation
++description: >
++  Genera isar_models.g.dart con un SDK de Flutter compatible con
++  isar_community_generator. Ver docs/ISAR_TOOLCHAIN.md.
++
++inputs:
++  flutter-version:
++    description: Versión de Flutter usada SOLO para generar código Isar.
++    required: false
++    default: "3.41.4"
++
++runs:
++  using: composite
++  steps:
++    - name: Set up Flutter for Isar codegen
++      uses: subosito/flutter-action@v2
++      with:
++        flutter-version: ${{ inputs.flutter-version }}
++        channel: stable
++        cache: true
++
++    - name: Generate Isar models (room_scanner_core)
++      shell: bash
++      working-directory: packages/room_scanner_core
++      run: |
++        set -euo pipefail
++        flutter --version
++        flutter pub get
++        dart run build_runner build --delete-conflicting-outputs
++        test -s lib/src/models/isar_models.g.dart
+diff --git a/.github/workflows/build_apk.yml b/.github/workflows/build_apk.yml
+index 2dd7381..ac9ae18 100644
+--- a/.github/workflows/build_apk.yml
++++ b/.github/workflows/build_apk.yml
+@@ -53,6 +53,11 @@ jobs:
+             exit 1
+           fi
+ 
++      # Código Isar generado con el SDK compatible con el generador
++      # (docs/ISAR_TOOLCHAIN.md) antes de instalar FLUTTER_VERSION.
++      - name: Generate Isar models
++        uses: ./.github/actions/isar-codegen
++
+       - name: Set up Flutter
+         uses: subosito/flutter-action@v2
+         with:
+@@ -60,12 +65,6 @@ jobs:
+           channel: stable
+           cache: true
+ 
+-      - name: Generate Isar database models (room_scanner_core)
+-        run: |
+-          dart pub get
+-          dart run build_runner build --delete-conflicting-outputs
+-        working-directory: packages/room_scanner_core
+-
+       - name: Install dependencies and generate localizations
+         working-directory: packages/room_scanner_app
+         run: |
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 0f4a5f6..10bce80 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -78,6 +78,11 @@ jobs:
+       - name: Checkout repository
+         uses: actions/checkout@v4
+ 
++      # Código Isar generado con el SDK compatible con el generador
++      # (docs/ISAR_TOOLCHAIN.md). El resto del job usa FLUTTER_VERSION.
++      - name: Generate Isar models
++        uses: ./.github/actions/isar-codegen
++
+       - name: Set up Flutter
+         uses: subosito/flutter-action@v2
+         with:
+@@ -85,18 +90,10 @@ jobs:
+           channel: "stable"
+           cache: true
+ 
+-      - name: Get dependencies
++      - name: Get dependencies (room_scanner_core)
+         run: flutter pub get
+         working-directory: packages/room_scanner_core
+ 
+-      - name: Generate Isar / Build Runner code
+-        run: flutter pub run build_runner build --delete-conflicting-outputs
+-        working-directory: packages/room_scanner_core
+-
+-      - name: Dependency visibility — pub outdated
+-        working-directory: packages/room_scanner_app
+-        run: flutter pub outdated
+-
+       - name: Generate app localizations
+         working-directory: packages/room_scanner_app
+         run: |
+diff --git a/.github/workflows/release_android.yml b/.github/workflows/release_android.yml
+index 8a9f3d2..ed1cdd7 100644
+--- a/.github/workflows/release_android.yml
++++ b/.github/workflows/release_android.yml
+@@ -52,6 +52,11 @@ jobs:
+       - name: Install Android API 36
+         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+ 
++      # Código Isar generado con el SDK compatible con el generador
++      # (docs/ISAR_TOOLCHAIN.md) antes de instalar FLUTTER_VERSION.
++      - name: Generate Isar models
++        uses: ./.github/actions/isar-codegen
++
+       - name: Set up Flutter
+         uses: subosito/flutter-action@v2
+         with:
+@@ -64,12 +69,6 @@ jobs:
+         with:
+           gradle-version: '8.14'
+ 
+-      - name: Generate core models
+-        working-directory: packages/room_scanner_core
+-        run: |
+-          flutter pub get
+-          flutter pub run build_runner build --delete-conflicting-outputs
+-
+       - name: Prepare app and audit repository before signing
+         working-directory: packages/room_scanner_app
+         run: |
+diff --git a/.github/workflows/release_ios.yml b/.github/workflows/release_ios.yml
+index 05cfbe2..6ccf0bd 100644
+--- a/.github/workflows/release_ios.yml
++++ b/.github/workflows/release_ios.yml
+@@ -64,6 +64,11 @@ jobs:
+             exit 1
+           fi
+ 
++      # Código Isar generado con el SDK compatible con el generador
++      # (docs/ISAR_TOOLCHAIN.md) antes de instalar FLUTTER_VERSION.
++      - name: Generate Isar models
++        uses: ./.github/actions/isar-codegen
++
+       - name: Set up Flutter
+         uses: subosito/flutter-action@v2
+         with:
+@@ -71,12 +76,6 @@ jobs:
+           channel: stable
+           cache: true
+ 
+-      - name: Generate core models
+-        working-directory: packages/room_scanner_core
+-        run: |
+-          flutter pub get
+-          flutter pub run build_runner build --delete-conflicting-outputs
+-
+       - name: Install Apple certificate and provisioning profile
+         working-directory: packages/room_scanner_app
+         shell: bash
+diff --git a/docs/ISAR_TOOLCHAIN.md b/docs/ISAR_TOOLCHAIN.md
+new file mode 100644
+index 0000000..adcf248
+--- /dev/null
++++ b/docs/ISAR_TOOLCHAIN.md
+@@ -0,0 +1,55 @@
++# Toolchain de generación Isar
++
++## Decisión
++
++`isar_models.g.dart` se genera con **Flutter 3.41.4 (Dart 3.11)** mediante
++`.github/actions/isar-codegen`. Análisis, tests y builds siguen usando
++`FLUTTER_VERSION` (3.47.0). El código generado no depende de la versión del
++SDK que lo ejecuta.
++
++Las tres piezas de Isar se fijan a la misma versión exacta (`3.3.2`), como
++indica el quickstart oficial de `isar_community`.
++
++No se usan `dependency_overrides` ni pins de `analyzer`/`dart_style`.
++
++## Por qué
++
++- `isar_community_generator 3.3.2` declara `analyzer >=8.0.0 <11.0.0`.
++- Flutter 3.47 trae Dart 3.13; el ecosistema que lo soporta está en analyzer
++  13+ (`build_runner 2.16.1` exige `analyzer >=13.3.0`).
++- En CI, con Flutter 3.47, `pub get` resuelve pero el paso de generación falla
++  en todas las corridas desde la migración a Isar Community (265–271).
++- La misma combinación (generator 3.3.2, build_runner 2.15.1, analyzer 10.0.1,
++  dart_style 3.1.7, source_gen 4.2.4) genera correctamente con Flutter 3.41.4
++  en un proyecto público: https://github.com/arcbyte-lab/Santian
++- Intentos descartados (rama `refactor/feature-first-foundation`): pinear
++  `analyzer 8.4.1` + `dart_style 3.1.3`, override a `analyzer 11.0.0`,
++  bajar el generador a 3.3.0. Todos rompen la resolución o la generación.
++
++## Desarrollo local
++
++```bash
++# con Flutter 3.41.x activo (fvm, puro o instalación paralela)
++cd packages/room_scanner_core
++flutter pub get
++dart run build_runner build --delete-conflicting-outputs
++```
++
++Después se puede volver a Flutter 3.47 para correr, analizar y compilar.
++
++## Cuándo eliminar esta restricción
++
++Cuando se publique un `isar_community_generator` con soporte de analyzer
++>=12 (upstream: issue #130, PR #139 en isar-community/isar-community).
++En ese momento: subir las tres piezas de Isar juntas, borrar la acción
++`isar-codegen` y volver a generar con `FLUTTER_VERSION`.
++
++## Riesgos conocidos de Isar Community 3.3.2 (upstream)
++
++| Issue | Estado | Impacto |
++|---|---|---|
++| #135 crash Scudo en Android 16 al liberar resultados | abierto | `targetSdk` 36 |
++| #115 autoincrement no persiste entre reinicios (fix #131 sin publicar) | abierto | bajo: las rooms se reescriben completas y se identifican por UUID |
++| #113 / #121 "Incorrect Isar Core version" | abiertos | mitigado con versión exacta |
++| #126 placeholder `KGP_VERSION` en `flutter_libs` publicado | cerrado | el tag 3.3.2 está limpio; lo detecta el build Android |
++| #138 dudas de mantenimiento | abierto | justifica aislar la persistencia detrás de un repositorio |
+diff --git a/packages/room_scanner_app/pubspec.yaml b/packages/room_scanner_app/pubspec.yaml
+index 84f8907..4f23185 100644
+--- a/packages/room_scanner_app/pubspec.yaml
++++ b/packages/room_scanner_app/pubspec.yaml
+@@ -56,7 +56,8 @@ dependencies:
+ 
+   # Binarios nativos de Isar. Viven exclusivamente acá: room_scanner_core
+   # solo declara el paquete "isar" (anotaciones/runtime), no sus binarios.
+-  isar_community_flutter_libs: ^3.3.2
++  # Misma versión exacta que isar_community en room_scanner_core.
++  isar_community_flutter_libs: 3.3.2
+ 
+   # Logotipo vectorial oficial de ARchScan
+   flutter_svg: ^2.0.10+1
+diff --git a/packages/room_scanner_core/pubspec.yaml b/packages/room_scanner_core/pubspec.yaml
+index f8ed5f3..fe4fe26 100644
+--- a/packages/room_scanner_core/pubspec.yaml
++++ b/packages/room_scanner_core/pubspec.yaml
+@@ -14,7 +14,7 @@ environment:
+ dependencies:
+   # Base de datos local NoSQL. Los binarios nativos 16 KB se aportan
+   # mediante isar_community_flutter_libs en la app.
+-  isar_community: ^3.3.2
++  isar_community: 3.3.2
+ 
+   # Matemáticas vectoriales para los puntos 3D del plano.
+   vector_math: ^2.1.4
+@@ -27,11 +27,13 @@ dev_dependencies:
+   test: ^1.25.0
+   lints: ^3.0.0
+ 
+-  # Generador de código compatible con el fork comunitario de Isar.
+-  # 2.11.1 mantiene el modo de compilación anterior al cambio a AOT.
+-  build_runner: 2.11.1
+-  isar_community_generator: ^3.3.2
++  # Generador de Isar Community. Las tres piezas de Isar van fijadas a la
++  # misma versión exacta: el runtime valida la versión del core nativo.
++  # El generador solo acepta analyzer <11, que no soporta Dart 3.13; el
++  # código se genera con el SDK indicado en docs/ISAR_TOOLCHAIN.md.
++  build_runner: ^2.15.1
++  isar_community_generator: 3.3.2
+ 
+   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
+   # locales de integración de este paquete.
+-  isar_community_flutter_libs: ^3.3.2
++  isar_community_flutter_libs: 3.3.2
+-- 
+2.43.0
+

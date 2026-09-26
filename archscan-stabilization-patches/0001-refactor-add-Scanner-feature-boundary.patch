@@ -1,0 +1,36 @@
+From 0571694cf439986a5e12f0902eac4b34140825c1 Mon Sep 17 00:00:00 2001
+From: BetO <pepitero@gmail.com>
+Date: Sat, 26 Sep 2026 00:55:13 -0300
+Subject: [PATCH 01/10] refactor: add Scanner feature boundary
+
+---
+ .../lib/features/scanner/scanner_feature.dart   | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+ create mode 100644 packages/room_scanner_app/lib/features/scanner/scanner_feature.dart
+
+diff --git a/packages/room_scanner_app/lib/features/scanner/scanner_feature.dart b/packages/room_scanner_app/lib/features/scanner/scanner_feature.dart
+new file mode 100644
+index 0000000..0f76355
+--- /dev/null
++++ b/packages/room_scanner_app/lib/features/scanner/scanner_feature.dart
+@@ -0,0 +1,17 @@
++/// Public entry point for the Scanner feature.
++///
++/// This is the first compatibility seam of the Feature-first migration.
++/// Concrete implementations remain in the existing scanner tree until each
++/// responsibility has been migrated and verified independently.
++library;
++
++export '../../scanner/adapters/ar_scanner_adapter.dart';
++export '../../scanner/adapters/basic_scanner_adapter.dart';
++export '../../scanner/engine/scanner_adapter.dart';
++export '../../scanner/engine/scanner_engine.dart';
++export '../../scanner/engine/scanner_mode_resolver.dart';
++export '../../scanner/factories/scanner_factory.dart';
++export '../../scanner/models/scanner_mode.dart';
++export '../../scanner/models/scanner_point.dart';
++export '../../scanner/models/scanner_sensor_state.dart';
++export '../../scanner/navigation/scanner_launch_request.dart';
+-- 
+2.43.0
+
