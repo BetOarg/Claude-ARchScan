@@ -30,15 +30,14 @@ dev_dependencies:
   # Generador de código compatible con el fork comunitario de Isar.
   # Se fija en 2.10.5 para mantener una combinación estable con
   # isar_community_generator 3.3.2 durante la migración.
-  build_runner: 2.10.5
-  isar_community_generator: ^3.3.2
+  build_runner: 2.15.1
+  isar_community_generator: 3.3.0
 
   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
   # locales de integración de este paquete.
   isar_community_flutter_libs: ^3.3.2
 
-# Isar Community 3.3.2 declara compatibilidad hasta analyzer <11,
-# pero Dart 3.13 requiere un analyzer que entienda su versión de lenguaje.
-# Se fuerza 11.0.0 mientras completamos la migración de persistencia.
+# Stack de generación compatible con Dart 3.13 y el generador Isar Community 3.3.0.
 dependency_overrides:
-  analyzer: 11.0.0
+  analyzer: 8.4.1
+  dart_style: 3.1.3
