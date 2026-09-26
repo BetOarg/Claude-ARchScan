@@ -37,6 +37,3 @@ dev_dependencies:
   # supports analyzer >=8.0.0 <11.0.0 and fixes analyzer 10.x support.
   analyzer: 10.2.0
 
-  # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
-  # locales de integración de este paquete.
-  isar_community_flutter_libs: 3.3.2
