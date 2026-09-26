@@ -89,9 +89,30 @@ jobs:
         run: flutter pub get
         working-directory: packages/room_scanner_core
 
-      - name: Generate Isar / Build Runner code
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+      - name: Set up Flutter for Isar code generation
+        uses: subosito/flutter-action@v2
+        with:
+          # Isar Community 3.3.2 requires Dart >=3.9 and supports analyzer <11.
+          # Flutter 3.35.0 provides Dart 3.9.x, avoiding the Dart 3.13/analyzer
+          # language-version mismatch of the application toolchain.
+          flutter-version: "3.35.0"
+          channel: "stable"
+          cache: true
+
+      - name: Refresh dependencies for Isar generation toolchain
+        run: flutter pub get
         working-directory: packages/room_scanner_core
+
+      - name: Generate Isar / Build Runner code
+        run: dart run build_runner build
+        working-directory: packages/room_scanner_core
+
+      - name: Restore application Flutter toolchain
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "${{ env.FLUTTER_VERSION }}"
+          channel: "stable"
+          cache: true
 
       - name: Dependency visibility — pub outdated
         working-directory: packages/room_scanner_app

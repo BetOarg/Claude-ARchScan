@@ -1,11 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:ar_flutter_plugin_2/datatypes/config_planedetection.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_anchor_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +23,7 @@ import '../widgets/opening_placement_dialog.dart'
 import '../widgets/scanner_plan_opening_hint.dart';
 import '../widgets/scanner_guide_painter.dart';
 import '../scanner/adapters/ar_scanner_adapter.dart';
+import '../scanner/ar/archscan_ar_session.dart';
 import '../scanner/widgets/archscan_ar_view.dart';
 import 'basic_scanner_screen.dart';
 import 'floor_plan_viewer_screen.dart';
@@ -90,8 +86,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   // CONTROLADORES AR
   // ================================================================
 
-  ARSessionManager? _arSessionManager;
-  ARObjectManager? _arObjectManager;
   static const Duration _arInitializationTimeout = Duration(seconds: 15);
   Future<void> _arLifecycleTask = Future<void>.value();
   Timer? _arInitializationTimer;
@@ -336,8 +330,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       context.read<ScannerProvider>().updateTrackingStatus(false);
     }
 
-    _arSessionManager = null;
-    _arObjectManager = null;
     await _arScannerAdapter.dispose();
   }
 
@@ -365,9 +357,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
     unawaited(_arScannerAdapter.dispose());
 
-    _arSessionManager = null;
-    _arObjectManager = null;
-
     super.dispose();
   }
 
@@ -375,30 +364,17 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   // AR VIEW
   // ================================================================
 
-  void _onARViewCreated(
-    int generation,
-    int viewId,
-    ARSessionManager arSessionManager,
-    ARObjectManager arObjectManager,
-    ARAnchorManager arAnchorManager,
-    ARLocationManager arLocationManager,
-  ) {
+  void _onARViewCreated(int generation, ArchScanArSession session) {
     if (!mounted || !_appIsResumed || generation != _arViewGeneration) {
-      arSessionManager.dispose();
+      session.dispose();
       return;
     }
 
     _arInitializationTimer?.cancel();
     _arSessionReady = true;
     _arInitializationFailed = false;
-    _arSessionManager = arSessionManager;
-    _arObjectManager = arObjectManager;
 
-    _arScannerAdapter.attachARSession(
-      viewId: viewId,
-      sessionManager: arSessionManager,
-      objectManager: arObjectManager,
-    );
+    _arScannerAdapter.attachSession(session);
 
     context.read<ScannerProvider>().updateTrackingStatus(true);
   }
@@ -419,8 +395,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         return;
       }
 
-      _arSessionManager = null;
-      _arObjectManager = null;
       unawaited(_arScannerAdapter.dispose());
 
       setState(() {
@@ -434,8 +408,6 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
   Future<void> _retryArInitialization() async {
     _arInitializationTimer?.cancel();
-    _arSessionManager = null;
-    _arObjectManager = null;
     await _arScannerAdapter.dispose();
 
     if (!mounted || !_appIsResumed) {
@@ -589,22 +561,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
           ArchScanArView(
             key: ValueKey<int>(arViewGeneration),
-            onCreated:
-                (
-                  viewId,
-                  sessionManager,
-                  objectManager,
-                  anchorManager,
-                  locationManager,
-                ) => _onARViewCreated(
-                  arViewGeneration,
-                  viewId,
-                  sessionManager,
-                  objectManager,
-                  anchorManager,
-                  locationManager,
-                ),
-            planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
+            onCreated: (session) => _onARViewCreated(arViewGeneration, session),
+            planeDetection: ArchScanPlaneDetection.horizontalAndVertical,
           ),
 
           // ============================================================

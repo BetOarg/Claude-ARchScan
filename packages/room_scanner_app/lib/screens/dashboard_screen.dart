@@ -102,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _renameProject(IsarProject project) async {
+  Future<void> _renameProject(ProjectSummary project) async {
     final localizations = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: project.name);
 
@@ -152,7 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _openProject(
-    IsarProject project,
+    ProjectSummary project,
   ) async {
     final provider = context.read<ProjectProvider>();
 
@@ -180,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _viewFloorPlan(
-    IsarProject project,
+    ProjectSummary project,
   ) async {
     final provider = context.read<ProjectProvider>();
 

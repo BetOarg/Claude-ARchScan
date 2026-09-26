@@ -14,7 +14,7 @@ environment:
 dependencies:
   # Base de datos local NoSQL. Los binarios nativos 16 KB se aportan
   # mediante isar_community_flutter_libs en la app.
-  isar_community: ^3.3.2
+  isar_community: 3.3.2
 
   # Matemáticas vectoriales para los puntos 3D del plano.
   vector_math: ^2.1.4
@@ -27,11 +27,15 @@ dev_dependencies:
   test: ^1.25.0
   lints: ^3.0.0
 
-  # Generador de código compatible con el fork comunitario de Isar.
-  # 2.11.1 mantiene el modo de compilación anterior al cambio a AOT.
-  build_runner: 2.11.1
-  isar_community_generator: ^3.3.2
+  # Generador de Isar Community. Las tres piezas de Isar van fijadas a la
+  # misma versión exacta: el runtime valida la versión del core nativo.
+  # El generador solo acepta analyzer <11, que no soporta Dart 3.13; el
+  # código se genera con el SDK indicado en docs/ISAR_TOOLCHAIN.md.
+  build_runner: ^2.15.1
+  isar_community_generator: 3.3.2
+  # Pin the generator's supported analyzer line. Isar 3.3.2 explicitly
+  # supports analyzer >=8.0.0 <11.0.0 and fixes analyzer 10.x support.
+  # Isar 3.3.2 supports analyzer >=8 <11; 8.4.1 is the conservative
+  # generation line for the Dart 3.9 toolchain used in CI.
+  analyzer: 8.4.1
 
-  # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
-  # locales de integración de este paquete.
-  isar_community_flutter_libs: ^3.3.2

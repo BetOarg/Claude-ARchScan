@@ -56,7 +56,8 @@ dependencies:
 
   # Binarios nativos de Isar. Viven exclusivamente acá: room_scanner_core
   # solo declara el paquete "isar" (anotaciones/runtime), no sus binarios.
-  isar_community_flutter_libs: ^3.3.2
+  # Misma versión exacta que isar_community en room_scanner_core.
+  isar_community_flutter_libs: 3.3.2
 
   # Logotipo vectorial oficial de ARchScan
   flutter_svg: ^2.0.10+1
