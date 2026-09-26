@@ -32,7 +32,7 @@ dev_dependencies:
   # El generador solo acepta analyzer <11, que no soporta Dart 3.13; el
   # código se genera con el SDK indicado en docs/ISAR_TOOLCHAIN.md.
   build_runner: ^2.15.1
-  isar_community_generator: 3.3.2
+  isar_community_generator: 3.3.0
   # Pin the generator's supported analyzer line. Isar 3.3.2 explicitly
   # supports analyzer >=8.0.0 <11.0.0 and fixes analyzer 10.x support.
   # Isar 3.3.2 supports analyzer >=8 <11; 8.4.1 is the conservative
