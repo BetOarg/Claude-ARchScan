@@ -35,5 +35,7 @@ dev_dependencies:
   isar_community_generator: 3.3.2
   # Pin the generator's supported analyzer line. Isar 3.3.2 explicitly
   # supports analyzer >=8.0.0 <11.0.0 and fixes analyzer 10.x support.
-  analyzer: 10.2.0
+  # Isar 3.3.2 supports analyzer >=8 <11; 8.4.1 is the conservative
+  # generation line for the Dart 3.9 toolchain used in CI.
+  analyzer: 8.4.1
 
