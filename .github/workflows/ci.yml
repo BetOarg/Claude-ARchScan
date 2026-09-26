@@ -92,14 +92,19 @@ jobs:
       - name: Set up Flutter for Isar code generation
         uses: subosito/flutter-action@v2
         with:
-          # Isar Community 3.3.2 generator currently supports analyzer <11.
-          # Generate with Dart 3.11, then return to the application toolchain.
-          flutter-version: "3.41.4"
+          # Isar Community 3.3.2 requires Dart >=3.9 and supports analyzer <11.
+          # Flutter 3.35.0 provides Dart 3.9.x, avoiding the Dart 3.13/analyzer
+          # language-version mismatch of the application toolchain.
+          flutter-version: "3.35.0"
           channel: "stable"
           cache: true
 
+      - name: Refresh dependencies for Isar generation toolchain
+        run: flutter pub get
+        working-directory: packages/room_scanner_core
+
       - name: Generate Isar / Build Runner code
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build
         working-directory: packages/room_scanner_core
 
       - name: Restore application Flutter toolchain
