@@ -33,6 +33,9 @@ dev_dependencies:
   # código se genera con el SDK indicado en docs/ISAR_TOOLCHAIN.md.
   build_runner: ^2.15.1
   isar_community_generator: 3.3.2
+  # Pin the generator's supported analyzer line. Isar 3.3.2 explicitly
+  # supports analyzer >=8.0.0 <11.0.0 and fixes analyzer 10.x support.
+  analyzer: 10.2.0
 
   # SOLO dev_dependency: habilita abrir una instancia real de Isar en tests
   # locales de integración de este paquete.
