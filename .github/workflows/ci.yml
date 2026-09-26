@@ -89,9 +89,25 @@ jobs:
         run: flutter pub get
         working-directory: packages/room_scanner_core
 
+      - name: Set up Flutter for Isar code generation
+        uses: subosito/flutter-action@v2
+        with:
+          # Isar Community 3.3.2 generator currently supports analyzer <11.
+          # Generate with Dart 3.11, then return to the application toolchain.
+          flutter-version: "3.41.4"
+          channel: "stable"
+          cache: true
+
       - name: Generate Isar / Build Runner code
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
         working-directory: packages/room_scanner_core
+
+      - name: Restore application Flutter toolchain
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "${{ env.FLUTTER_VERSION }}"
+          channel: "stable"
+          cache: true
 
       - name: Dependency visibility — pub outdated
         working-directory: packages/room_scanner_app
