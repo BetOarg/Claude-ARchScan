@@ -15,3 +15,4 @@ export '../../scanner/models/scanner_mode.dart';
 export '../../scanner/models/scanner_point.dart';
 export '../../scanner/models/scanner_sensor_state.dart';
 export '../../scanner/navigation/scanner_launch_request.dart';
+export '../../scanner/scanner_composition.dart';
