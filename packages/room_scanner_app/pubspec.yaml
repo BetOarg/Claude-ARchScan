@@ -16,7 +16,7 @@ dependencies:
     sdk: flutter
   intl: 0.20.3
 
-  # Núcleo de dominio: modelos, geometría, Isar y construcción de
+  # Núcleo de dominio: modelos, geometría, persistencia Drift y construcción de
   # exportaciones. Durante la fase de monorepo se resuelve por path; tras
   # el split físico a un repositorio propio pasa a resolverse por git (o
   # por un servidor pub privado si se decide publicarlo).
