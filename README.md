@@ -83,7 +83,7 @@ ARchScan no requiere cuenta ni sincronización propia en la nube. Guarda los pro
 
 No incorpora SDK publicitario ni compras integradas en sus dependencias directas actuales. Antes de publicar debe auditarse también el artefacto final y sus dependencias transitivas.
 
-Se conserva el formato histórico y el orden de las enumeraciones persistidas. Antes de instalar una versión con otra firma o desinstalar la app, exportá los proyectos a JSON o SVG y guardalos fuera de ARchScan. Una actualización de prueba a Google Play puede requerir reinstalación por diferencia de firmas: **no desinstales sin copia**.
+Se conserva el formato histórico y el orden de las enumeraciones persistidas. La versión 2.7.0 no fue publicada con Isar; por lo tanto, la migración a Drift no necesita convertir datos Isar de una versión publicada. Para futuras versiones con datos persistidos, toda migración de esquema deberá mantener una estrategia explícita de compatibilidad.
 
 - Sitio público bilingüe: [ARchScan](https://sites.google.com/view/archscan/inicio)
 - [Política de privacidad](docs/PUBLIC_PRIVACY_POLICY.md)
