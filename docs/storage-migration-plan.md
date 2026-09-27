@@ -1,44 +1,36 @@
-# Estrategia futura de persistencia local
+# Estrategia de persistencia local
 
 ## Estado actual
 
-ARchScan utiliza Isar como persistencia local de proyectos y datos de escaneo. La dependencia actual es `isar ^3.1.0+1`.
+ARchScan utiliza **Drift/SQLite** como persistencia local. La aplicación mantiene la frontera `ProjectRepository`, por lo que las pantallas y el dominio no dependen directamente del motor de base de datos.
 
-Esta capa es deliberadamente local: no hay sincronización con servidor ni cuentas de usuario.
+Esta capa es deliberadamente local: no hay sincronización propia con servidor ni cuentas de usuario.
 
-## Decisión para la beta
+## Migración realizada
 
-No migrar la base de datos antes de la beta.
+La rama de estabilización reemplazó Isar Community por Drift. La primera versión conserva el modelo de dominio existente y almacena los ambientes serializados en `projects.rooms_json` para minimizar cambios funcionales durante la transición.
 
-La persistencia existente es parte del flujo funcional de ARchScan y una migración previa al lanzamiento introduciría riesgo innecesario sobre proyectos existentes, generación de modelos, exportaciones y recuperación de borradores.
+El esquema inicial contiene:
 
-## Criterios para una migración futura
+- `id`: clave interna autoincremental;
+- `uuid`: identificador estable y único del proyecto;
+- `name`: nombre del proyecto;
+- `created_at` y `updated_at`: fechas de creación y modificación;
+- `rooms_json`: ambientes serializados mediante `RoomModel.toJson/fromJson`.
 
-Antes de sustituir Isar se debe verificar:
+Las escrituras de proyecto se realizan dentro de una transacción y conservan `created_at` al actualizar un proyecto existente.
 
-1. mantenimiento activo y compatibilidad con la versión de Flutter/Dart adoptada;
-2. soporte Android e iOS para las versiones objetivo;
-3. equivalencia de consultas, índices y relaciones utilizadas por ARchScan;
-4. migración de datos existentes sin pérdida de proyectos;
-5. compatibilidad con los modelos generados actualmente;
-6. rendimiento con proyectos grandes y múltiples habitaciones;
-7. recuperación de borradores y continuidad del escaneo;
-8. exportación JSON/DXF/SVG/PDF/PNG/JPG después de migrar;
-9. pruebas de regresión y rollback.
+## Compatibilidad con instalaciones históricas
 
-## Estrategia recomendada
+La migración del motor no convierte automáticamente una base Isar existente. Antes de distribuir una actualización sobre instalaciones que contengan proyectos guardados con una versión Isar, debe definirse y probarse una estrategia explícita Isar → Drift o un mecanismo de exportación/importación mediante JSON/SVG.
 
-La migración debe realizarse en una fase independiente:
+Para una instalación nueva, Drift crea directamente el esquema inicial.
 
-- introducir una interfaz de repositorio de persistencia;
-- mantener Isar detrás de esa interfaz;
-- implementar el nuevo backend en paralelo;
-- probar lectura/escritura y migración sobre copias de datos;
-- validar físicamente Android e iOS;
-- activar el nuevo backend únicamente después de completar la matriz de regresión.
+## Próximas etapas
 
-No se debe modificar el formato persistido ni eliminar Isar durante esta fase documental.
+1. Mantener `ProjectRepository` como única frontera de persistencia.
+2. Añadir pruebas de esquema y migraciones antes de cambiar `schemaVersion`.
+3. Auditar recuperación de proyectos, borradores y continuidad del escaneo.
+4. Solo después evaluar una normalización de ambientes, paredes y aberturas en tablas separadas si aporta una necesidad funcional o de rendimiento.
 
-## Regla de seguridad
-
-Una migración de almacenamiento no debe mezclarse con cambios del motor CAD, escaneo AR, exportadores o UX. Debe ser una iniciativa independiente con rollback definido.
+No mezclar estos cambios con UX ni con la sustitución del adaptador AR.
