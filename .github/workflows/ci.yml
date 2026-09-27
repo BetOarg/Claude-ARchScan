@@ -93,9 +93,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           # Isar Community 3.3.2 requires Dart >=3.9 and supports analyzer <11.
-          # Flutter 3.35.0 provides Dart 3.9.x, avoiding the Dart 3.13/analyzer
+          # Flutter 3.41.4 provides Dart 3.11.x, avoiding the Dart 3.13/analyzer
           # language-version mismatch of the application toolchain.
-          flutter-version: "3.35.0"
+          flutter-version: "3.41.4"
           channel: "stable"
           cache: true
 
