@@ -76,20 +76,20 @@ without moving working implementation files. Existing imports remain valid.
 Next stages will migrate Scanner presentation/domain/data behind this boundary,
 then apply the same pattern to projects and floor plans.
 
-## Estado (rama `refactor/archscan-stabilization`)
+## Estado (rama `refactor/archscan-stabilization-v2`)
 
 | Etapa | Estado |
 |---|---|
 | Seguridad de firma (ver `SECURITY_INCIDENT_2026-09-signing.md`) | hecho |
-| Persistencia Drift/SQLite + generación reproducible | hecho, pendiente CI |
+| Persistencia Drift/SQLite + generación reproducible | hecho, CI verde |
 | CI: ratchet de formato y auditoría 16 KB en cada build | hecho, pendiente CI |
 | Frontera de persistencia: `ProjectRepository` / `ProjectSummary` | hecho, pendiente CI |
 | Frontera AR: la UI no importa `ar_flutter_plugin_2` | hecho, pendiente CI |
 | `FloorPlanProvider`: tipos movidos a `floor_plan_provider_types.dart` | hecho, pendiente CI |
-| `FloorPlanProvider`: división de la clase por responsabilidad | bloqueada hasta CI verde + tests de caracterización |
+| `FloorPlanProvider`: división de la clase por responsabilidad | siguiente bloque |
 | `floor_plan_viewer_screen`: painters, modelos y widgets en `part` | hecho, pendiente CI |
-| `floor_plan_viewer_screen`: división del `State` | bloqueada hasta CI verde |
+| `floor_plan_viewer_screen`: división del `State` | siguiente bloque |
 | Exportaciones: la UI usa `ImportExportService`; los builders viven en core | sin cambios necesarios por ahora |
-| Actualización de dependencias (una por PR) | bloqueada hasta CI verde |
+| Actualización de dependencias (una por PR) | siguiente bloque, después de estabilizar AR |
 
 Regla: no se avanza a la siguiente etapa con CI en rojo.
