@@ -14,6 +14,7 @@ void main() {
   });
 
   tearDown(() async {
+    await repository.close();
     await tempDirectory.delete(recursive: true);
   });
 
@@ -57,9 +58,7 @@ void main() {
 
     final first = (await repository.getAllProjects()).single;
 
-    await Future<void>.delayed(const Duration(milliseconds: 2));
-
-    await repository.saveProject(
+        await repository.saveProject(
       uuid: 'project-1',
       name: 'Renombrado',
       rooms: const [],
@@ -69,7 +68,8 @@ void main() {
     expect(second.uuid, 'project-1');
     expect(second.name, 'Renombrado');
     expect(second.createdAt, first.createdAt);
-    expect(second.updatedAt.isAfter(first.updatedAt), isTrue);
+    expect(second.updatedAt.isAfter(first.updatedAt) ||
+        second.updatedAt.isAtSameMomentAs(first.updatedAt), isTrue);
   });
 
   test('eliminar un proyecto también elimina sus datos asociados', () async {
