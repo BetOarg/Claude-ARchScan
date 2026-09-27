@@ -1,8 +1,8 @@
-import 'package:ar_flutter_plugin_2/datatypes/config_planedetection.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_anchor_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin_plus/datatypes/config_planedetection.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_anchor_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_location_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_session_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +14,7 @@ typedef ArchScanArViewCreatedCallback =
 
 /// Thin platform-view bridge that exposes the native view id.
 ///
-/// `ar_flutter_plugin_2` hides this id, although Android's camera-pose channel
+/// `ar_flutter_plugin_plus` hides this id, although Android's camera-pose channel
 /// needs it. Camera permissions remain owned by the existing scanner flow.
 /// Plugin types stay inside this file and [ArchScanArSession].
 class ArchScanArView extends StatelessWidget {
@@ -62,7 +62,7 @@ class ArchScanArView extends StatelessWidget {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return AndroidView(
-          viewType: 'ar_flutter_plugin_2',
+          viewType: 'ar_flutter_plugin_plus',
           layoutDirection: TextDirection.ltr,
           creationParams: creationParams,
           creationParamsCodec: const StandardMessageCodec(),
@@ -70,7 +70,7 @@ class ArchScanArView extends StatelessWidget {
         );
       case TargetPlatform.iOS:
         return UiKitView(
-          viewType: 'ar_flutter_plugin_2',
+          viewType: 'ar_flutter_plugin_plus',
           layoutDirection: TextDirection.ltr,
           creationParams: creationParams,
           creationParamsCodec: const StandardMessageCodec(),
