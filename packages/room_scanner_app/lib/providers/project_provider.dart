@@ -4,11 +4,10 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 import '../services/scan_draft_service.dart';
 
 class ProjectProvider with ChangeNotifier {
-  /// Frontera de persistencia. La UI no conoce el motor concreto (Isar).
   late final ProjectRepository _repository;
 
   ProjectProvider({ProjectRepository? repository}) {
-    _repository = repository ?? IsarProjectRepository.local();
+    _repository = repository ?? DriftProjectRepository.local();
   }
 
   List<ProjectSummary> _projects = [];
@@ -30,10 +29,6 @@ class ProjectProvider with ChangeNotifier {
   ProjectSummary? get currentProject => _currentProject;
   bool get isLoading => _isLoading;
 
-  /// Inicializa el almacenamiento local y carga los proyectos guardados.
-  ///
-  /// `path_provider` (plugin de Flutter con canal nativo) vive acá: el
-  /// repositorio solo recibe el directorio ya resuelto.
   Future<void> init() async {
     _setLoading(true);
     try {
@@ -45,13 +40,11 @@ class ProjectProvider with ChangeNotifier {
     }
   }
 
-  /// Carga la lista de proyectos guardados.
   Future<void> loadProjects() async {
     _projects = await _repository.getAllProjects();
     notifyListeners();
   }
 
-  /// Crea o guarda un proyecto existente únicamente en el dispositivo.
   Future<void> saveCurrentProject({
     required String uuid,
     required String name,
@@ -59,13 +52,11 @@ class ProjectProvider with ChangeNotifier {
   }) async {
     return _serialize(() async {
       _setLoading(true);
-
       try {
         if (_deletedIds.contains(uuid)) {
           throw StateError('Project was deleted.');
         }
         await _repository.saveProject(uuid: uuid, name: name, rooms: rooms);
-
         await loadProjects();
       } finally {
         _setLoading(false);
@@ -73,7 +64,6 @@ class ProjectProvider with ChangeNotifier {
     });
   }
 
-  /// Carga un proyecto para trabajar en él
   Future<List<RoomModel>> selectProject(ProjectSummary project) async {
     final rooms = await _repository.getRoomsForProject(project.uuid);
     _currentProject = project;
@@ -81,7 +71,6 @@ class ProjectProvider with ChangeNotifier {
     return rooms;
   }
 
-  /// Cambia el nombre de un proyecto conservando UUID y datos locales.
   Future<void> renameProject({
     required String uuid,
     required String name,
@@ -118,7 +107,6 @@ class ProjectProvider with ChangeNotifier {
     });
   }
 
-  /// Elimina un proyecto por su UUID
   Future<void> deleteProject(String uuid) async {
     _deletedIds.add(uuid);
     return _serialize(() async {
@@ -136,20 +124,16 @@ class ProjectProvider with ChangeNotifier {
     });
   }
 
-  /// Elimina del dispositivo todos los proyectos locales.
   Future<void> deleteAllLocalProjects() async {
     _deletedIds.addAll(_projects.map((project) => project.uuid));
     return _serialize(() async {
       _setLoading(true);
-
       try {
         final projectIds =
             _projects.map((project) => project.uuid).toList(growable: false);
-
         for (final projectId in projectIds) {
           await _repository.deleteProject(projectId);
         }
-
         for (final projectId in projectIds) {
           await const ScanDraftService().clear(
             projectId,
@@ -157,7 +141,6 @@ class ProjectProvider with ChangeNotifier {
           );
         }
         await const ScanDraftService().clearAll();
-
         _projects = [];
         _currentProject = null;
       } finally {
