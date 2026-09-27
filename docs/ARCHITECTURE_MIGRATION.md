@@ -58,15 +58,15 @@ move files mechanically.
 ## Current first-stage findings
 
 - Scanner already has a useful adapter/engine/factory seam.
-- AR-specific code is still imported directly by scanner UI/adapters.
+- AR-specific code is isolated behind the Scanner adapter/session boundary.
 - Project, floor-plan and scanner state are currently provided from a common
   application-level Provider composition.
 - `FloorPlanProvider` currently contains state, geometry/edit operations,
   history and persistence coordination; it is a primary decomposition target.
 - `DriftProjectRepository` owns the concrete Drift/SQLite runtime behind the
   `ProjectRepository` boundary; the former Isar service and models were removed.
-- `ar_flutter_plugin_2` remains a concrete platform dependency and will be
-  replaced only after the AR boundary is stable.
+- `ar_flutter_plugin_plus` is now isolated behind the AR adapter/session boundary;
+  the legacy `ar_flutter_plugin_2` dependency has been removed.
 
 ## Stage 1
 
