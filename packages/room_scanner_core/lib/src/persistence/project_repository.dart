@@ -4,8 +4,8 @@ import 'project_summary.dart';
 /// Contrato de persistencia local de proyectos.
 ///
 /// Es la frontera entre la aplicación y el motor de almacenamiento. La
-/// implementación actual es [IsarProjectRepository]; un backend futuro debe
-/// respetar el mismo comportamiento observable.
+/// implementación actual usa Drift/SQLite; un backend futuro debe respetar
+/// el mismo comportamiento observable.
 abstract interface class ProjectRepository {
   /// Abre el almacenamiento local en [directoryPath].
   Future<void> open({required String directoryPath});
