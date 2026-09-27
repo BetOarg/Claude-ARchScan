@@ -22,7 +22,7 @@ Las escrituras de proyecto se realizan dentro de una transacción y conservan `c
 
 ## Compatibilidad con instalaciones históricas
 
-La migración del motor no convierte automáticamente una base Isar existente. Antes de distribuir una actualización sobre instalaciones que contengan proyectos guardados con una versión Isar, debe definirse y probarse una estrategia explícita Isar → Drift o un mecanismo de exportación/importación mediante JSON/SVG.
+La versión 2.7.0 no fue publicada con Isar. Por ello, no existe una base Isar de una versión publicada de ARchScan que deba convertirse para esta migración. Las instalaciones internas o de prueba que hayan usado Isar no forman parte de una actualización publicada; si se necesitara conservar esos datos, puede utilizarse una exportación/importación explícita mediante JSON/SVG.
 
 Para una instalación nueva, Drift crea directamente el esquema inicial.
 
