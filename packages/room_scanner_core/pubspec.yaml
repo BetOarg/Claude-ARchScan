@@ -1,42 +1,22 @@
 name: room_scanner_core
 description: >
-  Núcleo de dominio de Claude Room Scanner: modelos Isar, geometría de
-  ambientes/paredes compartidas y construcción de exportaciones JSON/PDF.
-  Sin UI, sin widgets, sin controladores de hardware.
+  Núcleo de dominio de ARchScan: modelos, geometría, persistencia Drift y
+  construcción de exportaciones JSON/PDF. Sin UI, sin widgets, sin
+  controladores de hardware.
 publish_to: 'none'
 version: 1.0.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
-  # Sin "flutter:" — es un paquete Dart puro. Ninguna dependencia de acá
-  # requiere el SDK de Flutter para compilar.
 
 dependencies:
-  # Base de datos local NoSQL. Los binarios nativos 16 KB se aportan
-  # mediante isar_community_flutter_libs en la app.
-  isar_community: 3.3.2
-
-  # Matemáticas vectoriales para los puntos 3D del plano.
+  drift: ^2.35.0
+  sqlite3: ^3.5.2
   vector_math: ^2.1.4
-
-  # Generación de documentos PDF — paquete Dart puro, sin dependencia de
-  # Flutter. La impresión/guardado real (package:printing) queda en la app.
   pdf: ^3.10.8
 
 dev_dependencies:
   test: ^1.25.0
   lints: ^3.0.0
-
-  # Generador de Isar Community. Las tres piezas de Isar van fijadas a la
-  # misma versión exacta: el runtime valida la versión del core nativo.
-  # El generador solo acepta analyzer <11, que no soporta Dart 3.13; el
-  # código se genera con el SDK indicado en docs/ISAR_TOOLCHAIN.md.
-  build_runner: 2.15.1
-  isar_community_generator: 3.3.2
-  analyzer: 10.0.1
-  dart_style: 3.1.7
-  # Pin the generator's supported analyzer line. Isar 3.3.2 explicitly
-  # supports analyzer >=8.0.0 <11.0.0 and fixes analyzer 10.x support.
-  # Isar 3.3.2 supports analyzer >=8 <11; 8.4.1 is the conservative
-  # generation line for the Dart 3.9 toolchain used in CI.
-
+  drift_dev: ^2.35.0
+  build_runner: ^2.16.1
