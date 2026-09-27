@@ -25,6 +25,11 @@ class DriftProjectRepository implements ProjectRepository {
     _database = ArchScanDatabase(directoryPath: directoryPath);
   }
 
+  Future<void> close() async {
+    await _database?.close();
+    _database = null;
+  }
+
   ArchScanDatabase get _db {
     final database = _database;
     if (database == null) {
