@@ -1,7 +1,7 @@
-import 'package:ar_flutter_plugin_2/managers/ar_anchor_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_anchor_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_location_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_session_manager.dart';
 
 /// Detección de planos solicitada a la sesión AR nativa.
 enum ArchScanPlaneDetection {
@@ -13,7 +13,7 @@ enum ArchScanPlaneDetection {
 
 /// Sesión AR nativa creada por `ArchScanArView`.
 ///
-/// Es el único tipo que transporta los managers de `ar_flutter_plugin_2`
+/// Es el único tipo que transporta los managers de `ar_flutter_plugin_plus`
 /// entre la vista nativa y `ARScannerAdapter`. Las pantallas lo reciben como
 /// un handle opaco, de modo que reemplazar el plugin no obliga a tocar la UI.
 class ArchScanArSession {
