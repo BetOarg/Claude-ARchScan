@@ -7,7 +7,8 @@ Feature-first architecture with explicit boundaries between presentation,
 domain, data and platform integrations.
 
 The migration is intentionally incremental. Existing behavior is preserved
-while each boundary is introduced and verified.
+while each boundary is introduced and verified. Persistence has now moved to
+Drift/SQLite behind `ProjectRepository`.
 
 ## Target structure
 
@@ -62,8 +63,8 @@ move files mechanically.
   application-level Provider composition.
 - `FloorPlanProvider` currently contains state, geometry/edit operations,
   history and persistence coordination; it is a primary decomposition target.
-- `LocalDatabaseService` currently owns the concrete Isar Community runtime;
-  persistence will be isolated before the next database migration step.
+- `DriftProjectRepository` owns the concrete Drift/SQLite runtime behind the
+  `ProjectRepository` boundary; the former Isar service and models were removed.
 - `ar_flutter_plugin_2` remains a concrete platform dependency and will be
   replaced only after the AR boundary is stable.
 
@@ -80,7 +81,7 @@ then apply the same pattern to projects and floor plans.
 | Etapa | Estado |
 |---|---|
 | Seguridad de firma (ver `SECURITY_INCIDENT_2026-09-signing.md`) | hecho |
-| Toolchain Isar reproducible (ver `ISAR_TOOLCHAIN.md`) | hecho, pendiente CI |
+| Persistencia Drift/SQLite + generación reproducible | hecho, pendiente CI |
 | CI: ratchet de formato y auditoría 16 KB en cada build | hecho, pendiente CI |
 | Frontera de persistencia: `ProjectRepository` / `ProjectSummary` | hecho, pendiente CI |
 | Frontera AR: la UI no importa `ar_flutter_plugin_2` | hecho, pendiente CI |
