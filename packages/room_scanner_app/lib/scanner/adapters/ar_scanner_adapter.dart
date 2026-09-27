@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
-import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_session_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
@@ -12,7 +12,7 @@ import '../models/scanner_point.dart';
 
 /// Adapter del motor AR.
 ///
-/// Encapsula toda la interacción con ar_flutter_plugin_2.
+/// Encapsula toda la interacción con ar_flutter_plugin_plus.
 ///
 /// IMPORTANTE:
 /// - No contiene lógica de RoomModel.
