@@ -1,7 +1,8 @@
 /// Resumen de un proyecto guardado, independiente del motor de persistencia.
 ///
-/// La UI trabaja con este tipo en lugar de las colecciones Isar, de modo que
-/// cambiar el backend local no obliga a tocar pantallas ni providers.
+/// La UI trabaja con este tipo en lugar de los modelos concretos de la base
+/// de datos, de modo que cambiar el backend local no obliga a tocar pantallas
+/// ni providers.
 class ProjectSummary {
   final String uuid;
   final String name;
