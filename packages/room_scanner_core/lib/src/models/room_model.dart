@@ -2,7 +2,7 @@ import 'package:vector_math/vector_math_64.dart' as vector;
 
 enum RoomType {
   // No cambiar el orden de los tipos históricos:
-  // Isar los persiste por posición.
+  // El orden histórico se conserva para estabilidad de datos.
   living,
   cocina,
   bano,
