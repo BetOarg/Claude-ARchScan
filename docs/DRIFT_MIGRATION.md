@@ -17,8 +17,19 @@ Guardar un proyecto reemplaza atómicamente su fila y conserva created_at.
 
 La generación usa drift_dev + build_runner. Drift proporciona generación tipada, análisis del esquema y herramientas de migración verificables.
 
-## Próxima etapa
+## Compatibilidad de datos
 
-Antes de publicar una versión con datos persistidos existentes, se debe decidir si hace falta una herramienta explícita Isar → Drift para instalaciones que ya contengan datos. Para una instalación nueva de beta, Drift crea su base SQLite desde el esquema versión 1.
+La versión 2.7.0 no fue publicada con Isar. Por lo tanto, no existe una base Isar de una versión publicada de ARchScan que deba convertirse como parte de esta migración.
 
-Las futuras modificaciones de tablas deberán incrementar schemaVersion y conservar snapshots de esquema para validar migraciones.
+Las instalaciones internas o de prueba que hayan usado Isar no forman parte de una actualización publicada. Si fuera necesario recuperar esos datos, puede utilizarse una exportación/importación explícita mediante JSON o SVG.
+
+Para una instalación nueva, Drift crea directamente el esquema inicial.
+
+## Próximas etapas
+
+1. Mantener ProjectRepository como única frontera de persistencia.
+2. Añadir pruebas de esquema y migraciones antes de cambiar schemaVersion.
+3. Auditar recuperación de proyectos, borradores y continuidad del escaneo.
+4. Solo después evaluar una normalización de ambientes, paredes y aberturas en tablas separadas si existe una necesidad funcional o de rendimiento.
+
+No mezclar estos cambios con UX ni con la sustitución del adaptador AR.
