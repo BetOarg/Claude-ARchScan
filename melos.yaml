@@ -25,7 +25,7 @@ scripts:
 
   build-runner:
     run: dart run build_runner build --delete-conflicting-outputs
-    description: Genera el código de Isar en room_scanner_core.
+    description: Genera el código de Drift en room_scanner_core.
     packageFilters:
       scope: room_scanner_core
 
