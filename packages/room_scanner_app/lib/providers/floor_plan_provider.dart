@@ -2575,8 +2575,15 @@ class FloorPlanProvider extends ChangeNotifier {
   // MÉTRICAS
   // ===========================================================================
 
-  double wallLength(RoomModel room, int wallIndex) =>
-      PlanEditGeometry.wallLength(room, wallIndex);
+  double wallLength(RoomModel room, int wallIndex) {
+    if (wallIndex < 0 || wallIndex >= PlanEditGeometry.wallCount(room)) {
+      return 0.0;
+    }
+    return PlanEditGeometry.distance(
+      room.points[wallIndex],
+      room.points[(wallIndex + 1) % room.points.length],
+    );
+  }
 
   double get totalProjectArea {
     double total = 0.0;
