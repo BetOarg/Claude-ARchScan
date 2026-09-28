@@ -38,7 +38,7 @@ void main() {
       featureType: FeatureType.door,
       globalStart: ARPoint(x: 1, y: 2, z: 3),
       globalEnd: ARPoint(x: 4, y: 5, z: 6),
-      side: OpeningConnectionSide.end,
+      side: OpeningConnectionSide.right,
       startEndpoint: ContinuationStartEndpoint.end,
     );
     final history = [
@@ -61,7 +61,7 @@ void main() {
     expect(restored.continuationReference!.featureType, FeatureType.door);
     expect(restored.continuationReference!.globalStart.x, 1);
     expect(restored.continuationReference!.globalEnd.z, 6);
-    expect(restored.continuationReference!.side, OpeningConnectionSide.end);
+    expect(restored.continuationReference!.side, OpeningConnectionSide.right);
     expect(
       restored.continuationReference!.startEndpoint,
       ContinuationStartEndpoint.end,
