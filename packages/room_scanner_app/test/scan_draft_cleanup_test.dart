@@ -48,6 +48,15 @@ void main() {
     expect(preferences.getKeys(), {'measurement_system'});
   });
 
+  test('clear is idempotent when the project has no draft', () async {
+    SharedPreferences.setMockInitialValues({
+      'measurement_system': 'metric',
+    });
+    await const ScanDraftService().clear('missing-project');
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getKeys(), {'measurement_system'});
+  });
+
   test('clear removes only the selected project draft', () async {
     SharedPreferences.setMockInitialValues({
       'scan_draft_v1_a': '{}',
