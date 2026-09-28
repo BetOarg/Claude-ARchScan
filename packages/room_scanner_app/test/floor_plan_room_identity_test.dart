@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:room_scanner_app/providers/floor_plan_room_identity.dart';
+import 'package:room_scanner_ar/providers/floor_plan_room_identity.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
 ARPoint point(double x, double z) => ARPoint(x: x, y: 0, z: z);
