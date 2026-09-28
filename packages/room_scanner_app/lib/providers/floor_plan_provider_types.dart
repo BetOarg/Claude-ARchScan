@@ -111,16 +111,6 @@ class _WallAlignmentCandidate {
     required this.score,  });
 }
 
-class _RoomNormalizationResult {
-  final List<RoomModel> rooms;
-
-  final bool changed;
-
-  const _RoomNormalizationResult({
-    required this.rooms,
-    required this.changed,
-  });
-}
 
 class OpeningPlacement {
   final double widthMeters;
