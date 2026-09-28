@@ -58,7 +58,7 @@ void main() {
 
     final first = (await repository.getAllProjects()).single;
 
-        await repository.saveProject(
+    await repository.saveProject(
       uuid: 'project-1',
       name: 'Renombrado',
       rooms: const [],
@@ -70,6 +70,44 @@ void main() {
     expect(second.createdAt, first.createdAt);
     expect(second.updatedAt.isAfter(first.updatedAt) ||
         second.updatedAt.isAtSameMomentAs(first.updatedAt), isTrue);
+  });
+
+  test('conserva el proyecto al cerrar y reabrir el repositorio', () async {
+    await repository.saveProject(
+      uuid: 'project-persistent',
+      name: 'Persistente',
+      rooms: const [],
+    );
+
+    await repository.close();
+
+    final reopened = DriftProjectRepository.local();
+    await reopened.open(directoryPath: tempDirectory.path);
+
+    addTearDown(reopened.close);
+
+    final projects = await reopened.getAllProjects();
+    expect(projects, hasLength(1));
+    expect(projects.single.uuid, 'project-persistent');
+    expect(projects.single.name, 'Persistente');
+  });
+
+  test('guardar el mismo UUID reemplaza el proyecto sin duplicarlo', () async {
+    await repository.saveProject(
+      uuid: 'project-1',
+      name: 'Primero',
+      rooms: const [],
+    );
+
+    await repository.saveProject(
+      uuid: 'project-1',
+      name: 'Segundo',
+      rooms: const [],
+    );
+
+    final projects = await repository.getAllProjects();
+    expect(projects, hasLength(1));
+    expect(projects.single.name, 'Segundo');
   });
 
   test('eliminar un proyecto también elimina sus datos asociados', () async {
