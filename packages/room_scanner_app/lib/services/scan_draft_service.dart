@@ -20,10 +20,9 @@ class ScanDraft {
         'version': 1,
         'room': room.toJson(),
         'resumeRoom': resumeRoom?.toJson(),
-        'continuationReference':
-            continuationReference == null
-                ? null
-                : _continuationToJson(continuationReference!),
+        'continuationReference': continuationReference == null
+            ? null
+            : _continuationToJson(continuationReference!),
         'basicHistory': basicHistory.map((point) => point.toJson()).toList(),
       };
 
@@ -32,7 +31,9 @@ class ScanDraft {
 
     return ScanDraft(
       resumeRoom: json['resumeRoom'] is Map
-          ? RoomModel.fromJson(Map<String, dynamic>.from(json['resumeRoom'] as Map))
+          ? RoomModel.fromJson(
+              Map<String, dynamic>.from(json['resumeRoom'] as Map),
+            )
           : null,
       room: RoomModel.fromJson(
         Map<String, dynamic>.from(json['room'] as Map),
@@ -103,7 +104,10 @@ class ScanDraftService {
 
   Future<void> _serialize(Future<void> Function() action) {
     final result = _mutations.then((_) => action());
-    _mutations = result.then<void>((_) {}, onError: (Object error, StackTrace stack) {});
+    _mutations = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stack) {},
+    );
     return result;
   }
 
@@ -119,20 +123,24 @@ class ScanDraftService {
     List<ARPoint> basicHistory = const <ARPoint>[],
   }) async {
     return _serialize(() async {
-    final preferences = await SharedPreferences.getInstance();
-    if (_deletedIds.contains(projectUuid)) throw StateError('Project was deleted.');
-    final draft = ScanDraft(
-      room: room,
-      resumeRoom: resumeRoom,
-      continuationReference: continuationReference,
-      basicHistory: basicHistory,
-    );
-    final saved = await preferences.setString(
-      _key(projectUuid),
-      jsonEncode(draft.toJson()),
-    );
-    if (!saved) throw StateError('Scan draft could not be saved.');
+      final preferences = await SharedPreferences.getInstance();
+      if (_deletedIds.contains(projectUuid)) {
+        throw StateError('Project was deleted.');
+      }
 
+      final draft = ScanDraft(
+        room: room,
+        resumeRoom: resumeRoom,
+        continuationReference: continuationReference,
+        basicHistory: basicHistory,
+      );
+      final saved = await preferences.setString(
+        _key(projectUuid),
+        jsonEncode(draft.toJson()),
+      );
+      if (!saved) {
+        throw StateError('Scan draft could not be saved.');
+      }
     });
   }
 
@@ -154,27 +162,32 @@ class ScanDraftService {
     }
   }
 
-  Future<void> clear(String projectUuid, {bool permanentlyDeleted = false}) async {
-    if (permanentlyDeleted) _deletedIds.add(projectUuid);
-    return _serialize(() async {
-    final preferences = await SharedPreferences.getInstance();
-    if (!await preferences.remove(_key(projectUuid))) {
-      throw StateError('Scan draft could not be deleted.');
+  Future<void> clear(
+    String projectUuid, {
+    bool permanentlyDeleted = false,
+  }) async {
+    if (permanentlyDeleted) {
+      _deletedIds.add(projectUuid);
     }
 
+    return _serialize(() async {
+      final preferences = await SharedPreferences.getInstance();
+      // Draft cleanup is intentionally idempotent: a project can be deleted
+      // before any scan draft exists.
+      await preferences.remove(_key(projectUuid));
     });
   }
 
   Future<void> clearAll() async {
     return _serialize(() async {
-    final preferences = await SharedPreferences.getInstance();
-    final keys = preferences.getKeys().where((key) => key.startsWith(_keyPrefix)).toList();
-    for (final key in keys) {
-      if (!await preferences.remove(key)) {
-        throw StateError('Scan draft could not be deleted.');
+      final preferences = await SharedPreferences.getInstance();
+      final keys = preferences
+          .getKeys()
+          .where((key) => key.startsWith(_keyPrefix))
+          .toList();
+      for (final key in keys) {
+        await preferences.remove(key);
       }
-    }
-
     });
   }
 }
