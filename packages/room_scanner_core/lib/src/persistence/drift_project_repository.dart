@@ -83,15 +83,15 @@ class DriftProjectRepository implements ProjectRepository {
     required List<RoomModel> rooms,
   }) async {
     final now = DateTime.now();
-    final existing = await (_db.select(_db.projects)
-          ..where((table) => table.uuid.equals(uuid)))
-        .getSingleOrNull();
-
     final roomsJson = jsonEncode(
       rooms.map((room) => room.toJson()).toList(growable: false),
     );
 
     await _db.transaction(() async {
+      final existing = await (_db.select(_db.projects)
+            ..where((table) => table.uuid.equals(uuid)))
+          .getSingleOrNull();
+
       await (_db.delete(_db.projects)
             ..where((table) => table.uuid.equals(uuid)))
           .go();
