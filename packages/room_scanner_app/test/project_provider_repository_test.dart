@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:room_scanner_ar/providers/project_provider.dart';
+import 'package:room_scanner_ar/services/scan_draft_service.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _InMemoryProjectRepository implements ProjectRepository {
   final Map<String, ProjectSummary> projects = {};
@@ -49,6 +51,14 @@ class _InMemoryProjectRepository implements ProjectRepository {
 }
 
 void main() {
+  RoomModel room(String id) => RoomModel(
+        id: id,
+        name: id,
+        type: RoomType.other,
+        points: [ARPoint(x: 0, y: 0, z: 0)],
+        isClosed: false,
+      );
+
   test('guarda y lista proyectos a través del repositorio', () async {
     final repository = _InMemoryProjectRepository();
     final provider = ProjectProvider(repository: repository);
@@ -81,5 +91,49 @@ void main() {
     await provider.renameProject(uuid: 'a', name: '   ');
 
     expect(provider.projects.single.name, 'A');
+  });
+
+  test('eliminar proyecto borra Drift/repository, draft y selección actual', () async {
+    SharedPreferences.setMockInitialValues({});
+    final repository = _InMemoryProjectRepository();
+    final provider = ProjectProvider(repository: repository);
+    const service = ScanDraftService();
+
+    await provider.saveCurrentProject(
+      uuid: 'delete-integration',
+      name: 'Delete me',
+      rooms: const [],
+    );
+    await provider.selectProject(provider.projects.single);
+    await service.save(
+      projectUuid: 'delete-integration',
+      room: room('draft'),
+    );
+
+    await provider.deleteProject('delete-integration');
+
+    expect(repository.projects, isEmpty);
+    expect(repository.rooms, isEmpty);
+    expect(provider.projects, isEmpty);
+    expect(provider.currentProject, isNull);
+    expect(await service.load('delete-integration'), isNull);
+  });
+
+  test('eliminar proyecto sin draft sigue siendo válido', () async {
+    SharedPreferences.setMockInitialValues({});
+    final repository = _InMemoryProjectRepository();
+    final provider = ProjectProvider(repository: repository);
+
+    await provider.saveCurrentProject(
+      uuid: 'delete-without-draft',
+      name: 'No draft',
+      rooms: const [],
+    );
+
+    await provider.deleteProject('delete-without-draft');
+
+    expect(repository.projects, isEmpty);
+    expect(provider.projects, isEmpty);
+    expect(provider.currentProject, isNull);
   });
 }
