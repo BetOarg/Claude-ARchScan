@@ -40,6 +40,16 @@ android {
     // Alineación nativa de 16 KB para bibliotecas ELF en Android 15+.
     experimentalProperties["android.nativeLibraryAlignmentPageSize"] = "16k"
 
+    // Flutter's Gradle integration can add its supported ABIs after
+    // defaultConfig is evaluated. Exclude the legacy 32-bit ABI at the
+    // packaging boundary as well, so ARCore's 4 KB armeabi-v7a binaries
+    // cannot enter the release AAB.
+    packagingOptions {
+        jniLibs {
+            excludes += ["**/armeabi-v7a/**"]
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
