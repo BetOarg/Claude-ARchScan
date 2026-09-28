@@ -2576,13 +2576,31 @@ class FloorPlanProvider extends ChangeNotifier {
   // ===========================================================================
 
   double wallLength(RoomModel room, int wallIndex) =>
-      FloorPlanMetrics.wallLength(room, wallIndex);
+      PlanEditGeometry.wallLength(room, wallIndex);
 
-  double get totalProjectArea =>
-      FloorPlanMetrics.totalProjectArea(_completedRooms);
+  double get totalProjectArea {
+    double total = 0.0;
+    for (final room in _completedRooms) {
+      if (!room.isClosed) continue;
+      total += GeometryService.calculateArea(room.points);
+    }
+    return total;
+  }
 
-  List<Map<String, dynamic>> get roomSummaries =>
-      FloorPlanMetrics.roomSummaries(_completedRooms);
+  List<Map<String, dynamic>> get roomSummaries {
+    return _completedRooms
+        .map(
+          (room) => {
+            'id': room.id,
+            'name': room.name,
+            'type': room.type.name,
+            'area': PlanEditGeometry.area(room).toStringAsFixed(2),
+            'perimeter': PlanEditGeometry.perimeter(room).toStringAsFixed(2),
+            'pointsCount': room.points.length,
+          },
+        )
+        .toList();
+  }
 
   // ===========================================================================
   // REAJUSTE DE ABERTURAS
