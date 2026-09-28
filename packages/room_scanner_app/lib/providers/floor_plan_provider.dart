@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
+import 'floor_plan_room_identity.dart';
+
 part 'floor_plan_provider_types.dart';
 
 class FloorPlanProvider extends ChangeNotifier {
@@ -37,7 +39,7 @@ class FloorPlanProvider extends ChangeNotifier {
     final parts = PlanEditGeometry.deleteWall(original, index);
     if (parts.isEmpty) return const PlanEditProposal.failed(PlanEditError.invalid);
     for (var i = 1; i < parts.length; i++) {
-      parts[i] = parts[i].copyWith(id: _nextUniqueId());
+      parts[i] = parts[i].copyWith(id: FloorPlanRoomIdentity.nextUniqueId());
     }
     final proposed = <RoomModel>[];
     for (final room in _completedRooms) {
@@ -105,7 +107,6 @@ class FloorPlanProvider extends ChangeNotifier {
 
   ProjectPersister? persister;
 
-  static int _lastGeneratedId = 0;
 
   String? get projectUuid => _projectUuid;
 
@@ -136,61 +137,6 @@ class FloorPlanProvider extends ChangeNotifier {
   // IDENTIFICADORES
   // ===========================================================================
 
-  static String _nextUniqueId() {
-    final now =
-        DateTime.now().microsecondsSinceEpoch;
-
-    if (now > _lastGeneratedId) {
-      _lastGeneratedId = now;
-    } else {
-      _lastGeneratedId++;
-    }
-
-    return _lastGeneratedId.toString();
-  }
-
-  /// Repara IDs vacíos o repetidos.
-  ///
-  /// Permite abrir proyectos creados antes de incorporar
-  /// el generador monotónico de identificadores.
-  _RoomNormalizationResult _normalizeRoomIds(
-    List<RoomModel> rooms,
-  ) {
-    final usedIds = <String>{};
-
-    final normalized = <RoomModel>[];
-
-    bool changed = false;
-
-    for (final room in rooms) {
-      var id = room.id.trim();
-
-      if (id.isEmpty ||
-          usedIds.contains(id)) {
-        id = _nextUniqueId();
-
-        changed = true;
-      }
-
-      usedIds.add(id);
-
-      if (id != room.id) {
-        normalized.add(
-          room.copyWith(
-            id: id,
-          ),
-        );
-      } else {
-        normalized.add(room);
-      }
-    }
-
-    return _RoomNormalizationResult(
-      rooms: normalized,
-      changed: changed,
-    );
-  }
-
   // ===========================================================================
   // PROYECTO
   // ===========================================================================
@@ -205,7 +151,7 @@ class FloorPlanProvider extends ChangeNotifier {
     _projectName = name;
 
     final normalized =
-        _normalizeRoomIds(
+        FloorPlanRoomIdentity.normalizeIds(
       rooms,
     );
 
@@ -339,7 +285,7 @@ class FloorPlanProvider extends ChangeNotifier {
         duplicate) {
       roomToAdd =
           room.copyWith(
-        id: _nextUniqueId(),
+        id: FloorPlanRoomIdentity.nextUniqueId(),
       );
     }
 
@@ -414,7 +360,7 @@ class FloorPlanProvider extends ChangeNotifier {
       final sharedPoints = pathLength(reversePoints) < pathLength(continuationPoints)
           ? reversePoints : continuationPoints;
       return RoomModel(
-        id: _nextUniqueId(),
+        id: FloorPlanRoomIdentity.nextUniqueId(),
         name: room.name,
         type: room.type,
         points: sharedPoints,
@@ -528,7 +474,7 @@ class FloorPlanProvider extends ChangeNotifier {
           (existing) => existing.id == roomToAdd.id,
         )) {
       roomToAdd = roomToAdd.copyWith(
-        id: _nextUniqueId(),
+        id: FloorPlanRoomIdentity.nextUniqueId(),
       );
     }
 
@@ -655,7 +601,7 @@ class FloorPlanProvider extends ChangeNotifier {
     final previousName = _projectName;
     final before = List<RoomModel>.from(_completedRooms);
     final normalized =
-        _normalizeRoomIds(
+        FloorPlanRoomIdentity.normalizeIds(
       rooms,
     );
 
@@ -2695,7 +2641,7 @@ class FloorPlanProvider extends ChangeNotifier {
     }
     final before = List<RoomModel>.from(_completedRooms);
     final created = original == null ? WallFeature(
-      id: _nextUniqueId(), type: type, start: start, end: end,
+      id: FloorPlanRoomIdentity.nextUniqueId(), type: type, start: start, end: end,
       openingHeightMeters: openingHeightMeters, sillHeightMeters: sillHeightMeters,
     ) : null;
     for (final i in affected) {
