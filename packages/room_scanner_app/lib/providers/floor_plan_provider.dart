@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
 import 'floor_plan_room_identity.dart';
+import 'floor_plan_room_placement.dart';
 
 part 'floor_plan_provider_types.dart';
 
@@ -699,145 +700,30 @@ class FloorPlanProvider extends ChangeNotifier {
 
   // ===========================================================================  // POSICIONAMIENTO GLOBAL  // ===========================================================================
 
-  /// Traslada una habitación completa.
-  ///
-  /// Se trasladan también todas sus puertas y ventanas.
+  /// Traslada una habitación completa junto con sus aberturas.
   RoomModel _translateRoom(
     RoomModel room, {
     required double offsetX,
     required double offsetZ,
   }) {
-    final translatedPoints =
-        room.points.map(      (point) {        return ARPoint(          x: point.x + offsetX,
-          y: point.y,
-          z: point.z + offsetZ,
-        );
-      },
-    ).toList();
-
-    final translatedFeatures =
-        room.features.map(
-      (feature) {
-        return feature.copyWith(
-          start: ARPoint(
-            x:
-                feature.start.x +
-                    offsetX,
-            y: feature.start.y,
-            z:
-                feature.start.z +
-                    offsetZ,
-          ),
-          end: ARPoint(
-            x:
-                feature.end.x +
-                    offsetX,
-            y: feature.end.y,
-            z:
-                feature.end.z +
-                    offsetZ,
-          ),
-        );
-      },
-    ).toList();
-
-    return room.copyWith(
-      points: translatedPoints,
-      features: translatedFeatures,
-    );
-  }
-
-  /// Posiciona una habitación nueva después de las existentes.
-  ///
-  /// El comportamiento inicial es deliberadamente simple y predecible:
-  ///
-  ///   Habitación 1   Habitación 2   Habitación 3
-  ///   ┌───────┐      ┌───────┐      ┌───────┐
-  ///   │       │ 1 m  │       │ 1 m  │       │
-  ///   └───────┘      └───────┘      └───────┘
-  RoomModel _placeRoomAfterExisting(
-    RoomModel room,
-  ) {
-    if (_completedRooms.isEmpty ||
-        room.points.isEmpty) {
-      return room;
-    }
-
-    double projectMaxX =
-        double.negativeInfinity;
-
-    double projectMinZ =
-        double.infinity;    for (final existing
-        in _completedRooms) {
-      for (final point
-          in existing.points) {
-        if (point.x >
-            projectMaxX) {
-          projectMaxX =
-              point.x;
-        }
-
-        if (point.z <
-            projectMinZ) {
-          projectMinZ =
-              point.z;
-        }
-      }
-    }
-
-    if (!projectMaxX.isFinite) {
-      projectMaxX = 0.0;
-    }
-
-    if (!projectMinZ.isFinite) {
-      projectMinZ = 0.0;
-    }
-    double roomMinX =
-        double.infinity;
-
-    double roomMinZ =
-        double.infinity;
-
-    for (final point
-        in room.points) {
-      if (point.x < roomMinX) {
-        roomMinX =
-            point.x;      }
-
-      if (point.z < roomMinZ) {
-        roomMinZ =
-            point.z;
-      }
-    }
-    if (!roomMinX.isFinite) {
-      roomMinX = 0.0;
-    }
-
-    if (!roomMinZ.isFinite) {
-      roomMinZ = 0.0;
-    }
-
-    final targetMinX =
-        projectMaxX +
-            _defaultRoomSpacing;
-
-    final offsetX =
-        targetMinX -
-            roomMinX;
-
-    final offsetZ =
-        projectMinZ -
-            roomMinZ;
-
-    return _translateRoom(
+    return FloorPlanRoomPlacement.translate(
       room,
       offsetX: offsetX,
       offsetZ: offsetZ,
     );
   }
 
-  /// Arranges independent groups; connections and shared walls stay rigid.
-  /// The first group is the anchor. A single assembled plan is never moved.
+  /// Posiciona una habitación nueva después de las existentes.
+  RoomModel _placeRoomAfterExisting(
+    RoomModel room,
+  ) {
+    return FloorPlanRoomPlacement.placeAfterExisting(
+      room,
+      _completedRooms,
+      spacing: _defaultRoomSpacing,
+    );
+  }
+
   Future<bool> autoArrangeRooms({
     double spacing = _defaultRoomSpacing,
   }) async {
