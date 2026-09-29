@@ -44,4 +44,33 @@ void main() {
       throwsA(isA<SqliteException>()),
     );
   });
+
+  test('foreign keys reject room points with nonexistent rooms', () async {
+    final database = ArchScanDatabase.inMemory();
+    addTearDown(database.close);
+
+    await expectLater(
+      database.customStatement(
+        'INSERT INTO room_points (room_id, x, y, z) '
+        'VALUES (999999, 1.0, 2.0, 3.0)',
+      ),
+      throwsA(isA<SqliteException>()),
+    );
+  });
+
+  test('foreign keys reject wall features with nonexistent rooms', () async {
+    final database = ArchScanDatabase.inMemory();
+    addTearDown(database.close);
+
+    await expectLater(
+      database.customStatement(
+        'INSERT INTO wall_features_table '
+        '(room_id, feature_id, type, start_x, start_y, start_z, '
+        'end_x, end_y, end_z) '
+        "VALUES (999999, 'orphan-feature', 'door', 0.0, 0.0, 0.0, "
+        '1.0, 0.0, 0.0)',
+      ),
+      throwsA(isA<SqliteException>()),
+    );
+  });
 }
