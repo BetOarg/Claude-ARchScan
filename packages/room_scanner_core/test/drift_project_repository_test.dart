@@ -188,7 +188,7 @@ void main() {
     );
     final initial = (await repository.getAllProjects()).single;
 
-    await Future<void>.delayed(const Duration(milliseconds: 2));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
     await repository.saveProject(
       uuid: 'project-timestamps',
       name: 'Updated',
