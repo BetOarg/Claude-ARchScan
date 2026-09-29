@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:test/test.dart';
 
 import '../lib/src/models/room_model.dart';
@@ -181,5 +182,15 @@ void main() {
 
     expect(await repository.getAllProjects(), isEmpty);
     expect(await repository.getRoomsForProject('project-1'), isEmpty);
+
+    final projects = await database.select(database.projects).get();
+    final rooms = await database.select(database.rooms).get();
+    final points = await database.select(database.roomPoints).get();
+    final features = await database.select(database.wallFeaturesTable).get();
+
+    expect(projects, isEmpty);
+    expect(rooms, isEmpty);
+    expect(points, isEmpty);
+    expect(features, isEmpty);
   });
 }
