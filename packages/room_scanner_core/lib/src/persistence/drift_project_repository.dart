@@ -8,6 +8,8 @@ import 'drift_database.dart';
 import 'project_repository.dart';
 
 class DriftProjectRepository implements ProjectRepository {
+  DriftProjectRepository({ArchScanDatabase? database}) : _database = database;
+
   ArchScanDatabase? _database;
 
   ArchScanDatabase get _db {
