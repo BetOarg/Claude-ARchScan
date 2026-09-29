@@ -98,10 +98,12 @@ class DriftProjectRepository implements ProjectRepository {
             z: feature.startZ,
           ),
           connectedRoomId: feature.connectedRoomId,
-          connectionSide: OpeningConnectionSide.values.firstWhere(
-            (value) => value.name == feature.connectionSide,
-            orElse: () => OpeningConnectionSide.left,
-          ),
+          connectionSide: feature.connectionSide == null
+              ? null
+              : OpeningConnectionSide.values.firstWhere(
+                  (value) => value.name == feature.connectionSide,
+                  orElse: () => OpeningConnectionSide.left,
+                ),
           end: ARPoint(
             x: feature.endX,
             y: feature.endY,
