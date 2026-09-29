@@ -153,10 +153,14 @@ class DriftProjectRepository implements ProjectRepository {
       final existing = await (_db.select(_db.projects)
             ..where((p) => p.uuid.equals(uuid)))
           .getSingleOrNull();
-      final now = DateTime.now();
-      final updatedAt = existing != null && !now.isAfter(existing.updatedAt)
-          ? existing.updatedAt.add(const Duration(seconds: 1))
-          : now;
+      final now = DateTime.now().toUtc();
+      final updatedAt = existing == null
+          ? now
+          : (now.isAfter(
+                  existing.updatedAt.toUtc().add(const Duration(seconds: 1)),
+                )
+              ? now
+              : existing.updatedAt.toUtc().add(const Duration(seconds: 1)));
 
       late final int projectId;
       if (existing == null) {
