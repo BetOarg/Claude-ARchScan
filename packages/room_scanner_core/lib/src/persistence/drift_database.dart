@@ -30,7 +30,7 @@ class RoomPoints extends Table {
   RealColumn get z => real()();
 }
 
-class WallFeatures extends Table {
+class WallFeaturesTable extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get roomId => integer().references(Rooms, #id)();
   TextColumn get featureId => text()();
@@ -51,7 +51,7 @@ class WallFeatures extends Table {
   RealColumn get sillHeight => real().nullable()();
 }
 
-@DriftDatabase(tables: [Projects, Rooms, RoomPoints, WallFeatures])
+@DriftDatabase(tables: [Projects, Rooms, RoomPoints, WallFeaturesTable])
 class ArchScanDatabase extends _$ArchScanDatabase {
   ArchScanDatabase(String path) : super(NativeDatabase(File(path)));
 
