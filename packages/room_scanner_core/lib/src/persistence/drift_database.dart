@@ -35,6 +35,8 @@ class WallFeatures extends Table {
   IntColumn get roomId => integer().references(Rooms, #id)();
   TextColumn get featureId => text()();
   TextColumn get type => text()();
+  TextColumn get connectedRoomId => text().nullable()();
+  TextColumn get connectionSide => text().nullable()();
   RealColumn get startX => real()();
   RealColumn get startY => real()();
   RealColumn get startZ => real()();
