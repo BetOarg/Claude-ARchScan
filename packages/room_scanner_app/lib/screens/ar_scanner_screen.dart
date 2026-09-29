@@ -35,7 +35,7 @@ import 'floor_plan_viewer_screen.dart';
 enum AppMode { wall, door, window }
 
 class ARScannerScreen extends StatefulWidget {
-  /// UUID del proyecto Isar al que pertenece este escaneo.
+  /// UUID del proyecto local al que pertenece este escaneo.
   final String projectUuid;
 
   final String projectName;
