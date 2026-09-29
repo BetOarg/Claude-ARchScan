@@ -72,7 +72,7 @@ class DriftProjectRepository implements ProjectRepository {
     final pointRows = await (_db.select(_db.roomPoints)
           ..where((p) => p.roomId.isIn(roomDatabaseIds)))
         .get();
-    final featureRows = await (_db.select(_db.wallFeatures)
+    final featureRows = await (_db.select(_db.wallFeaturesTable)
           ..where((f) => f.roomId.isIn(roomDatabaseIds)))
         .get();
 
@@ -226,7 +226,7 @@ class DriftProjectRepository implements ProjectRepository {
             _db.wallFeatures,
             room.features
                 .map(
-                  (feature) => WallFeaturesCompanion.insert(
+                  (feature) => WallFeaturesTableCompanion.insert(
                     roomId: roomDbId,
                     featureId: feature.id,
                     type: feature.type.name,
