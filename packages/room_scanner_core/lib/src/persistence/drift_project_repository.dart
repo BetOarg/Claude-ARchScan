@@ -158,7 +158,7 @@ class DriftProjectRepository implements ProjectRepository {
           ? existing.updatedAt.add(const Duration(seconds: 1))
           : now;
 
-      final projectId;
+      late final int projectId;
       if (existing == null) {
         projectId = await _db.into(_db.projects).insert(
               ProjectsCompanion(
