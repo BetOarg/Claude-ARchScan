@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:test/test.dart';
 
 import '../lib/src/persistence/drift_database.dart';
