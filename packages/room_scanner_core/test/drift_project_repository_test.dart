@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:test/test.dart';
 
@@ -169,6 +171,77 @@ void main() {
     expect(rooms, hasLength(1));
     expect(rooms.single.points, hasLength(2));
     expect((await repository.getAllProjects()).single.name, 'Project renamed');
+  });
+
+  test('preserves createdAt and advances updatedAt when replacing a project', () async {
+    final room = RoomModel(
+      id: 'room-1',
+      name: 'Room',
+      type: RoomType.living,
+    );
+
+    await repository.saveProject(
+      uuid: 'project-timestamps',
+      name: 'Initial',
+      rooms: [room],
+    );
+    final initial = (await repository.getAllProjects()).single;
+
+    await Future<void>.delayed(const Duration(milliseconds: 2));
+    await repository.saveProject(
+      uuid: 'project-timestamps',
+      name: 'Updated',
+      rooms: [room],
+    );
+    final updated = (await repository.getAllProjects()).single;
+
+    expect(updated.createdAt, initial.createdAt);
+    expect(updated.updatedAt.isAfter(initial.updatedAt), isTrue);
+    expect(updated.name, 'Updated');
+  });
+
+  test('persists projects across database close and reopen', () async {
+    final directory = await Directory.systemTemp.createTemp('archscan-drift-test-');
+    final firstRepository = DriftProjectRepository();
+    final room = RoomModel(
+      id: 'room-persisted',
+      name: 'Persisted room',
+      type: RoomType.dormitorio,
+      isClosed: true,
+      points: [ARPoint(x: 1, y: 2, z: 3)],
+    );
+
+    try {
+      await firstRepository.init(directoryPath: directory.path);
+      await firstRepository.saveProject(
+        uuid: 'project-persisted',
+        name: 'Persisted project',
+        rooms: [room],
+      );
+      await firstRepository.dispose();
+
+      final secondRepository = DriftProjectRepository();
+      try {
+        await secondRepository.init(directoryPath: directory.path);
+        final projects = await secondRepository.getAllProjects();
+        final rooms = await secondRepository.getRoomsForProject(
+          'project-persisted',
+        );
+
+        expect(projects, hasLength(1));
+        expect(projects.single.name, 'Persisted project');
+        expect(rooms, hasLength(1));
+        expect(rooms.single.id, 'room-persisted');
+        expect(rooms.single.isClosed, isTrue);
+        expect(rooms.single.points.single.x, 1);
+        expect(rooms.single.points.single.y, 2);
+        expect(rooms.single.points.single.z, 3);
+      } finally {
+        await secondRepository.dispose();
+      }
+    } finally {
+      await directory.delete(recursive: true);
+    }
   });
 
   test('preserves empty projects when saved without rooms', () async {
