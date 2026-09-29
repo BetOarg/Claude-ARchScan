@@ -86,7 +86,7 @@ La política debe seguir contemplando proyectos locales, exportaciones JSON/SVG/
 3. Promover exactamente el artefacto probado.
 4. Ante una regresión, detener distribución y crear el hotfix desde el tag del lanzamiento.
 5. Incrementar el build number y repetir la auditoría completa.
-6. No degradar esquemas Isar ni borrar proyectos al corregir.
+6. No degradar el esquema Drift/SQLite ni borrar proyectos al corregir.
 
 ## Criterio de salida
 
