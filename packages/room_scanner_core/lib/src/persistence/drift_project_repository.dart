@@ -155,7 +155,7 @@ class DriftProjectRepository implements ProjectRepository {
           .getSingleOrNull();
       final now = DateTime.now();
       final updatedAt = existing != null && !now.isAfter(existing.updatedAt)
-          ? existing.updatedAt.add(const Duration(microseconds: 1))
+          ? existing.updatedAt.add(const Duration(milliseconds: 1))
           : now;
 
       final projectId = await _db.into(_db.projects).insertOnConflictUpdate(
