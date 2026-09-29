@@ -178,6 +178,7 @@ void main() {
       id: 'room-1',
       name: 'Room',
       type: RoomType.living,
+      points: [ARPoint(x: 0, y: 0, z: 0)],
     );
 
     await repository.saveProject(
