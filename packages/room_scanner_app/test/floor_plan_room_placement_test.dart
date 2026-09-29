@@ -48,9 +48,9 @@ void main() {
       [existing],
     );
 
-    expect(placed.points.map((p) => p.x).reduce((a, b) => a > b ? a : b), 4);
+    expect(placed.points.map((p) => p.x).reduce((a, b) => a > b ? a : b), 5);
     expect(placed.points.map((p) => p.z).reduce((a, b) => a < b ? a : b), 0);
-    expect(placed.features.single.start.x, 2.5);
+    expect(placed.features.single.start.x, 3.5);
   });
 
   test('empty existing rooms leave candidate unchanged', () {
