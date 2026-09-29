@@ -1,6 +1,6 @@
 name: room_scanner_core
 description: >
-  Núcleo de dominio de Claude Room Scanner: modelos Isar, geometría de
+  Núcleo de dominio de Claude Room Scanner: modelos de dominio, persistencia Drift, geometría de
   ambientes/paredes compartidas y construcción de exportaciones JSON/PDF.
   Sin UI, sin widgets, sin controladores de hardware.
 publish_to: 'none'
