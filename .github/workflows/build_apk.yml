@@ -29,12 +29,21 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.android
-          base64 --decode             .github/signing/room-scanner-test.keystore.b64             > ~/.android/debug.keystore
+          base64 --decode \
+            .github/signing/room-scanner-test.keystore.b64 \
+            > ~/.android/debug.keystore
 
-          keytool -list             -keystore ~/.android/debug.keystore             -storepass android             -alias androiddebugkey
+          keytool -list \
+            -keystore ~/.android/debug.keystore \
+            -storepass android \
+            -alias androiddebugkey
 
           ACTUAL_SHA256="$(
-            keytool -list -v               -keystore ~/.android/debug.keystore               -storepass android               -alias androiddebugkey 2>/dev/null               | sed -n 's/^[[:space:]]*SHA256: //p'
+            keytool -list -v \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias androiddebugkey 2>/dev/null \
+              | sed -n 's/^[[:space:]]*SHA256: //p'
           )"
 
           if [[ "$ACTUAL_SHA256" != "$TEST_SIGNING_SHA256" ]]; then
@@ -68,7 +77,7 @@ jobs:
         run: |
           # Monotónico, único por ejecución y reintento. Evita APK con un
           # versionCode repetido o menor que el ya instalado.
-          VERSION_CODE=$(( 
+          VERSION_CODE=$((
             270000000 +
             ${{ github.run_number }} * 100 +
             ${{ github.run_attempt }}
@@ -82,9 +91,14 @@ jobs:
             exit 1
           fi
 
-          flutter build apk             --debug             --android-skip-build-dependency-validation             --build-name="$APP_VERSION"             --build-number="$VERSION_CODE"
+          flutter build apk \
+            --debug \
+            --android-skip-build-dependency-validation \
+            --build-name="$APP_VERSION" \
+            --build-number="$VERSION_CODE"
 
-          cp build/app/outputs/flutter-apk/app-debug.apk             "build/app/outputs/flutter-apk/room-scanner-build-${{ github.run_number }}.apk"
+          cp build/app/outputs/flutter-apk/app-debug.apk \
+            "build/app/outputs/flutter-apk/room-scanner-build-${{ github.run_number }}.apk"
 
           APK_PATH="build/app/outputs/flutter-apk/room-scanner-build-${{ github.run_number }}.apk"
           APK_SIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
@@ -111,7 +125,7 @@ jobs:
           "$AAPT" dump permissions "$APK_PATH" | tee "$REPORT_DIR/permissions.txt"
           printf '%s\n' "$APK_CERTIFICATE" > "$REPORT_DIR/signing-certificate.txt"
 
-          grep -Fq "package: name='com.bet0.ARchScan'"             "$REPORT_DIR/package-version-sdk.txt" || {
+          grep -Fq "package: name='com.bet0.ARchScan'" "$REPORT_DIR/package-version-sdk.txt" || {
               echo "El APK no usa el Application ID esperado."
               exit 1
             }
@@ -121,7 +135,8 @@ jobs:
             exit 1
           }
 
-          if grep -Eq "android.permission.(RECORD_AUDIO|INTERNET)"               "$REPORT_DIR/permissions.txt"; then
+          if grep -Eq "android.permission.(RECORD_AUDIO|INTERNET)" \
+              "$REPORT_DIR/permissions.txt"; then
             echo "El APK final contiene permisos incompatibles con la declaración de privacidad."
             exit 1
           fi
