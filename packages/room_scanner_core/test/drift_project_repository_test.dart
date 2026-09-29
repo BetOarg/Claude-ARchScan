@@ -171,6 +171,22 @@ void main() {
     expect((await repository.getAllProjects()).single.name, 'Project renamed');
   });
 
+  test('preserves empty projects when saved without rooms', () async {
+    await repository.saveProject(
+      uuid: 'project-empty',
+      name: 'Empty project',
+      rooms: const [],
+    );
+
+    final projects = await repository.getAllProjects();
+    final rooms = await repository.getRoomsForProject('project-empty');
+
+    expect(projects, hasLength(1));
+    expect(projects.single.uuid, 'project-empty');
+    expect(projects.single.name, 'Empty project');
+    expect(rooms, isEmpty);
+  });
+
   test('isolates rooms and data between projects', () async {
     final projectARoom = RoomModel(
       id: 'room-a',
