@@ -79,6 +79,56 @@ void main() {
     );
   });
 
+  test('round-trips complete door metadata and opening dimensions', () async {
+    final door = WallFeature(
+      id: 'door-complete',
+      type: FeatureType.door,
+      start: ARPoint(x: 1, y: 2, z: 3),
+      end: ARPoint(x: 2, y: 2, z: 3),
+      doorHingeSide: DoorHingeSide.end,
+      doorSwingSide: DoorSwingSide.right,
+      doorOpeningDirection: DoorOpeningDirection.exterior,
+      connectedRoomId: 'room-connected',
+      connectionSide: OpeningConnectionSide.right,
+      openingHeightMeters: 2.15,
+      sillHeightMeters: 0.25,
+    );
+
+    await repository.saveProject(
+      uuid: 'project-door-metadata',
+      name: 'Door metadata',
+      rooms: [
+        RoomModel(
+          id: 'room-door',
+          name: 'Room',
+          type: RoomType.living,
+          points: [ARPoint(x: 0, y: 0, z: 0)],
+          features: [door],
+        ),
+      ],
+    );
+
+    final restored = (await repository.getRoomsForProject(
+      'project-door-metadata',
+    )).single.features.single;
+
+    expect(restored.id, door.id);
+    expect(restored.type, FeatureType.door);
+    expect(restored.start.x, door.start.x);
+    expect(restored.start.y, door.start.y);
+    expect(restored.start.z, door.start.z);
+    expect(restored.end.x, door.end.x);
+    expect(restored.end.y, door.end.y);
+    expect(restored.end.z, door.end.z);
+    expect(restored.doorHingeSide, DoorHingeSide.end);
+    expect(restored.doorSwingSide, DoorSwingSide.right);
+    expect(restored.doorOpeningDirection, DoorOpeningDirection.exterior);
+    expect(restored.connectedRoomId, 'room-connected');
+    expect(restored.connectionSide, OpeningConnectionSide.right);
+    expect(restored.openingHeightMeters, 2.15);
+    expect(restored.sillHeightMeters, 0.25);
+  });
+
   test('round-trips every persisted enum by name', () async {
     final rooms = RoomType.values
         .asMap()
