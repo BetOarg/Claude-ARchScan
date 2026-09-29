@@ -1,0 +1,33 @@
+name: Bootstrap Drift Schema Snapshot
+
+on:
+  push:
+    branches:
+      - migration/drift-persistence
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.9.2'
+      - name: Generate Drift schema snapshot
+        working-directory: packages/room_scanner_core
+        run: |
+          dart pub get
+          mkdir -p drift_schemas
+          dart run drift_dev schema dump lib/src/persistence/drift_database.dart drift_schemas/drift_schema_v1.json
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/room_scanner_core/drift_schemas/drift_schema_v1.json
+          git diff --cached --quiet && exit 0
+          git commit -m "test: add Drift schema v1 snapshot"
+          git push
