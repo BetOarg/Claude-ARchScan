@@ -168,11 +168,10 @@ class DriftProjectRepository implements ProjectRepository {
             ),
           );
 
-      final currentProject = existing == null
-          ? await (_db.select(_db.projects)
+      final currentProject = existing ??
+          await (_db.select(_db.projects)
                 ..where((p) => p.uuid.equals(uuid)))
-              .getSingle()
-          : existing;
+              .getSingle();
 
       final oldRooms = await (_db.select(_db.rooms)
             ..where((r) => r.projectId.equals(currentProject.id)))
