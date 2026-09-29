@@ -1,7 +1,7 @@
 import 'package:vector_math/vector_math_64.dart' as vector;
 
 enum RoomType {
-  // Keep historical order for stable persisted enum values; Drift stores enum names.
+  // Keep the historical order for persisted compatibility; Drift stores names.
   living,
   cocina,
   bano,
@@ -136,8 +136,7 @@ class WallFeature {
     double? sillHeightMeters,
   }) : openingHeightMeters =
            openingHeightMeters ?? (type == FeatureType.door ? 2.10 : 1.20),
-       sillHeightMeters =
-           sillHeightMeters ?? (type == FeatureType.door ? 0.0 : 0.90);
+       sillHeightMeters = sillHeightMeters ?? (type == FeatureType.door ? 0.0 : 0.90);
 
   bool get isConnected =>
       connectedRoomId != null && connectedRoomId!.trim().isNotEmpty;
