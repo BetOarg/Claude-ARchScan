@@ -6,6 +6,7 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 
 import 'floor_plan_room_identity.dart';
 import 'floor_plan_room_placement.dart';
+import 'floor_plan_transform_history.dart';
 
 part 'floor_plan_provider_types.dart';
 
@@ -87,8 +88,6 @@ class FloorPlanProvider extends ChangeNotifier {
   }
 
   static const double _defaultRoomSpacing = 1.0;
-  static const int _maximumTransformHistoryEntries = 50;
-
   MeasurementSystem measurementSystem =
       MeasurementSystem.metric;
 
@@ -98,8 +97,7 @@ class FloorPlanProvider extends ChangeNotifier {
 
   final List<RoomModel> _completedRooms = [];
 
-  final List<_TransformHistoryEntry> _transformUndoHistory = [];
-  final List<_TransformHistoryEntry> _transformRedoHistory = [];
+  final FloorPlanTransformHistory _transformHistory = FloorPlanTransformHistory();
 
   List<RoomModel>? _touchTransformBefore;
   List<RoomModel>? _touchTransformLastValid;
@@ -120,19 +118,9 @@ class FloorPlanProvider extends ChangeNotifier {
         _completedRooms,
       );
 
-  bool get canUndoTransform =>
-      _transformUndoHistory.isNotEmpty &&
-      _sameRoomSnapshot(
-        _transformUndoHistory.last.after,
-        _completedRooms,
-      );
+  bool get canUndoTransform => _transformHistory.canUndo(_completedRooms);
 
-  bool get canRedoTransform =>
-      _transformRedoHistory.isNotEmpty &&
-      _sameRoomSnapshot(
-        _transformRedoHistory.last.before,
-        _completedRooms,
-      );
+  bool get canRedoTransform => _transformHistory.canRedo(_completedRooms);
 
   // ===========================================================================
   // IDENTIFICADORES
@@ -1857,7 +1845,8 @@ class FloorPlanProvider extends ChangeNotifier {
     }
 
     final uuid = _projectUuid;
-    final entry = _transformUndoHistory.last;
+    final entry = _transformHistory.peekUndo(_completedRooms);
+    if (entry == null) return false;
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms
       ..clear()
@@ -1865,9 +1854,7 @@ class FloorPlanProvider extends ChangeNotifier {
     notifyListeners();
     if (!await _persistRoomChange(before)) return false;
     if (_projectUuid == uuid && _sameRoomSnapshot(entry.before, _completedRooms) &&
-        _transformUndoHistory.isNotEmpty && identical(_transformUndoHistory.last, entry)) {
-      _transformUndoHistory.removeLast();
-      _transformRedoHistory.add(entry);
+        _transformHistory.moveUndoToRedo(entry)) {
       notifyListeners();
     }
     return true;
@@ -1880,7 +1867,8 @@ class FloorPlanProvider extends ChangeNotifier {
     }
 
     final uuid = _projectUuid;
-    final entry = _transformRedoHistory.last;
+    final entry = _transformHistory.peekRedo(_completedRooms);
+    if (entry == null) return false;
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms
       ..clear()
@@ -1888,47 +1876,25 @@ class FloorPlanProvider extends ChangeNotifier {
     notifyListeners();
     if (!await _persistRoomChange(before)) return false;
     if (_projectUuid == uuid && _sameRoomSnapshot(entry.after, _completedRooms) &&
-        _transformRedoHistory.isNotEmpty && identical(_transformRedoHistory.last, entry)) {
-      _transformRedoHistory.removeLast();
-      _transformUndoHistory.add(entry);
+        _transformHistory.moveRedoToUndo(entry)) {
       notifyListeners();
     }
     return true;
   }
 
   void _recordTransform(List<RoomModel> before) {
-    if (_sameRoomSnapshot(before, _completedRooms)) return;
-    _transformUndoHistory.add(
-      _TransformHistoryEntry(
-        before: before,
-        after: List<RoomModel>.from(_completedRooms),
-      ),
-    );
-    if (_transformUndoHistory.length >
-        _maximumTransformHistoryEntries) {
-      _transformUndoHistory.removeAt(0);
-    }
-    _transformRedoHistory.clear();
+    _transformHistory.record(before, _completedRooms);
   }
 
   void _clearTransformHistory() {
-    _transformUndoHistory.clear();
-    _transformRedoHistory.clear();
+    _transformHistory.clear();
   }
 
   bool _sameRoomSnapshot(
     List<RoomModel> first,
     List<RoomModel> second,
   ) {
-    if (first.length != second.length) {
-      return false;
-    }
-
-    for (var index = 0; index < first.length; index++) {
-      if (!identical(first[index], second[index])) {
-        return false;
-      }    }
-    return true;
+    return FloorPlanTransformHistory.sameSnapshot(first, second);
   }
 
   RoomModel _rotateRoom(
