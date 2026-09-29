@@ -23,7 +23,7 @@ void main() {
       name: 'Living',
       type: RoomType.living,
       isClosed: true,
-      points: const [
+      points: [
         ARPoint(x: 0, y: 0, z: 0),
         ARPoint(x: 4, y: 0, z: 0),
         ARPoint(x: 4, y: 3, z: 0),
@@ -32,8 +32,8 @@ void main() {
         WallFeature(
           id: 'door-1',
           type: FeatureType.door,
-          start: const ARPoint(x: 0.5, y: 0, z: 0),
-          end: const ARPoint(x: 1.4, y: 0, z: 0),
+          start: ARPoint(x: 0.5, y: 0, z: 0),
+          end: ARPoint(x: 1.4, y: 0, z: 0),
           doorHingeSide: DoorHingeSide.end,
           doorSwingSide: DoorSwingSide.right,
           doorOpeningDirection: DoorOpeningDirection.exterior,
@@ -74,7 +74,7 @@ void main() {
       id: 'room-1',
       name: 'Room',
       type: RoomType.living,
-      points: const [ARPoint(x: 0, y: 0, z: 0)],
+      points: [ARPoint(x: 0, y: 0, z: 0)],
     );
 
     await repository.saveProject(
@@ -84,7 +84,7 @@ void main() {
     );
 
     final updated = initial.copyWith(
-      points: const [
+      points: [
         ARPoint(x: 0, y: 0, z: 0),
         ARPoint(x: 1, y: 0, z: 0),
       ],
@@ -107,13 +107,13 @@ void main() {
       id: 'room-1',
       name: 'Room',
       type: RoomType.living,
-      points: const [ARPoint(x: 0, y: 0, z: 0)],
+      points: [ARPoint(x: 0, y: 0, z: 0)],
       features: [
         WallFeature(
           id: 'window-1',
           type: FeatureType.window,
-          start: const ARPoint(x: 0, y: 0, z: 0),
-          end: const ARPoint(x: 1, y: 0, z: 0),
+          start: ARPoint(x: 0, y: 0, z: 0),
+          end: ARPoint(x: 1, y: 0, z: 0),
         ),
       ],
     );
