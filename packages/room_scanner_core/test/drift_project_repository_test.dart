@@ -173,6 +173,59 @@ void main() {
     expect((await repository.getAllProjects()).single.name, 'Project renamed');
   });
 
+  test('replacing a project removes stale child rows', () async {
+    final initial = RoomModel(
+      id: 'room-stale',
+      name: 'Room',
+      type: RoomType.living,
+      points: [
+        ARPoint(x: 0, y: 0, z: 0),
+        ARPoint(x: 1, y: 0, z: 0),
+      ],
+      features: [
+        WallFeature(
+          id: 'window-stale',
+          type: FeatureType.window,
+          start: ARPoint(x: 0, y: 0, z: 0),
+          end: ARPoint(x: 1, y: 0, z: 0),
+        ),
+      ],
+    );
+
+    await repository.saveProject(
+      uuid: 'project-stale',
+      name: 'Project',
+      rooms: [initial],
+    );
+
+    final replacement = RoomModel(
+      id: 'room-stale',
+      name: 'Room',
+      type: RoomType.living,
+      points: [ARPoint(x: 5, y: 0, z: 0)],
+    );
+
+    await repository.saveProject(
+      uuid: 'project-stale',
+      name: 'Project',
+      rooms: [replacement],
+    );
+
+    final rooms = await repository.getRoomsForProject('project-stale');
+    expect(rooms, hasLength(1));
+    expect(rooms.single.points, hasLength(1));
+    expect(rooms.single.points.single.x, 5);
+    expect(rooms.single.features, isEmpty);
+
+    final roomRows = await database.select(database.rooms).get();
+    final pointRows = await database.select(database.roomPoints).get();
+    final featureRows = await database.select(database.wallFeaturesTable).get();
+
+    expect(roomRows, hasLength(1));
+    expect(pointRows, hasLength(1));
+    expect(featureRows, isEmpty);
+  });
+
   test('preserves createdAt and advances updatedAt when replacing a project', () async {
     final room = RoomModel(
       id: 'room-1',
