@@ -37,6 +37,8 @@ void main() {
           doorHingeSide: DoorHingeSide.end,
           doorSwingSide: DoorSwingSide.right,
           doorOpeningDirection: DoorOpeningDirection.exterior,
+          connectedRoomId: 'room-2',
+          connectionSide: OpeningConnectionSide.right,
           openingHeightMeters: 2.1,
           sillHeightMeters: 0,
         ),
@@ -63,6 +65,11 @@ void main() {
     expect(rooms.single.points[2].y, 3);
     expect(rooms.single.features, hasLength(1));
     expect(rooms.single.features.single.id, 'door-1');
+    expect(rooms.single.features.single.connectedRoomId, 'room-2');
+    expect(
+      rooms.single.features.single.connectionSide,
+      OpeningConnectionSide.right,
+    );
     expect(
       rooms.single.features.single.doorOpeningDirection,
       DoorOpeningDirection.exterior,
