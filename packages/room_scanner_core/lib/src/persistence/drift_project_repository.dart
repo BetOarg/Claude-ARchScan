@@ -23,7 +23,7 @@ class DriftProjectRepository implements ProjectRepository {
   @override
   Future<void> init({required String directoryPath}) async {
     await _database?.close();
-    _database = ArchScanDatabase('${directoryPath}/archscan.sqlite');
+    _database = ArchScanDatabase('$directoryPath/archscan.sqlite');
   }
 
   Future<void> dispose() async {
@@ -98,12 +98,7 @@ class DriftProjectRepository implements ProjectRepository {
             z: feature.startZ,
           ),
           connectedRoomId: feature.connectedRoomId,
-          connectionSide: feature.connectionSide == null
-              ? null
-              : OpeningConnectionSide.values.firstWhere(
-                  (value) => value.name == feature.connectionSide,
-                  orElse: () => OpeningConnectionSide.left,
-                ),
+          connectionSide: _parseConnectionSide(feature.connectionSide),
           end: ARPoint(
             x: feature.endX,
             y: feature.endY,
@@ -185,7 +180,7 @@ class DriftProjectRepository implements ProjectRepository {
 
       final oldRoomIds = oldRooms.map((r) => r.id).toList();
       if (oldRoomIds.isNotEmpty) {
-        await (_db.delete(_db.wallFeatures)
+        await (_db.delete(_db.wallFeaturesTable)
               ..where((f) => f.roomId.isIn(oldRoomIds)))
             .go();
         await (_db.delete(_db.roomPoints)
@@ -223,7 +218,7 @@ class DriftProjectRepository implements ProjectRepository {
           );
 
           batch.insertAll(
-            _db.wallFeatures,
+            _db.wallFeaturesTable,
             room.features
                 .map(
                   (feature) => WallFeaturesTableCompanion.insert(
@@ -274,7 +269,7 @@ class DriftProjectRepository implements ProjectRepository {
       final roomIds = rooms.map((r) => r.id).toList();
 
       if (roomIds.isNotEmpty) {
-        await (_db.delete(_db.wallFeatures)
+        await (_db.delete(_db.wallFeaturesTable)
               ..where((f) => f.roomId.isIn(roomIds)))
             .go();
         await (_db.delete(_db.roomPoints)
@@ -289,4 +284,15 @@ class DriftProjectRepository implements ProjectRepository {
           .go();
     });
   }
+}
+
+
+OpeningConnectionSide? _parseConnectionSide(String? value) {
+  if (value == null) {
+    return null;
+  }
+  return OpeningConnectionSide.values.firstWhere(
+    (entry) => entry.name == value,
+    orElse: () => OpeningConnectionSide.left,
+  );
 }
