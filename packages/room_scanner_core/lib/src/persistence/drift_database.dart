@@ -53,9 +53,9 @@ class WallFeaturesTable extends Table {
 
 @DriftDatabase(tables: [Projects, Rooms, RoomPoints, WallFeaturesTable])
 class ArchScanDatabase extends _$ArchScanDatabase {
-  ArchScanDatabase(String path) : super(NativeDatabase(File(path)));
+  ArchScanDatabase(String path) : super(_openNativeDatabase(File(path)));
 
-  ArchScanDatabase.inMemory() : super(NativeDatabase.memory());
+  ArchScanDatabase.inMemory() : super(_openInMemoryDatabase());
 
 
   @override
@@ -73,4 +73,22 @@ class ArchScanDatabase extends _$ArchScanDatabase {
           }
         },
       );
+}
+
+
+QueryExecutor _openNativeDatabase(File file) {
+  return NativeDatabase(
+    file,
+    setup: (database) {
+      database.execute('PRAGMA foreign_keys = ON');
+    },
+  );
+}
+
+QueryExecutor _openInMemoryDatabase() {
+  return NativeDatabase.memory(
+    setup: (database) {
+      database.execute('PRAGMA foreign_keys = ON');
+    },
+  );
 }
