@@ -149,12 +149,14 @@ class DriftProjectRepository implements ProjectRepository {
     required String name,
     required List<RoomModel> rooms,
   }) async {
-    final now = DateTime.now();
-
     await _db.transaction(() async {
       final existing = await (_db.select(_db.projects)
             ..where((p) => p.uuid.equals(uuid)))
           .getSingleOrNull();
+      final now = DateTime.now();
+      final updatedAt = existing != null && !now.isAfter(existing.updatedAt)
+          ? existing.updatedAt.add(const Duration(microseconds: 1))
+          : now;
 
       final projectId = await _db.into(_db.projects).insertOnConflictUpdate(
             ProjectsCompanion(
@@ -164,7 +166,7 @@ class DriftProjectRepository implements ProjectRepository {
               uuid: Value(uuid),
               name: Value(name),
               createdAt: Value(existing?.createdAt ?? now),
-              updatedAt: Value(now),
+              updatedAt: Value(updatedAt),
             ),
           );
 
