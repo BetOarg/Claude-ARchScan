@@ -109,6 +109,52 @@ void main() {
     expect((await repository.getAllProjects()).single.name, 'Project renamed');
   });
 
+  test('isolates rooms and data between projects', () async {
+    final projectARoom = RoomModel(
+      id: 'room-a',
+      name: 'Project A room',
+      type: RoomType.living,
+      points: [ARPoint(x: 1, y: 2, z: 3)],
+    );
+    final projectBRoom = RoomModel(
+      id: 'room-b',
+      name: 'Project B room',
+      type: RoomType.living,
+      points: [ARPoint(x: 4, y: 5, z: 6)],
+    );
+
+    await repository.saveProject(
+      uuid: 'project-a',
+      name: 'Project A',
+      rooms: [projectARoom],
+    );
+    await repository.saveProject(
+      uuid: 'project-b',
+      name: 'Project B',
+      rooms: [projectBRoom],
+    );
+
+    final roomsA = await repository.getRoomsForProject('project-a');
+    final roomsB = await repository.getRoomsForProject('project-b');
+
+    expect(roomsA.map((room) => room.id), ['room-a']);
+    expect(roomsA.single.points.single.x, 1);
+    expect(roomsB.map((room) => room.id), ['room-b']);
+    expect(roomsB.single.points.single.x, 4);
+
+    await repository.deleteProject('project-a');
+
+    expect(await repository.getRoomsForProject('project-a'), isEmpty);
+    expect(await repository.getRoomsForProject('project-b'), hasLength(1));
+    expect(
+      (await repository.getRoomsForProject('project-b')).single.id,
+      'room-b',
+    );
+    expect((await repository.getAllProjects()).map((project) => project.uuid), [
+      'project-b',
+    ]);
+  });
+
   test('deleting a project removes its rooms and dependent rows', () async {
     final room = RoomModel(
       id: 'room-1',
