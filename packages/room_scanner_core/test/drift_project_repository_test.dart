@@ -77,6 +77,67 @@ void main() {
     );
   });
 
+  test('round-trips every persisted enum by name', () async {
+    final rooms = RoomType.values
+        .asMap()
+        .entries
+        .map(
+          (entry) => RoomModel(
+            id: 'room-enum-${entry.key}',
+            name: entry.value.name,
+            type: entry.value,
+            points: [ARPoint(x: entry.key.toDouble(), y: 0, z: 0)],
+            features: [
+              WallFeature(
+                id: 'feature-enum-${entry.key}',
+                type: entry.key.isEven ? FeatureType.door : FeatureType.window,
+                start: ARPoint(x: 0, y: 0, z: 0),
+                end: ARPoint(x: 1, y: 0, z: 0),
+                doorHingeSide: DoorHingeSide.values[entry.key % DoorHingeSide.values.length],
+                doorSwingSide: DoorSwingSide.values[entry.key % DoorSwingSide.values.length],
+                doorOpeningDirection: DoorOpeningDirection.values[
+                  entry.key % DoorOpeningDirection.values.length
+                ],
+                connectionSide: OpeningConnectionSide.values[
+                  entry.key % OpeningConnectionSide.values.length
+                ],
+              ),
+            ],
+          ),
+        )
+        .toList();
+
+    await repository.saveProject(
+      uuid: 'project-enums',
+      name: 'Enum project',
+      rooms: rooms,
+    );
+
+    final restored = await repository.getRoomsForProject('project-enums');
+
+    expect(restored.map((room) => room.type), RoomType.values);
+    expect(
+      restored.map((room) => room.features.single.type),
+      rooms.map((room) => room.features.single.type),
+    );
+    expect(
+      restored.map((room) => room.features.single.doorHingeSide),
+      rooms.map((room) => room.features.single.doorHingeSide),
+    );
+    expect(
+      restored.map((room) => room.features.single.doorSwingSide),
+      rooms.map((room) => room.features.single.doorSwingSide),
+    );
+    expect(
+      restored.map((room) => room.features.single.doorOpeningDirection),
+      rooms.map((room) => room.features.single.doorOpeningDirection),
+    );
+    expect(
+      restored.map((room) => room.features.single.connectionSide),
+      rooms.map((room) => room.features.single.connectionSide),
+    );
+  });
+
   test('replacing a project does not duplicate rooms, points or features', () async {
     final initial = RoomModel(
       id: 'room-1',
