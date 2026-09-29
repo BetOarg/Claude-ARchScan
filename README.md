@@ -79,11 +79,11 @@ Las conexiones se protegen: no se desplaza silenciosamente una abertura conectad
 
 ## Privacidad y proyectos históricos
 
-ARchScan no requiere cuenta ni sincronización propia en la nube. Guarda los proyectos localmente con Isar. JSON, SVG, PDF, DXF, PNG y JPG pueden guardarse fuera de la app o compartirse; su ubicación queda bajo control del usuario.
+ARchScan no requiere cuenta ni sincronización propia en la nube. Guarda los proyectos localmente con Drift sobre SQLite. JSON, SVG, PDF, DXF, PNG y JPG pueden guardarse fuera de la app o compartirse; su ubicación queda bajo control del usuario.
 
 No incorpora SDK publicitario ni compras integradas en sus dependencias directas actuales. Antes de publicar debe auditarse también el artefacto final y sus dependencias transitivas.
 
-Se conserva el formato histórico y el orden de las enumeraciones persistidas. Antes de instalar una versión con otra firma o desinstalar la app, exportá los proyectos a JSON o SVG y guardalos fuera de ARchScan. Una actualización de prueba a Google Play puede requerir reinstalación por diferencia de firmas: **no desinstales sin copia**.
+Se conserva el formato JSON de ARchScan y la compatibilidad de las enumeraciones persistidas; el backend local actual es Drift/SQLite. Antes de instalar una versión con otra firma o desinstalar la app, exportá los proyectos a JSON o SVG y guardalos fuera de ARchScan. Una actualización de prueba a Google Play puede requerir reinstalación por diferencia de firmas: **no desinstales sin copia**.
 
 - Sitio público bilingüe: [ARchScan](https://sites.google.com/view/archscan/inicio)
 - [Política de privacidad](docs/PUBLIC_PRIVACY_POLICY.md)
@@ -94,7 +94,7 @@ Se conserva el formato histórico y el orden de las enumeraciones persistidas. A
 
 | Paquete | Responsabilidad |
 |---|---|
-| `packages/room_scanner_core` | Modelos, geometría, persistencia Isar y exportaciones/importaciones JSON/SVG, PDF y DXF |
+| `packages/room_scanner_core` | Modelos, geometría, persistencia Drift/SQLite y exportaciones/importaciones JSON/SVG, PDF y DXF |
 | `packages/room_scanner_app` | Flutter, estado, pantallas, localización, cámara y adaptadores AR |
 
 Las herramientas de geometría y el editor común no dependen del modo de captura. Basic, ARCore y ARKit comparten el modelo del plano y las herramientas posteriores; RoomPlan se integra como captura nativa compatible cuando está disponible. La disponibilidad y precisión dependen del dispositivo.
@@ -122,7 +122,7 @@ flutter test
 flutter run
 ```
 
-Los archivos generados de Isar y localización se regeneran antes de compilar. También se puede utilizar Melos según `melos.yaml`.
+El código generado de Drift y la localización se regeneran antes de compilar. También se puede utilizar Melos según `melos.yaml`.
 
 ## Preparación para Google Play
 
