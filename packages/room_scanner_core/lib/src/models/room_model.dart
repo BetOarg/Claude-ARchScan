@@ -1,7 +1,7 @@
 import 'package:vector_math/vector_math_64.dart' as vector;
 
 enum RoomType {
-  // Keep historical order for stable persisted enum values.
+  // Keep historical order for stable persisted enum values; Drift stores enum names.
   living,
   cocina,
   bano,
