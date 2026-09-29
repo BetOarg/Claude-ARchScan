@@ -23,7 +23,7 @@ class DriftProjectRepository implements ProjectRepository {
   @override
   Future<void> init({required String directoryPath}) async {
     await _database?.close();
-    _database = ArchScanDatabase(directoryPath + '/archscan.sqlite');
+    _database = ArchScanDatabase('${directoryPath}/archscan.sqlite');
   }
 
   Future<void> dispose() async {
