@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:test/test.dart';
 
 import '../lib/src/persistence/drift_database.dart';
@@ -26,6 +27,20 @@ void main() {
         'room_points',
         'wall_features_table',
       }),
+    );
+  });
+
+  test('foreign keys reject child rows with nonexistent parents', () async {
+    final database = ArchScanDatabase.inMemory();
+    addTearDown(database.close);
+
+    await expectLater(
+      database.customStatement(
+        'INSERT INTO rooms '
+        '(project_id, room_id, name, type, is_closed) '
+        "VALUES (999999, 'orphan-room', 'Orphan', 'living', 0)",
+      ),
+      throwsA(isA<SqliteException>()),
     );
   });
 }
