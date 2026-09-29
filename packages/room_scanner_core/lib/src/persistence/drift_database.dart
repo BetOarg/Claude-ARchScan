@@ -57,7 +57,6 @@ class ArchScanDatabase extends _$ArchScanDatabase {
 
   ArchScanDatabase.inMemory() : super(NativeDatabase.memory());
 
-  ArchScanDatabase.withExecutor(QueryExecutor executor) : super(executor);
 
   @override
   int get schemaVersion => 1;
