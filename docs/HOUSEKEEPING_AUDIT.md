@@ -23,7 +23,7 @@ These require context validation because Flutter/Dart code can be reached throug
 
 ## Generated files
 
-Required Isar and localization generated sources are not classified as dead code by this audit; their existing build/CI rules remain authoritative.
+Required Drift and localization generated sources are not classified as dead code by this audit; their existing build/CI rules remain authoritative.
 
 ## Deletion policy
 
