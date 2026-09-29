@@ -129,6 +129,80 @@ void main() {
     expect(restored.sillHeightMeters, 0.25);
   });
 
+  test('round-trips connected rooms with a shared opening on both sides', () async {
+    final sharedA = WallFeature(
+      id: 'shared-door',
+      type: FeatureType.door,
+      start: ARPoint(x: 2, y: 0, z: 0.5),
+      end: ARPoint(x: 2, y: 0, z: 1.5),
+      connectedRoomId: 'room-b',
+      connectionSide: OpeningConnectionSide.right,
+      doorHingeSide: DoorHingeSide.end,
+      doorSwingSide: DoorSwingSide.right,
+      doorOpeningDirection: DoorOpeningDirection.exterior,
+      openingHeightMeters: 2.15,
+      sillHeightMeters: 0.25,
+    );
+    final sharedB = sharedA.copyWith(
+      connectedRoomId: 'room-a',
+      connectionSide: OpeningConnectionSide.left,
+    );
+
+    await repository.saveProject(
+      uuid: 'project-connected',
+      name: 'Connected rooms',
+      rooms: [
+        RoomModel(
+          id: 'room-a',
+          name: 'Living',
+          type: RoomType.living,
+          isClosed: true,
+          points: [
+            ARPoint(x: 0, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 2),
+            ARPoint(x: 0, y: 0, z: 2),
+          ],
+          features: [sharedA],
+        ),
+        RoomModel(
+          id: 'room-b',
+          name: 'Cocina',
+          type: RoomType.cocina,
+          isClosed: true,
+          points: [
+            ARPoint(x: 2, y: 0, z: 0),
+            ARPoint(x: 4, y: 0, z: 0),
+            ARPoint(x: 4, y: 0, z: 2),
+            ARPoint(x: 2, y: 0, z: 2),
+          ],
+          features: [sharedB],
+        ),
+      ],
+    );
+
+    final restored = await repository.getRoomsForProject('project-connected');
+
+    expect(restored.map((room) => room.id), ['room-a', 'room-b']);
+    final restoredA = restored.firstWhere((room) => room.id == 'room-a');
+    final restoredB = restored.firstWhere((room) => room.id == 'room-b');
+    final doorA = restoredA.features.single;
+    final doorB = restoredB.features.single;
+
+    expect(doorA.id, 'shared-door');
+    expect(doorB.id, 'shared-door');
+    expect(doorA.connectedRoomId, 'room-b');
+    expect(doorB.connectedRoomId, 'room-a');
+    expect(doorA.connectionSide, OpeningConnectionSide.right);
+    expect(doorB.connectionSide, OpeningConnectionSide.left);
+    expect(doorA.start.x, doorB.start.x);
+    expect(doorA.start.z, doorB.start.z);
+    expect(doorA.end.x, doorB.end.x);
+    expect(doorA.end.z, doorB.end.z);
+    expect(doorA.openingHeightMeters, 2.15);
+    expect(doorA.sillHeightMeters, 0.25);
+  });
+
   test('round-trips every persisted enum by name', () async {
     final rooms = RoomType.values
         .asMap()
