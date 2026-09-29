@@ -66,8 +66,10 @@ class ArchScanDatabase extends _$ArchScanDatabase {
           await m.createAll();
         },
         onUpgrade: (Migrator m, int from, int to) async {
-          // Future schema changes must be added here and accompanied by
-          // Drift schema snapshots/migration tests.
+          // Schema changes must be accompanied by a versioned migration test.
+          if (from < 1) {
+            await m.createAll();
+          }
         },
       );
 }
