@@ -57,7 +57,6 @@ class ArchScanDatabase extends _$ArchScanDatabase {
 
   ArchScanDatabase.inMemory() : super(_openInMemoryDatabase());
 
-
   @override
   int get schemaVersion => 1;
 
@@ -74,7 +73,6 @@ class ArchScanDatabase extends _$ArchScanDatabase {
         },
       );
 }
-
 
 QueryExecutor _openNativeDatabase(File file) {
   return NativeDatabase(
