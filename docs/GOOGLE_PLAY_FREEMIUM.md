@@ -34,7 +34,7 @@ Los cobros por funciones digitales deben ajustarse a la [política de pagos de G
 
 API 36 coincide con el objetivo indicado por la [guía oficial de nivel API](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en); volver a revisar la exigencia al enviar.
 
-**Pendiente crítico:** comprobar páginas de 16 KB de todas las bibliotecas nativas incluidas en el AAB, especialmente Isar, Flutter y AR. Elegir un NDK reciente no recompila ni garantiza la alineación de bibliotecas precompiladas de terceros. Seguir la [verificación oficial de 16 KB](https://developer.android.com/guide/practices/page-sizes), inspeccionar ELF/ZIP y probar el APK generado en un entorno de 16 KB. No marcar este punto como aprobado por tener CI verde. Si una dependencia falla, planificar actualización o migración con copia y pruebas de proyectos históricos.
+**Pendiente crítico:** comprobar páginas de 16 KB de todas las bibliotecas nativas incluidas en el AAB, especialmente Flutter, AR y cualquier otra biblioteca nativa transitiva. Elegir un NDK reciente no recompila ni garantiza la alineación de bibliotecas precompiladas de terceros. Seguir la [verificación oficial de 16 KB](https://developer.android.com/guide/practices/page-sizes), inspeccionar ELF/ZIP y probar el APK generado en un entorno de 16 KB. No marcar este punto como aprobado por tener CI verde. Si una dependencia falla, planificar actualización o migración con copia y pruebas de proyectos históricos.
 
 ## 4. Firma y entrega
 
