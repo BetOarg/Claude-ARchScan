@@ -158,21 +158,31 @@ class DriftProjectRepository implements ProjectRepository {
           ? existing.updatedAt.add(const Duration(seconds: 1))
           : now;
 
-      final projectId = await _db.into(_db.projects).insertOnConflictUpdate(
-            ProjectsCompanion(
-              id: existing == null
-                  ? const Value.absent()
-                  : Value(existing.id),
-              uuid: Value(uuid),
-              name: Value(name),
-              createdAt: Value(existing?.createdAt ?? now),
-              updatedAt: Value(updatedAt),
-            ),
-          );
+      final projectId;
+      if (existing == null) {
+        projectId = await _db.into(_db.projects).insert(
+              ProjectsCompanion(
+                uuid: Value(uuid),
+                name: Value(name),
+                createdAt: Value(now),
+                updatedAt: Value(now),
+              ),
+            );
+      } else {
+        await (_db.update(_db.projects)
+              ..where((p) => p.id.equals(existing.id)))
+            .write(
+          ProjectsCompanion(
+            name: Value(name),
+            updatedAt: Value(updatedAt),
+          ),
+        );
+        projectId = existing.id;
+      }
 
       final currentProject = existing ??
           await (_db.select(_db.projects)
-                ..where((p) => p.uuid.equals(uuid)))
+                ..where((p) => p.id.equals(projectId)))
               .getSingle();
 
       final oldRooms = await (_db.select(_db.rooms)
