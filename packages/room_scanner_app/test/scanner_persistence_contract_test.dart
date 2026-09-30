@@ -115,6 +115,69 @@ void main() {
     expect(redone.single.toJson(), resized.after.single.toJson());
   });
 
+  test('continuation persists both sides of a shared opening through Drift', () async {
+    final database = ArchScanDatabase.inMemory();
+    final repository = DriftProjectRepository(database: database);
+    addTearDown(repository.dispose);
+
+    final provider = FloorPlanProvider()
+      ..loadProject(uuid: 'project', name: 'Home', rooms: const [])
+      ..persister = repository.saveProject;
+    addTearDown(provider.dispose);
+
+    final source = _room();
+    expect(await provider.addCompletedRoom(source, preservePlacement: true), isTrue);
+
+    final opening = source.features.single;
+    final reference = ScanContinuationReference.fromFeature(
+      sourceRoomId: source.id,
+      feature: opening,
+      side: OpeningConnectionSide.left,
+      startEndpoint: ContinuationStartEndpoint.start,
+    );
+
+    final continuation = RoomModel(
+      id: 'continued-room',
+      name: 'Cocina',
+      type: RoomType.cocina,
+      isClosed: true,
+      points: [
+        ARPoint(x: 0, y: 0, z: 0),
+        ARPoint(x: 1, y: 0, z: 0),
+        ARPoint(x: 1, y: 0, z: 3),
+        ARPoint(x: 0, y: 0, z: 3),
+      ],
+    );
+
+    expect(
+      await provider.addCompletedRoomFromContinuation(
+        room: continuation,
+        reference: reference,
+      ),
+      isTrue,
+    );
+
+    final restored = await repository.getRoomsForProject('project');
+    expect(restored, hasLength(2));
+
+    final restoredSource =
+        restored.singleWhere((room) => room.id == source.id);
+    final restoredContinuation =
+        restored.singleWhere((room) => room.id == 'continued-room');
+
+    final sourceOpening = restoredSource.features.single;
+    final sharedOpening = restoredContinuation.features.single;
+
+    expect(sourceOpening.connectedRoomId, restoredContinuation.id);
+    expect(sourceOpening.connectionSide, OpeningConnectionSide.left);
+    expect(sharedOpening.connectedRoomId, restoredSource.id);
+    expect(sharedOpening.connectionSide, OpeningConnectionSide.right);
+    expect(sharedOpening.id, sourceOpening.id);
+    expect(sharedOpening.type, sourceOpening.type);
+    expect(sharedOpening.start.toJson(), sourceOpening.start.toJson());
+    expect(sharedOpening.end.toJson(), sourceOpening.end.toJson());
+  });
+
   test('scanner completion rolls back when Drift persistence fails', () async {
     final room = _room();
     final provider = FloorPlanProvider()
