@@ -139,7 +139,7 @@ void main() {
     final reference = ScanContinuationReference.fromFeature(
       sourceRoomId: source.id,
       feature: opening,
-      side: OpeningConnectionSide.left,
+      side: OpeningConnectionSide.right,
       startEndpoint: ContinuationStartEndpoint.start,
     );
 
@@ -176,9 +176,9 @@ void main() {
     final sharedOpening = restoredContinuation.features.single;
 
     expect(sourceOpening.connectedRoomId, restoredContinuation.id);
-    expect(sourceOpening.connectionSide, OpeningConnectionSide.left);
+    expect(sourceOpening.connectionSide, OpeningConnectionSide.right);
     expect(sharedOpening.connectedRoomId, restoredSource.id);
-    expect(sharedOpening.connectionSide, OpeningConnectionSide.right);
+    expect(sharedOpening.connectionSide, OpeningConnectionSide.left);
     expect(sharedOpening.id, sourceOpening.id);
     expect(sharedOpening.type, sourceOpening.type);
     expect(sharedOpening.start.toJson(), sourceOpening.start.toJson());
