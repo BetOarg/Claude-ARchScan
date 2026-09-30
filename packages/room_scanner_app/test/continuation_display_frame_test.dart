@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
-import '../lib/services/continuation_display_frame.dart';
+import 'package:room_scanner_ar/services/continuation_display_frame.dart';
 
 void main() {
   test('screen directions stay fixed for every wall orientation and side', () {
