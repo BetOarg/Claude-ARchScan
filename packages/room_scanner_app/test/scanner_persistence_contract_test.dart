@@ -178,9 +178,9 @@ void main() {
     final sharedOpening = restoredContinuation.features.single;
 
     expect(sourceOpening.connectedRoomId, restoredContinuation.id);
-    expect(sourceOpening.connectionSide, OpeningConnectionSide.right);
+    expect(sourceOpening.connectionSide, OpeningConnectionSide.left);
     expect(sharedOpening.connectedRoomId, restoredSource.id);
-    expect(sharedOpening.connectionSide, OpeningConnectionSide.left);
+    expect(sharedOpening.connectionSide, OpeningConnectionSide.right);
     expect(sharedOpening.id, sourceOpening.id);
     expect(sharedOpening.type, sourceOpening.type);
     expect(sharedOpening.start.toJson(), sourceOpening.start.toJson());
