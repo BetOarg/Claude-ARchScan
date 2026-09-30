@@ -335,25 +335,6 @@ class FloorPlanProvider extends ChangeNotifier {
         PlanEditGeometry.overlaps(room, existing),
   );
 
-  bool _canPlaceContinuationRoom(
-    RoomModel room,
-    RoomModel sourceRoom,
-    WallFeature sharedFeature,
-  ) {
-    for (final existing in _completedRooms) {
-      if (existing.id == room.id || existing.id == sourceRoom.id) continue;
-      if (PlanEditGeometry.overlaps(room, existing)) return false;
-    }
-
-    // A continuation is allowed to share exactly the selected wall with
-    // its source room. Interior intersections remain rejected.
-    return !PlanEditGeometry.overlaps(
-      room,
-      sourceRoom,
-      allowSharedBoundary: true,
-    );
-  }
-
   Future<bool> _saveTransform(List<RoomModel> before) async {
     final uuid = _projectUuid;
     final after = List<RoomModel>.from(_completedRooms);
@@ -666,12 +647,7 @@ class FloorPlanProvider extends ChangeNotifier {
       features: newFeatures,
     );
 
-    final canPlaceContinuation = _canPlaceContinuationRoom(
-      roomToAdd,
-      sourceRoom,
-      sourceFeature,
-    );
-    if (!canPlaceContinuation) return false;
+    if (!canPlaceScannedRoom(roomToAdd)) return false;
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms[sourceRoomIndex] = sourceRoom.copyWith(
       features: sourceFeatures,
