@@ -106,6 +106,13 @@ void main() {
 
     final restored = await repository.getRoomsForProject('project');
     expect(restored.single.toJson(), original.toJson());
+
+    expect(await provider.redoTransform(), isTrue);
+    expect(provider.completedRooms.single.points[1].x, 5);
+
+    final redone = await repository.getRoomsForProject('project');
+    expect(redone.single.points[1].x, 5);
+    expect(redone.single.toJson(), resized.after.single.toJson());
   });
 
   test('scanner completion rolls back when Drift persistence fails', () async {
