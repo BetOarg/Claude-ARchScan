@@ -79,7 +79,7 @@ void main() {
       ..persister = repository.saveProject;
     addTearDown(provider.dispose);
 
-    final room = _room();
+    final room = _room().copyWith(features: const []);
     expect(await provider.addCompletedRoom(room), isTrue);
 
     final original = provider.completedRooms.single;
