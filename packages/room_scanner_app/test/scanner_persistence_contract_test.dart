@@ -125,13 +125,19 @@ void main() {
       ..persister = repository.saveProject;
     addTearDown(provider.dispose);
 
+    final baseOpening = _room().features.single;
     final source = _room().copyWith(
       features: [
-        _room().features.single.copyWith(
+        WallFeature(
+          id: baseOpening.id,
+          type: baseOpening.type,
           start: ARPoint(x: 1, y: 0, z: 0),
           end: ARPoint(x: 2, y: 0, z: 0),
-          connectedRoomId: null,
-          connectionSide: null,
+          doorHingeSide: baseOpening.doorHingeSide,
+          doorSwingSide: baseOpening.doorSwingSide,
+          doorOpeningDirection: baseOpening.doorOpeningDirection,
+          openingHeightMeters: baseOpening.openingHeightMeters,
+          sillHeightMeters: baseOpening.sillHeightMeters,
         ),
       ],
     );
@@ -178,7 +184,7 @@ void main() {
     final sharedOpening = restoredContinuation.features.single;
 
     expect(sourceOpening.connectedRoomId, restoredContinuation.id);
-    expect(sourceOpening.connectionSide, OpeningConnectionSide.left);
+    expect(sourceOpening.connectionSide, OpeningConnectionSide.right);
     expect(sharedOpening.connectedRoomId, restoredSource.id);
     expect(sharedOpening.connectionSide, OpeningConnectionSide.right);
     expect(sharedOpening.id, sourceOpening.id);
