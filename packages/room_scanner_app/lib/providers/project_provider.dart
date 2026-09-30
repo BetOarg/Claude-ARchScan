@@ -6,7 +6,10 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 import '../services/scan_draft_service.dart';
 
 class ProjectProvider with ChangeNotifier {
-  final ProjectRepository _repository = DriftProjectRepository();
+  ProjectProvider({ProjectRepository? repository})
+      : _repository = repository ?? DriftProjectRepository();
+
+  final ProjectRepository _repository;
 
   List<ProjectRecord> _projects = [];
   ProjectRecord? _currentProject;
