@@ -128,8 +128,8 @@ void main() {
     final source = _room().copyWith(
       features: [
         _room().features.single.copyWith(
-          start: ARPoint(x: 0, y: 0, z: 1),
-          end: ARPoint(x: 0, y: 0, z: 2),
+          start: ARPoint(x: 1, y: 0, z: 0),
+          end: ARPoint(x: 2, y: 0, z: 0),
           connectedRoomId: null,
           connectionSide: null,
         ),
@@ -141,7 +141,7 @@ void main() {
     final reference = ScanContinuationReference.fromFeature(
       sourceRoomId: source.id,
       feature: opening,
-      side: OpeningConnectionSide.left,
+      side: OpeningConnectionSide.right,
       startEndpoint: ContinuationStartEndpoint.start,
     );
 
@@ -152,9 +152,9 @@ void main() {
       isClosed: true,
       points: [
         ARPoint(x: 0, y: 0, z: 0),
-        ARPoint(x: 0, y: 0, z: 1),
-        ARPoint(x: -3, y: 0, z: 1),
-        ARPoint(x: -3, y: 0, z: 0),
+        ARPoint(x: 1, y: 0, z: 0),
+        ARPoint(x: 1, y: 0, z: 3),
+        ARPoint(x: 0, y: 0, z: 3),
       ],
     );
 
