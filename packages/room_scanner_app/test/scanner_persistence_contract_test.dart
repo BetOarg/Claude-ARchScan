@@ -51,6 +51,24 @@ void main() {
     expect(persistedRooms!.single.toJson(), room.toJson());
   });
 
+  test('scanner completion round-trips through the real Drift repository', () async {
+    final database = ArchScanDatabase.inMemory();
+    final repository = DriftProjectRepository(database: database);
+    addTearDown(repository.dispose);
+
+    final room = _room();
+    final provider = FloorPlanProvider()
+      ..loadProject(uuid: 'project', name: 'Home', rooms: const [])
+      ..persister = repository.saveProject;
+    addTearDown(provider.dispose);
+
+    expect(await provider.addCompletedRoom(room), isTrue);
+
+    final restored = await repository.getRoomsForProject('project');
+    expect(restored, hasLength(1));
+    expect(restored.single.toJson(), room.toJson());
+  });
+
   test('scanner completion rolls back when Drift persistence fails', () async {
     final room = _room();
     final provider = FloorPlanProvider()
