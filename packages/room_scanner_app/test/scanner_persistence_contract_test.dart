@@ -8,11 +8,11 @@ RoomModel _room() {
     name: 'Dormitorio',
     type: RoomType.dormitorio,
     isClosed: true,
-    points: const [
-      ARPoint(x: 0, y: 0, z: 0),
-      ARPoint(x: 4, y: 0, z: 0),
-      ARPoint(x: 4, y: 0, z: 3),
-      ARPoint(x: 0, y: 0, z: 3),
+    points: [
+      const ARPoint(x: 0, y: 0, z: 0),
+      const ARPoint(x: 4, y: 0, z: 0),
+      const ARPoint(x: 4, y: 0, z: 3),
+      const ARPoint(x: 0, y: 0, z: 3),
     ],
     features: [
       WallFeature(
