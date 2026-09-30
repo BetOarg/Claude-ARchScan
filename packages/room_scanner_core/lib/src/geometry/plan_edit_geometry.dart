@@ -268,11 +268,7 @@ class PlanEditGeometry {
       _cross(a, b, c) * _cross(a, b, d) < -1e-10 &&
       _cross(c, d, a) * _cross(c, d, b) < -1e-10;
 
-  static bool overlaps(
-    RoomModel room,
-    RoomModel other, {
-    bool allowSharedBoundary = false,
-  }) {
+  static bool overlaps(RoomModel room, RoomModel other) {
     if (!other.isClosed || other.points.length < 3) return false;
     for (var i = 0; i < wallCount(room); i++) {
       final a = room.points[i], b = room.points[(i + 1) % room.points.length];
@@ -291,7 +287,7 @@ class PlanEditGeometry {
         }
       }
     }
-    if (room.isClosed && !allowSharedBoundary) {
+    if (room.isClosed) {
       // Also detect coincident boundaries with different subdivisions.
       for (var i = 0; i < wallCount(room); i++) {
         final a = room.points[i], b = room.points[(i + 1) % room.points.length];
