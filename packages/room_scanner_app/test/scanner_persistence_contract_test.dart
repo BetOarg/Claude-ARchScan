@@ -152,9 +152,9 @@ void main() {
       isClosed: true,
       points: [
         ARPoint(x: 0, y: 0, z: 0),
-        ARPoint(x: -1, y: 0, z: 0),
-        ARPoint(x: -1, y: 0, z: 3),
-        ARPoint(x: 0, y: 0, z: 3),
+        ARPoint(x: 0, y: 0, z: 1),
+        ARPoint(x: -3, y: 0, z: 1),
+        ARPoint(x: -3, y: 0, z: 0),
       ],
     );
 
