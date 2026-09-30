@@ -9,17 +9,17 @@ RoomModel _room() {
     type: RoomType.dormitorio,
     isClosed: true,
     points: [
-      const ARPoint(x: 0, y: 0, z: 0),
-      const ARPoint(x: 4, y: 0, z: 0),
-      const ARPoint(x: 4, y: 0, z: 3),
-      const ARPoint(x: 0, y: 0, z: 3),
+      ARPoint(x: 0, y: 0, z: 0),
+      ARPoint(x: 4, y: 0, z: 0),
+      ARPoint(x: 4, y: 0, z: 3),
+      ARPoint(x: 0, y: 0, z: 3),
     ],
     features: [
       WallFeature(
         id: 'door-1',
         type: FeatureType.door,
-        start: const ARPoint(x: 1, y: 0, z: 0),
-        end: const ARPoint(x: 2, y: 0, z: 0),
+        start: ARPoint(x: 1, y: 0, z: 0),
+        end: ARPoint(x: 2, y: 0, z: 0),
         connectedRoomId: 'hall',
         connectionSide: OpeningConnectionSide.right,
         doorHingeSide: DoorHingeSide.end,
