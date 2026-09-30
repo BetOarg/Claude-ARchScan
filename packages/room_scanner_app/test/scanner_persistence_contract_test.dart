@@ -69,6 +69,45 @@ void main() {
     expect(restored.single.toJson(), room.toJson());
   });
 
+  test('undo persists the restored geometry through the real Drift repository', () async {
+    final database = ArchScanDatabase.inMemory();
+    final repository = DriftProjectRepository(database: database);
+    addTearDown(repository.dispose);
+
+    final provider = FloorPlanProvider()
+      ..loadProject(uuid: 'project', name: 'Home', rooms: const [])
+      ..persister = repository.saveProject;
+    addTearDown(provider.dispose);
+
+    final room = _room();
+    expect(await provider.addCompletedRoom(room), isTrue);
+
+    final original = provider.completedRooms.single;
+    final resized = provider.previewGeometry(
+      original,
+      [
+        ARPoint(x: 0, y: 0, z: 0),
+        ARPoint(x: 5, y: 0, z: 0),
+        ARPoint(x: 5, y: 0, z: 3),
+        ARPoint(x: 0, y: 0, z: 3),
+      ],
+    );
+
+    expect(resized.error, isNull);
+    expect(await provider.applyPlanEdit(resized), isTrue);
+    expect(provider.completedRooms.single.points[1].x, 5);
+    expect(
+      (await repository.getRoomsForProject('project')).single.points[1].x,
+      5,
+    );
+
+    expect(await provider.undoTransform(), isTrue);
+    expect(provider.completedRooms.single.toJson(), original.toJson());
+
+    final restored = await repository.getRoomsForProject('project');
+    expect(restored.single.toJson(), original.toJson());
+  });
+
   test('scanner completion rolls back when Drift persistence fails', () async {
     final room = _room();
     final provider = FloorPlanProvider()
