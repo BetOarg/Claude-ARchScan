@@ -125,7 +125,14 @@ void main() {
       ..persister = repository.saveProject;
     addTearDown(provider.dispose);
 
-    final source = _room();
+    final source = _room().copyWith(
+      features: [
+        _room().features.single.copyWith(
+          connectedRoomId: null,
+          connectionSide: null,
+        ),
+      ],
+    );
     expect(await provider.addCompletedRoom(source, preservePlacement: true), isTrue);
 
     final opening = source.features.single;
