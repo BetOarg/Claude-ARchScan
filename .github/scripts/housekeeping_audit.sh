@@ -55,6 +55,16 @@ while IFS= read -r -d '' file; do
   esac
 done < <(git ls-files -z '.github/*')
 
+echo "-- Removed Isar runtime references --"
+isar_matches="$(git grep -n -I -E 'package:isar|isar_community|isar_generator|^[[:space:]]*isar(_community)?[[:space:]]*:' -- 'packages/**' '*.yaml' 'melos.yaml' '.github/**' 2>/dev/null || true)"
+if [[ -n "$isar_matches" ]]; then
+  printf '%s\\n' "$isar_matches"
+  echo "FAIL: Isar runtime/dependency references remain after the Drift migration."
+  failures=$((failures + 1))
+else
+  echo "OK: no Isar runtime/dependency references remain."
+fi
+
 echo "-- Suspicious source markers --"
 marker_matches="$(git grep -n -I -E '(^|[[:space:]])(TODO|FIXME|XXX|HACK)([[:space:]:]|$)' -- '*.dart' '*.swift' '*.kt' '*.java' 2>/dev/null || true)"
 if [[ -n "$marker_matches" ]]; then
