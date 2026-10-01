@@ -45,16 +45,22 @@ Antes de publicar una compilación que utilice Drift, debe determinarse si exist
 
 No se debe asumir que un cambio de backend conserva automáticamente una base de datos instalada.
 
-## Próximo endurecimiento
+## Endurecimiento completado
 
-Después de estabilizar compilación y tests:
-1. generar snapshots de esquema Drift;
-2. añadir pruebas de migración schemaVersion;
-3. probar apertura con bases SQLite de versiones anteriores;
-4. validar rendimiento con proyectos grandes;
-5. validar físicamente Android e iOS;
-6. ejecutar regresión de proyectos, continuidad, exportaciones y recuperación;
-7. conservar un procedimiento de rollback y copias JSON de los proyectos de prueba.
+Los siguientes controles ya fueron ejecutados en esta rama:
+1. pruebas de round-trip y reemplazo sin duplicados;
+2. persistencia en SQLite real con cierre, reapertura y reinicio;
+3. prueba de ciclo de vida con 40 ambientes, 2.000 puntos y 400 vanos;
+4. integración de ProjectProvider con Drift;
+5. continuidad con vanos compartidos y persistencia de ambos lados;
+6. Undo/Redo y persistencia del resultado restaurado;
+7. validación de build Android e iOS en CI;
+8. auditoría de referencias Isar con guard automático en Housekeeping.
+
+Pendientes que requieren entorno físico o datos de producción:
+- validar ARCore sobre dispositivo Android real;
+- validar ARKit/RoomPlan sobre dispositivo Apple compatible;
+- determinar si alguna instalación pública anterior contiene datos Isar que deban recuperarse.
 
 ## Regla de seguridad
 
