@@ -256,16 +256,18 @@ class ImportExportService {
         return JsonImportResult.cancelled;
       }
 
-      if (provider.projectUuid == null) {
-        final uuid = newProjectUuid?.trim();
-        if (uuid == null || uuid.isEmpty) {
+      final requestedNewProjectUuid = newProjectUuid?.trim();
+      if (requestedNewProjectUuid != null) {
+        if (requestedNewProjectUuid.isEmpty) {
           return JsonImportResult.invalid;
         }
         provider.loadProject(
-          uuid: uuid,
+          uuid: requestedNewProjectUuid,
           name: parsed.projectName,
           rooms: const [],
         );
+      } else if (provider.projectUuid == null) {
+        return JsonImportResult.invalid;
       }
 
       if (!await provider.loadExistingRooms(parsed.rooms, parsed.projectName)) {
