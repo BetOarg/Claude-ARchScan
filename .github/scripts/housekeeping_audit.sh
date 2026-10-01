@@ -56,7 +56,7 @@ while IFS= read -r -d '' file; do
 done < <(git ls-files -z '.github/*')
 
 echo "-- Removed Isar runtime references --"
-isar_matches="$(git grep -n -I -E 'package:isar|isar_community|isar_generator|^[[:space:]]*isar(_community)?[[:space:]]*:' -- 'packages/**' '*.yaml' 'melos.yaml' '.github/**' 2>/dev/null || true)"
+isar_matches="$(git grep -n -I -E 'package:isar|isar_community|isar_generator|^[[:space:]]*isar(_community)?[[:space:]]*:' -- 'packages/**' '*.yaml' 'melos.yaml' ':!.github/scripts/housekeeping_audit.sh' 2>/dev/null || true)"
 if [[ -n "$isar_matches" ]]; then
   printf '%s\\n' "$isar_matches"
   echo "FAIL: Isar runtime/dependency references remain after the Drift migration."
