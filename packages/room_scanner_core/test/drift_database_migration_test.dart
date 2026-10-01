@@ -11,6 +11,9 @@ void main() {
 
     expect(database.schemaVersion, 1);
 
+    final foreignKeys = await database.customSelect('PRAGMA foreign_keys').getSingle();
+    expect(foreignKeys.read<int>('foreign_keys'), 1);
+
     final tables = await database.customSelect(
       "SELECT name FROM sqlite_master WHERE type = 'table'",
     ).get();
