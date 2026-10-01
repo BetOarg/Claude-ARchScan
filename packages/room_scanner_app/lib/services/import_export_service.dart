@@ -222,6 +222,7 @@ class ImportExportService {
   static Future<JsonImportResult> importProject(
     FloorPlanProvider provider, {
     required Future<bool> Function() confirmReplacement,
+    String? newProjectUuid,
   }) async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -254,6 +255,19 @@ class ImportExportService {
       if (!await confirmReplacement()) {
         return JsonImportResult.cancelled;
       }
+
+      if (provider.projectUuid == null) {
+        final uuid = newProjectUuid?.trim();
+        if (uuid == null || uuid.isEmpty) {
+          return JsonImportResult.invalid;
+        }
+        provider.loadProject(
+          uuid: uuid,
+          name: parsed.projectName,
+          rooms: const [],
+        );
+      }
+
       if (!await provider.loadExistingRooms(parsed.rooms, parsed.projectName)) {
         return JsonImportResult.invalid;
       }
