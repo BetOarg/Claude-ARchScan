@@ -10,7 +10,7 @@
 - URL de privacidad: https://sites.google.com/view/archscan/privacidad-privacy
 - URL pública de eliminación de datos: https://sites.google.com/view/archscan/privacidad-privacy
 
-Categoría sugerida pendiente de confirmar. No anunciar Pro como disponible hasta implementar y probar las compras. Soporte: support.ARchScan@gmail.com. Responsable: Alberto Lucchetta (Bet0), República Argentina.
+Categoría sugerida pendiente de confirmar. No anunciar Pro como disponible hasta implementar y probar las compras. Soporte: bet0.archscan@gmail.com. Responsable: Alberto Lucchetta (Bet0), República Argentina.
 
 ## Español
 

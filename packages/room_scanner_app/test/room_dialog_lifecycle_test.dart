@@ -5,14 +5,14 @@ import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
-import '../lib/l10n/generated/app_localizations.dart';
-import '../lib/providers/floor_plan_provider.dart';
-import '../lib/providers/measurement_settings_provider.dart';
-import '../lib/screens/floor_plan_viewer_screen.dart';
-import '../lib/screens/measurement_editor_screen.dart';
-import '../lib/services/recent_room_names_service.dart';
-import '../lib/widgets/room_completion_dialog.dart';
-import '../lib/widgets/room_name_dialog.dart';
+import 'package:room_scanner_ar/l10n/generated/app_localizations.dart';
+import 'package:room_scanner_ar/providers/floor_plan_provider.dart';
+import 'package:room_scanner_ar/providers/measurement_settings_provider.dart';
+import 'package:room_scanner_ar/screens/floor_plan_viewer_screen.dart';
+import 'package:room_scanner_ar/screens/measurement_editor_screen.dart';
+import 'package:room_scanner_ar/services/recent_room_names_service.dart';
+import 'package:room_scanner_ar/widgets/room_completion_dialog.dart';
+import 'package:room_scanner_ar/widgets/room_name_dialog.dart';
 
 void main() {
   setUp(() {

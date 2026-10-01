@@ -12,7 +12,7 @@ typedef RoomPlanCapture = Future<RoomModel?> Function({
 /// Connects RoomPlan capture to the existing project persistence path.
 ///
 /// Keeping this coordinator independent from navigation lets RoomPlan reuse the
-/// same [FloorPlanProvider] and Isar persistence contract as every other mode.
+/// same [FloorPlanProvider] and local persistence contract as every other mode.
 class RoomPlanCaptureCoordinator {
   final RoomPlanCapture _capture;
 

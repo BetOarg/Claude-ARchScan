@@ -330,10 +330,16 @@ class FloorPlanProvider extends ChangeNotifier {
     return false;
   }
 
-  bool canPlaceScannedRoom(RoomModel room) => !_completedRooms.any(
-    (existing) => existing.id != room.id &&
-        PlanEditGeometry.overlaps(room, existing),
-  );
+  bool canPlaceScannedRoom(
+    RoomModel room, {
+    String? ignoreRoomId,
+  }) =>
+      !_completedRooms.any(
+        (existing) =>
+            existing.id != room.id &&
+            existing.id != ignoreRoomId &&
+            PlanEditGeometry.overlaps(room, existing),
+      );
 
   Future<bool> _saveTransform(List<RoomModel> before) async {
     final uuid = _projectUuid;
@@ -647,7 +653,11 @@ class FloorPlanProvider extends ChangeNotifier {
       features: newFeatures,
     );
 
-    if (!canPlaceScannedRoom(roomToAdd)) return false;
+    // A continuation intentionally shares the selected boundary with
+    // its source room. Other rooms must still pass normal overlap checks.
+    if (!canPlaceScannedRoom(roomToAdd, ignoreRoomId: sourceRoom.id)) {
+      return false;
+    }
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms[sourceRoomIndex] = sourceRoom.copyWith(
       features: sourceFeatures,

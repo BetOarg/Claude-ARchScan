@@ -16,7 +16,7 @@ dependencies:
     sdk: flutter
   intl: 0.20.3
 
-  # Núcleo de dominio: modelos, geometría, Isar y construcción de
+  # Núcleo de dominio: modelos, geometría, persistencia Drift y construcción de
   # exportaciones. Durante la fase de monorepo se resuelve por path; tras
   # el split físico a un repositorio propio pasa a resolverse por git (o
   # por un servidor pub privado si se decide publicarlo).
@@ -53,10 +53,6 @@ dependencies:
   printing: ^5.13.1
   share_plus: ^10.0.0
   path_provider: ^2.1.2
-
-  # Binarios nativos de Isar. Viven exclusivamente acá: room_scanner_core
-  # solo declara el paquete "isar" (anotaciones/runtime), no sus binarios.
-  isar_community_flutter_libs: ^3.3.2
 
   # Logotipo vectorial oficial de ARchScan
   flutter_svg: ^2.0.10+1

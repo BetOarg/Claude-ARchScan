@@ -1,44 +1,69 @@
-# Estrategia futura de persistencia local
+# Migración de persistencia local — ARchScan
 
 ## Estado actual
 
-ARchScan utiliza Isar como persistencia local de proyectos y datos de escaneo. La dependencia actual es `isar ^3.1.0+1`.
+ARchScan utiliza Drift sobre SQLite como backend de persistencia local en la rama de migración. La aplicación mantiene una interfaz ProjectRepository, de modo que la capa de UI y dominio no depende directamente de SQLite.
 
-Esta capa es deliberadamente local: no hay sincronización con servidor ni cuentas de usuario.
+La persistencia sigue siendo deliberadamente local: no hay sincronización con servidor ni cuentas de usuario.
 
-## Decisión para la beta
+## Objetivo de esta migración
 
-No migrar la base de datos antes de la beta.
+Sustituir la implementación anterior basada en Isar por Drift/SQLite sin modificar el comportamiento funcional del producto.
 
-La persistencia existente es parte del flujo funcional de ARchScan y una migración previa al lanzamiento introduciría riesgo innecesario sobre proyectos existentes, generación de modelos, exportaciones y recuperación de borradores.
+Se preservan:
+- proyectos, UUID, nombre y fechas;
+- ambientes y su estado abierto/cerrado;
+- puntos 3D;
+- puertas y ventanas;
+- IDs y metadatos de conexión entre ambientes;
+- lectura/escritura y eliminación de proyectos;
+- escaneo, geometría, Undo/Redo, continuidad y exportaciones;
+- UI, UX y localización.
 
-## Criterios para una migración futura
+## Estrategia aplicada
 
-Antes de sustituir Isar se debe verificar:
+La migración se realiza por capas y con cambios acotados:
+1. ProjectRepository define el contrato de persistencia.
+2. DriftProjectRepository implementa ese contrato.
+3. ArchScanDatabase define el esquema SQLite mediante Drift.
+4. Los tests de repositorio verifican round-trip de proyectos, puntos, aberturas, metadatos de conexión, reemplazo sin duplicados y eliminación de dependencias.
+5. ProjectProvider utiliza el repositorio Drift; no accede directamente a tablas SQLite.
+6. El código generado por Drift se produce con build_runner en CI.
 
-1. mantenimiento activo y compatibilidad con la versión de Flutter/Dart adoptada;
-2. soporte Android e iOS para las versiones objetivo;
-3. equivalencia de consultas, índices y relaciones utilizadas por ARchScan;
-4. migración de datos existentes sin pérdida de proyectos;
-5. compatibilidad con los modelos generados actualmente;
-6. rendimiento con proyectos grandes y múltiples habitaciones;
-7. recuperación de borradores y continuidad del escaneo;
-8. exportación JSON/DXF/SVG/PDF/PNG/JPG después de migrar;
-9. pruebas de regresión y rollback.
+## Esquema Drift
 
-## Estrategia recomendada
+La versión inicial del esquema es schemaVersion = 1 e incluye Projects, Rooms, RoomPoints y WallFeaturesTable.
 
-La migración debe realizarse en una fase independiente:
+Las relaciones se representan mediante claves internas SQLite. Los valores de enums se almacenan por nombre para evitar depender de posiciones numéricas.
 
-- introducir una interfaz de repositorio de persistencia;
-- mantener Isar detrás de esa interfaz;
-- implementar el nuevo backend en paralelo;
-- probar lectura/escritura y migración sobre copias de datos;
-- validar físicamente Android e iOS;
-- activar el nuevo backend únicamente después de completar la matriz de regresión.
+## Datos históricos
 
-No se debe modificar el formato persistido ni eliminar Isar durante esta fase documental.
+Antes de publicar una compilación que utilice Drift, debe determinarse si existe alguna instalación real de ARchScan que contenga datos persistidos con el backend anterior.
+
+- Si no existe una versión pública con datos persistidos anteriores, no hay una migración de datos de usuario que ejecutar.
+- Si existen instalaciones reales con datos anteriores, la entrega debe incluir una migración explícita o una ruta de importación/recuperación mediante JSON antes de eliminar definitivamente el backend anterior.
+
+No se debe asumir que un cambio de backend conserva automáticamente una base de datos instalada.
+
+## Endurecimiento completado
+
+Los siguientes controles ya fueron ejecutados en esta rama:
+1. pruebas de round-trip y reemplazo sin duplicados;
+2. persistencia en SQLite real con cierre, reapertura y reinicio;
+3. prueba de ciclo de vida con 40 ambientes, 2.000 puntos y 400 vanos;
+4. integración de ProjectProvider con Drift;
+5. continuidad con vanos compartidos y persistencia de ambos lados;
+6. Undo/Redo y persistencia del resultado restaurado;
+7. validación de build Android e iOS en CI;
+8. auditoría de referencias Isar con guard automático en Housekeeping.
+
+Pendientes que requieren entorno físico o datos de producción:
+- validar ARCore sobre dispositivo Android real;
+- validar ARKit/RoomPlan sobre dispositivo Apple compatible;
+- determinar si alguna instalación pública anterior contiene datos Isar que deban recuperarse.
 
 ## Regla de seguridad
 
-Una migración de almacenamiento no debe mezclarse con cambios del motor CAD, escaneo AR, exportadores o UX. Debe ser una iniciativa independiente con rollback definido.
+La migración de almacenamiento no debe mezclarse con cambios del motor CAD, escaneo AR, exportadores o UX. Si una regresión aparece, se corrige en esta capa antes de continuar con otras reformas.
+
+Estado: backend Drift implementado; auditoría de referencias Isar añadida al gate de housekeeping en el commit 305d4425362fe72d0c6662d7244296322b04cd4f.

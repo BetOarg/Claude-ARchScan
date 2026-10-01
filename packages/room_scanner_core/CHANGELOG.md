@@ -3,11 +3,9 @@
 ## 1.0.0
 
 - Extracción inicial desde `room_scanner_ar` (monorepo `claude-room-scanner`).
-- Modelos de dominio (`RoomModel`, `ARPoint`, `WallFeature`) y colecciones
-  Isar (`IsarProject`, `IsarRoom`) con sus mapeadores.
+- Modelos de dominio (`RoomModel`, `ARPoint`, `WallFeature`) y persistencia local mediante Drift/SQLite.
 - `GeometryService` y `SharedWallService`.
-- `LocalDatabaseService`, ahora recibiendo el directorio de persistencia por
-  parámetro en vez de resolverlo con `path_provider`.
+- `ProjectRepository` y `DriftProjectRepository` para persistencia local de proyectos, ambientes, puntos 3D y aberturas.
 - `PlanExportBuilder`, extraído de la parte pura de `ImportExportService`
   (construcción de JSON, nombre de archivo, SVG del plano y documento PDF).
 - `MeasurementUnits` y `ScanValidator`.

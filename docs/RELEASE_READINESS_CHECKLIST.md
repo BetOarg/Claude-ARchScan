@@ -1,7 +1,7 @@
 # Lista de preparación para publicación — ARchScan
 
 **Última revisión:** 24/09/2026  
-**Main:** `ae2e90ea5bb88a0ebf21ba9ab72e259bbaeef66f`  
+**Main de referencia:** `fb8033bab146bb91f06019e29ac3c818986499ec`  
 **Versión declarada:** `2.7.0+4`
 
 ## Estado verificable en repositorio
@@ -57,7 +57,7 @@ La rama de trabajo restante es administrativa; no forma parte del artefacto de p
 
 ## Artefactos de publicación
 
-- [ ] Crear y custodiar keystore Android de producción fuera de Git.
+- [x] Keystore Android de producción utilizado por CI; la clave privada permanece fuera de Git.
 - [ ] Configurar Play App Signing.
 - [ ] Generar AAB firmado definitivo.
 - [ ] Auditar firma, manifiesto fusionado, permisos, SDK y bibliotecas nativas, incluidas páginas de 16 KB.
@@ -86,7 +86,7 @@ La política debe seguir contemplando proyectos locales, exportaciones JSON/SVG/
 3. Promover exactamente el artefacto probado.
 4. Ante una regresión, detener distribución y crear el hotfix desde el tag del lanzamiento.
 5. Incrementar el build number y repetir la auditoría completa.
-6. No degradar esquemas Isar ni borrar proyectos al corregir.
+6. No degradar el esquema Drift/SQLite ni borrar proyectos al corregir.
 
 ## Criterio de salida
 

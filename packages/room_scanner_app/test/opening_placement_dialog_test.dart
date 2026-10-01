@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
-import '../lib/l10n/generated/app_localizations.dart';
-import '../lib/widgets/opening_placement_dialog.dart';
-import '../lib/providers/scanner_provider.dart';
+import 'package:room_scanner_ar/l10n/generated/app_localizations.dart';
+import 'package:room_scanner_ar/widgets/opening_placement_dialog.dart';
+import 'package:room_scanner_ar/providers/scanner_provider.dart';
 
 void main() {
   for (final type in FeatureType.values) {

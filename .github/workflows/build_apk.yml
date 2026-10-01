@@ -60,7 +60,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Isar database models (room_scanner_core)
+      - name: Generate Drift database code (room_scanner_core)
         run: |
           dart pub get
           dart run build_runner build --delete-conflicting-outputs
@@ -121,19 +121,19 @@ jobs:
           mkdir -p "$REPORT_DIR"
 
           sha256sum "$APK_PATH" | tee "$REPORT_DIR/SHA256SUMS.txt"
-          "$AAPT" dump badging "$APK_PATH"             | tee "$REPORT_DIR/package-version-sdk.txt"
-          "$AAPT" dump permissions "$APK_PATH"             | tee "$REPORT_DIR/permissions.txt"
-          printf '%s\n' "$APK_CERTIFICATE"             > "$REPORT_DIR/signing-certificate.txt"
+          "$AAPT" dump badging "$APK_PATH" | tee "$REPORT_DIR/package-version-sdk.txt"
+          "$AAPT" dump permissions "$APK_PATH" | tee "$REPORT_DIR/permissions.txt"
+          printf '%s\n' "$APK_CERTIFICATE" > "$REPORT_DIR/signing-certificate.txt"
 
-          grep -Fq "package: name='com.bet0.ARchScan'"             "$REPORT_DIR/package-version-sdk.txt" || {
+          grep -Fq "package: name='com.bet0.ARchScan'" "$REPORT_DIR/package-version-sdk.txt" || {
               echo "El APK no usa el Application ID esperado."
               exit 1
             }
 
           grep -Fq "android.permission.CAMERA" "$REPORT_DIR/permissions.txt" || {
-              echo "El APK final no declara el permiso de cámara."
-              exit 1
-            }
+            echo "El APK final no declara el permiso de cámara."
+            exit 1
+          }
 
           if grep -Eq "android.permission.(RECORD_AUDIO|INTERNET)" \
               "$REPORT_DIR/permissions.txt"; then

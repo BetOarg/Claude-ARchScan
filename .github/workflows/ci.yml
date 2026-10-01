@@ -89,7 +89,7 @@ jobs:
         run: flutter pub get
         working-directory: packages/room_scanner_core
 
-      - name: Generate Isar / Build Runner code
+      - name: Generate Drift / Build Runner code
         run: flutter pub run build_runner build --delete-conflicting-outputs
         working-directory: packages/room_scanner_core
 
@@ -108,7 +108,7 @@ jobs:
         with:
           name: generated-sources
           path: |
-            packages/room_scanner_core/lib/src/models/isar_models.g.dart
+            packages/room_scanner_core/lib/src/persistence/drift_database.g.dart
             packages/room_scanner_app/lib/l10n/generated
           if-no-files-found: error
           retention-days: 1

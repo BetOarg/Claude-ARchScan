@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/services/resume_room_calibration.dart';
+import 'package:room_scanner_ar/services/resume_room_calibration.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 
 void main() {
