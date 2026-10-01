@@ -26,10 +26,12 @@ part 'floor_plan_wall_editor.dart';
 
 class FloorPlanViewerScreen extends StatefulWidget {
   final bool selectContinuationOpening;
+  final bool openExportOnLoad;
 
   const FloorPlanViewerScreen({
     super.key,
     this.selectContinuationOpening = false,
+    this.openExportOnLoad = false,
   });
 
   @override
@@ -63,6 +65,13 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
   void initState() {
     super.initState();
     _loadRoomPlanSupport();
+    if (widget.openExportOnLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showExportFlow();
+        }
+      });
+    }
   }
 
   Future<void> _loadRoomPlanSupport() async {
