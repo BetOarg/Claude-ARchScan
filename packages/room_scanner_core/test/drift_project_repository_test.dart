@@ -521,4 +521,98 @@ void main() {
     expect(points, isEmpty);
     expect(features, isEmpty);
   });
+
+  test('handles a large project and reopens the same SQLite file', () async {
+    final directory = await Directory.systemTemp.createTemp('archscan-drift-large-');
+    final firstRepository = DriftProjectRepository();
+    final rooms = List<RoomModel>.generate(40, (roomIndex) {
+      return RoomModel(
+        id: 'large-room-$roomIndex',
+        name: 'Room $roomIndex',
+        type: RoomType.values[roomIndex % RoomType.values.length],
+        isClosed: true,
+        points: List<ARPoint>.generate(
+          50,
+          (pointIndex) => ARPoint(
+            x: pointIndex.toDouble(),
+            y: roomIndex.toDouble(),
+            z: (pointIndex % 5).toDouble(),
+          ),
+        ),
+        features: List<WallFeature>.generate(
+          10,
+          (featureIndex) => WallFeature(
+            id: 'feature-$roomIndex-$featureIndex',
+            type: featureIndex.isEven ? FeatureType.door : FeatureType.window,
+            start: ARPoint(
+              x: featureIndex.toDouble(),
+              y: roomIndex.toDouble(),
+              z: 0,
+            ),
+            end: ARPoint(
+              x: featureIndex.toDouble() + 1,
+              y: roomIndex.toDouble(),
+              z: 0,
+            ),
+          ),
+        ),
+      );
+    });
+
+    try {
+      await firstRepository.init(directoryPath: directory.path);
+      await firstRepository.saveProject(
+        uuid: 'project-large',
+        name: 'Large project',
+        rooms: rooms,
+      );
+
+      final firstRead = await firstRepository.getRoomsForProject(
+        'project-large',
+      );
+      expect(firstRead, hasLength(40));
+      expect(
+        firstRead.fold<int>(0, (total, room) => total + room.points.length),
+        2000,
+      );
+      expect(
+        firstRead.fold<int>(0, (total, room) => total + room.features.length),
+        400,
+      );
+
+      await firstRepository.dispose();
+
+      final secondRepository = DriftProjectRepository();
+      try {
+        await secondRepository.init(directoryPath: directory.path);
+        final reopened = await secondRepository.getRoomsForProject(
+          'project-large',
+        );
+
+        expect(reopened, hasLength(40));
+        expect(reopened.first.points, hasLength(50));
+        expect(reopened.first.features, hasLength(10));
+        expect(reopened.last.points, hasLength(50));
+        expect(reopened.last.features, hasLength(10));
+
+        await secondRepository.dispose();
+
+        final thirdRepository = DriftProjectRepository();
+        try {
+          await thirdRepository.init(directoryPath: directory.path);
+          final restarted = await thirdRepository.getAllProjects();
+          expect(restarted, hasLength(1));
+          expect(restarted.single.name, 'Large project');
+        } finally {
+          await thirdRepository.dispose();
+        }
+      } finally {
+        await secondRepository.dispose();
+      }
+    } finally {
+      await directory.delete(recursive: true);
+    }
+  });
+
+
 }
