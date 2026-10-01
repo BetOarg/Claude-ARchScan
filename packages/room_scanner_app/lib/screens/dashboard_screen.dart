@@ -7,6 +7,7 @@ import '../providers/project_provider.dart';
 import '../providers/floor_plan_provider.dart';
 import '../providers/scanner_provider.dart';
 import '../services/ar_check_service.dart';
+import '../services/import_export_service.dart';
 import '../widgets/archscan_logo.dart';
 import 'floor_plan_viewer_screen.dart';
 import 'privacy_account_screen.dart';
@@ -214,6 +215,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _importProjectFromHome() async {
+    final localizations = AppLocalizations.of(context)!;
+    final floorPlanProvider = context.read<FloorPlanProvider>();
+    final uuid = DateTime.now().microsecondsSinceEpoch.toString();
+
+    final result = await ImportExportService.importProject(
+      floorPlanProvider,
+      newProjectUuid: uuid,
+      confirmReplacement: () async => true,
+    );
+
+    if (!mounted || result == JsonImportResult.cancelled) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result == JsonImportResult.imported
+              ? localizations.planImportedSuccessfully
+              : localizations.planImportCancelledOrInvalid,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportProjectFromHome() async {
+    final provider = context.read<ProjectProvider>();
+    if (provider.projects.isEmpty) return;
+
+    final project = await showDialog<ProjectRecord>(
+      context: context,
+      builder: (dialogContext) {
+        final localizations = AppLocalizations.of(context)!;
+        return AlertDialog(
+          title: Text(localizations.exportProject),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: provider.projects.length,
+              itemBuilder: (context, index) {
+                final project = provider.projects[index];
+                return ListTile(
+                  leading: const Icon(Icons.map_outlined),
+                  title: Text(
+                    project.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () => Navigator.pop(dialogContext, project),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || project == null) return;
+
+    final rooms = await provider.selectProject(project);
+    if (!mounted) return;
+
+    context.read<FloorPlanProvider>().loadProject(
+      uuid: project.uuid,
+      name: project.name,
+      rooms: rooms,
+    );
+    context.read<ScannerProvider>().loadRooms(rooms);
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const FloorPlanViewerScreen(
+          openExportOnLoad: true,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -231,6 +313,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         elevation: 2,
         actions: [
+          PopupMenuButton<_DashboardFileAction>(
+            tooltip: localizations.moreOptions,
+            icon: const Icon(Icons.folder_open_outlined),
+            onSelected: (action) {
+              switch (action) {
+                case _DashboardFileAction.importProject:
+                  _importProjectFromHome();
+                  break;
+                case _DashboardFileAction.exportProject:
+                  _exportProjectFromHome();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _DashboardFileAction.importProject,
+                child: ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.file_upload_outlined),
+                  title: Text(localizations.importProject),
+                ),
+              ),
+              PopupMenuItem(
+                value: _DashboardFileAction.exportProject,
+                enabled: provider.projects.isNotEmpty,
+                child: ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.file_download_outlined),
+                  title: Text(localizations.exportProject),
+                ),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(
               Icons.privacy_tip_outlined,
@@ -418,3 +533,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 
 enum _ProjectAction { rename, delete }
+
+enum _DashboardFileAction {
+  importProject,
+  exportProject,
+}
