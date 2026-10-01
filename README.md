@@ -141,27 +141,25 @@ No se ejecutan ni supervisan workflows automáticamente como parte de esta docum
 
 ## Estado de lanzamiento
 
-El titular confirmó el funcionamiento de los flujos principales y el último CI quedó verde. Las correcciones de persistencia, continuación entre esquinas, conservación de paredes, navegación del plano, acciones 2×2, compartir en iPad e importación segura están integradas en `main`.
+La migración de persistencia a Drift/SQLite está integrada en `main` y el CI de validación quedó verde. La firma Android de producción está configurada para CI mediante secretos de GitHub; el workflow genera, audita y elimina las credenciales temporales al finalizar. El candidato comercial sigue siendo beta: no se declara publicación aprobada en Google Play ni App Store.
 
 Antes de enviar la beta a revisión todavía corresponde:
 
-- crear y custodiar la clave privada de carga de Android;
-- configurar los cuatro secretos de firma en GitHub Actions;
-- generar el AAB firmado mediante `ARchScan - Android Store Build` y conservar su auditoría;
-- comprobar en el AAB final firma, permisos, versión y bibliotecas nativas de 16 KB;
-- configurar Play App Signing, ficha, Seguridad de los datos, clasificación, países y canal de prueba;
+- generar el AAB final del candidato que se vaya a probar y conservar su SHA-256 y auditoría;
+- probar físicamente ese AAB en los dispositivos Android objetivo, incluyendo ARCore y recuperación de permisos;
+- completar Play App Signing, ficha, Seguridad de los datos, clasificación, países y canal de prueba;
 - preparar capturas obtenidas de la compilación final;
-- para iOS, configurar certificados, perfil, Team ID y App Store Connect antes de generar el IPA;
+- para iOS, configurar certificados, perfil, Team ID y App Store Connect y probar el archivo firmado en dispositivo compatible;
 - mantener públicas y coherentes las páginas de soporte, privacidad, eliminación local y guía de uso;
 - verificar en el plano final que las cotas de muros, aberturas y totales no se dupliquen ni se apilen innecesariamente.
 
-Un CI verde demuestra que el código compila y pasa las pruebas automatizadas configuradas; no equivale a una aprobación de Google Play o App Store.
+Un CI verde demuestra que el código compila y pasa las pruebas automatizadas configuradas; no equivale a una aprobación de Google Play o App Store ni sustituye las pruebas físicas del candidato final.
 
 ## Contacto
 
 - Desarrollador: **Bet0**.
 - Responsable: **Alberto Lucchetta**, República Argentina.
-- Soporte: **support.ARchScan@gmail.com**.
+- Soporte: **bet0.archscan@gmail.com**.
 - Privacidad: **bet0.archscan@gmail.com**.
 - Plazo de respuesta informado: **20 días hábiles**, sin sustituir plazos legales aplicables.
 
