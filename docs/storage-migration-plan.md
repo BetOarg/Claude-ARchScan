@@ -60,4 +60,4 @@ Después de estabilizar compilación y tests:
 
 La migración de almacenamiento no debe mezclarse con cambios del motor CAD, escaneo AR, exportadores o UX. Si una regresión aparece, se corrige en esta capa antes de continuar con otras reformas.
 
-Estado: backend Drift implementado; CI automatizado verde en el commit 8e3cf390785db9e11bec5338189d84e27f1fc146.
+Estado: backend Drift implementado; auditoría de referencias Isar añadida al gate de housekeeping en el commit 305d4425362fe72d0c6662d7244296322b04cd4f.
