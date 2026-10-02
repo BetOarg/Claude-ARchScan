@@ -259,7 +259,10 @@ class DimensionLayout {
     List<DimensionSegment> walls,
   ) {
     for (final wall in walls) {
-      if (_sameGeometry(dimension, wall)) continue;
+      if (_sameGeometry(dimension, wall) ||
+          _canShareDimensionChain(dimension, wall)) {
+        continue;
+      }
       if (corridor.intersectsSegment(wall.x1, wall.y1, wall.x2, wall.y2)) {
         return true;
       }
