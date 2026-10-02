@@ -553,6 +553,11 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (_planSaving)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 6),
+                      child: LinearProgressIndicator(minHeight: 2),
+                    ),
                   if (_choosingContinuationClosing) ...[
                     Row(
                       children: [
