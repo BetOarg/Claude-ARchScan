@@ -769,7 +769,6 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     if (_planSaving) return;
     final provider = _plan;
     final l = AppLocalizations.of(context)!;
-    setState(() => _planSaving = true);
     final route = DialogRoute<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -792,6 +791,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
       final confirmed = await Navigator.of(context).push(route);
       await route.completed;
       if (!mounted || confirmed != true) return;
+      setState(() => _planSaving = true);
       // Do not delete a replacement or edited room after a stale dialog.
       if (!provider.completedRooms.any((r) => identical(r, room))) {
         _planError(PlanEditError.stale);
