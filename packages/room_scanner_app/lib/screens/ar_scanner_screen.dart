@@ -205,6 +205,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
           _checkingPermissions = false;
         });
         await _onScannerPermissionGranted();
+        return;
       }
     }
 
