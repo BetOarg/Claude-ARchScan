@@ -146,28 +146,70 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       });
 
       if (granted) {
-        _startArInitializationWatchdog();
-      }
-
-      if (!granted) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.cameraLocationPermissionsDenied),
-            backgroundColor: Colors.redAccent,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-
+        await _onScannerPermissionGranted();
         return;
       }
 
       if (!mounted) return;
 
-      final provider = context.read<ScannerProvider>();
-      await _restoreOrStartRoom(provider);
-      _attachDraftListener(provider);
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.cameraLocationPermissionsDenied),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     });
+  }
+
+  Future<void> _onScannerPermissionGranted() async {
+    if (!mounted) return;
+
+    _startArInitializationWatchdog();
+    final provider = context.read<ScannerProvider>();
+    await _restoreOrStartRoom(provider);
+    if (!mounted) return;
+    _attachDraftListener(provider);
+  }
+
+  Future<void> _recoverScannerPermission() async {
+    final granted = await PermissionService.requestScannerPermissions();
+    if (!mounted) return;
+
+    if (granted) {
+      setState(() {
+        _permissionsGranted = true;
+        _checkingPermissions = false;
+      });
+      await _onScannerPermissionGranted();
+      return;
+    }
+
+    if (await PermissionService.isScannerPermissionPermanentlyDenied() &&
+        mounted) {
+      await PermissionService.openScannerSettings();
+    }
+  }
+
+  Future<void> _handleAppResumed() async {
+    if (!mounted || !_appIsResumed) return;
+
+    if (!_permissionsGranted) {
+      final granted = await PermissionService.hasBasicPermissions();
+      if (!mounted || !_appIsResumed) return;
+
+      if (granted) {
+        setState(() {
+          _permissionsGranted = true;
+          _checkingPermissions = false;
+        });
+        await _onScannerPermissionGranted();
+      }
+    }
+
+    if (!mounted || !_appIsResumed || !_permissionsGranted) return;
+    _queueArLifecycle(_restartArView);
   }
 
   Future<void> _restoreOrStartRoom(ScannerProvider provider) async {
@@ -314,7 +356,7 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       }
 
       _appIsResumed = true;
-      _queueArLifecycle(_restartArView);
+      unawaited(_handleAppResumed());
     }
   }
 
@@ -565,10 +607,21 @@ class _ARScannerScreenState extends State<ARScannerScreen>
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Text(
-              l10n.cameraLocationPermissionsDenied,
-              style: const TextStyle(color: Colors.white70),
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.cameraLocationPermissionsDenied,
+                  style: const TextStyle(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: _recoverScannerPermission,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l10n.retryCamera),
+                ),
+              ],
             ),
           ),
         ),
