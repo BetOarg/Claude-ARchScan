@@ -63,7 +63,7 @@ Antes de pasar del APK de pruebas a Google Play, exportar JSON. Una firma distin
 - Nombre: ARchScan. Desarrollador visible: Bet0.
 - Descarga: gratuita. Publicidad: No, sujeto a auditoría del manifiesto fusionado y SDK finales.
 - Compras: no anunciar ni configurar Pro como disponible hasta integrarlo y probarlo.
-- Soporte: support.ARchScan@gmail.com.
+- Soporte: bet0.archscan@gmail.com.
 - Privacidad: bet0.archscan@gmail.com.
 - Responsable: Alberto Lucchetta, República Argentina.
 - Categoría sugerida: Productividad, pendiente de confirmación.
