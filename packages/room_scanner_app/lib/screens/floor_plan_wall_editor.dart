@@ -532,7 +532,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 6,
           crossAxisSpacing: 8,
-          mainAxisExtent: 44,
+          mainAxisExtent: 48,
           children: children,
         );
     return SafeArea(
