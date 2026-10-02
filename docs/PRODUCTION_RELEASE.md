@@ -38,7 +38,7 @@ Antes de publicar:
 - declarar que ARchScan no crea cuentas ni sincroniza proyectos;
 - confirmar que no recopila ubicación, fotografías, videos, publicidad ni seguimiento;
 - responsable: Alberto Lucchetta (Bet0), República Argentina;
-- soporte: support.ARchScan@gmail.com; privacidad: bet0.archscan@gmail.com;
+- soporte: bet0.archscan@gmail.com; privacidad: bet0.archscan@gmail.com;
 - verificar SDK transitivos y copias del sistema antes de completar Seguridad de los datos.
 
 ## Verificación final
