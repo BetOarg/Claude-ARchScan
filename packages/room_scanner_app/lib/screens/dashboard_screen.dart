@@ -103,6 +103,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<bool> _confirmDeleteProject(ProjectRecord project) async {
+    final localizations = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(localizations.deleteProjectConfirmationTitle),
+        content: Text(
+          localizations.deleteProjectConfirmationMessage(project.name),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(localizations.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(localizations.delete),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   Future<void> _renameProject(ProjectRecord project) async {
     final localizations = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: project.name);
