@@ -96,9 +96,9 @@ void main() {
     );
     const second = DimensionSegment(
       x1: 0.5,
-      y1: 0,
+      y1: -1,
       x2: 2.5,
-      y2: 0,
+      y2: -1,
       kind: DimensionKind.wall,
       id: 'second',
       centerX: 1.5,
