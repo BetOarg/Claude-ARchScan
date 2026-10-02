@@ -276,8 +276,7 @@ class DimensionLayout {
     }
 
     final aLength = a.length;
-    final bLength = b.length;
-    if (aLength < kGeometryEpsilon || bLength < kGeometryEpsilon) {
+    if (aLength < kGeometryEpsilon || b.length < kGeometryEpsilon) {
       return false;
     }
 
