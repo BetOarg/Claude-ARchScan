@@ -10,4 +10,4 @@ Revisión sugerida:
 5. Exportar JSON, PDF o DXF 2D mediante el menú de compartir del sistema.
 6. Abrir Privacidad y datos para eliminar proyectos locales.
 
-No se requieren credenciales de revisión. Soporte: support.ARchScan@gmail.com
+No se requieren credenciales de revisión. Soporte: bet0.archscan@gmail.com
