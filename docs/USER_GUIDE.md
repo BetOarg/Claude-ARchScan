@@ -408,7 +408,7 @@ Export important projects as JSON and verify that the files can be accessed from
 ## Support, privacy, and local data deletion
 
 - **Official website:** https://sites.google.com/view/archscan/inicio
-- **Support:** support.ARchScan@gmail.com
+- **Support:** bet0.archscan@gmail.com
 - **Privacy contact:** bet0.archscan@gmail.com
 - **Privacy Policy:** available from the Privacy section of the official website.
 - **Local Data Deletion:** available from the Privacy and Data section of the official website.
@@ -812,7 +812,7 @@ Exportá los proyectos importantes como JSON y verificá que puedas acceder a lo
 ## Soporte, privacidad y eliminación de datos locales
 
 - **Sitio oficial:** https://sites.google.com/view/archscan/inicio
-- **Soporte:** support.ARchScan@gmail.com
+- **Soporte:** bet0.archscan@gmail.com
 - **Contacto de privacidad:** bet0.archscan@gmail.com
 - **Política de privacidad:** disponible desde la sección Privacidad del sitio oficial.
 - **Eliminación de datos locales:** disponible desde la sección Privacidad y datos del sitio oficial.
