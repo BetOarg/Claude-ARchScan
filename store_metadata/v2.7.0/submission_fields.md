@@ -10,7 +10,7 @@
 - Developer name: Bet0
 - Legal responsible party: Alberto Lucchetta
 - Copyright: © 2026 Alberto Lucchetta (Bet0)
-- Support email: support.ARchScan@gmail.com
+- Support email: bet0.archscan@gmail.com
 - Privacy email: bet0.archscan@gmail.com
 - Support URL: https://sites.google.com/view/archscan/soporte-support
 - Privacy URL: https://sites.google.com/view/archscan/privacidad-privacy
