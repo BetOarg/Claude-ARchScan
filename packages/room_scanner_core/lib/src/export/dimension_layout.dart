@@ -299,13 +299,9 @@ class DimensionLayout {
       return false;
     }
 
-    double projection(double x, double y) =>
-        (x - a.x1) * aTangent.x + (y - a.y1) * aTangent.y;
-
     // Collinear wall segments belong to the same dimension chain even
     // when another segment lies between them. The corridor collision check
     // must therefore treat the complete collinear facade as one chain.
-    projection(b.x1, b.y1);
     return true;
   }
 
