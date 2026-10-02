@@ -143,7 +143,11 @@ class DimensionLayout {
             textHeight,
           );
 
-          if (occupied.any((other) => other.overlaps(corridor))) {
+          if (occupied.any(
+            (other) =>
+                other.overlaps(corridor) &&
+                !_canShareDimensionChain(dimension, other.segment),
+          )) {
             continue;
           }
 
@@ -261,6 +265,59 @@ class DimensionLayout {
       }
     }
     return false;
+  }
+
+  static bool _canShareDimensionChain(
+    DimensionSegment a,
+    DimensionSegment b,
+  ) {
+    if (a.kind != b.kind || a.kind != DimensionKind.wall) {
+      return false;
+    }
+
+    final aLength = a.length;
+    final bLength = b.length;
+    if (aLength < kGeometryEpsilon || bLength < kGeometryEpsilon) {
+      return false;
+    }
+
+    final aTangent = _tangent(a);
+    final bTangent = _tangent(b);
+    final parallel =
+        (aTangent.x * bTangent.x + aTangent.y * bTangent.y).abs() > 0.9999;
+    if (!parallel) {
+      return false;
+    }
+
+    final offsetX = b.x1 - a.x1;
+    final offsetY = b.y1 - a.y1;
+    final collinear =
+        (offsetX * aTangent.y - offsetY * aTangent.x).abs() < 0.0001;
+    if (!collinear) {
+      return false;
+    }
+
+    double projection(double x, double y) =>
+        (x - a.x1) * aTangent.x + (y - a.y1) * aTangent.y;
+
+    final aStart = 0.0;
+    final aEnd = aLength;
+    final bStart = math.min(
+      projection(b.x1, b.y1),
+      projection(b.x2, b.y2),
+    );
+    final bEnd = math.max(
+      projection(b.x1, b.y1),
+      projection(b.x2, b.y2),
+    );
+
+    final gap = bStart > aEnd
+        ? bStart - aEnd
+        : aStart > bEnd
+            ? aStart - bEnd
+            : 0.0;
+
+    return gap <= 0.0001;
   }
 
   static bool _sameGeometry(DimensionSegment a, DimensionSegment b) {
@@ -407,6 +464,7 @@ class _Vector {
 }
 
 class _DimensionCorridor {
+  final DimensionSegment segment;
   final _Point center;
   final _Vector tangent;
   final _Vector normal;
@@ -414,6 +472,7 @@ class _DimensionCorridor {
   final double halfNormal;
 
   const _DimensionCorridor({
+    required this.segment,
     required this.center,
     required this.tangent,
     required this.normal,
@@ -435,6 +494,7 @@ class _DimensionCorridor {
     );
     final margin = halfLabelWidth + 4.0;
     return _DimensionCorridor(
+      segment: d,
       center: midpoint,
       tangent: tangent,
       normal: normal,
