@@ -6,7 +6,7 @@
 **Android Application ID:** com.bet0.ARchScan
 **iOS Bundle ID:** com.bet0.ARchScan
 **Responsable:** Alberto Lucchetta (Bet0)
-**Soporte:** support.ARchScan@gmail.com  
+**Soporte:** bet0.archscan@gmail.com  
 **Privacidad:** bet0.archscan@gmail.com
 
 ARchScan no crea cuentas de usuario ni almacena proyectos en servidores externos.
@@ -32,6 +32,6 @@ Los JSON, PDF y DXF exportados permanecen en la carpeta o servicio elegido por e
 
 ## Solicitar ayuda
 
-Si no puede eliminar los datos desde el dispositivo, escriba a **support.ARchScan@gmail.com**. No envíe proyectos, contraseñas, claves ni documentación confidencial. Plazo máximo de respuesta: **20 días hábiles**, sin perjuicio de los plazos legales aplicables.
+Si no puede eliminar los datos desde el dispositivo, escriba a **bet0.archscan@gmail.com**. No envíe proyectos, contraseñas, claves ni documentación confidencial. Plazo máximo de respuesta: **20 días hábiles**, sin perjuicio de los plazos legales aplicables.
 
 El correo de ayuda no permite borrar remotamente proyectos guardados en el teléfono. Revise también las copias del sistema operativo y los archivos compartidos, si existen.
