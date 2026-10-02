@@ -2271,7 +2271,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                 _calculateTransform(size, rooms);
               }
 
-              return Stack(
+              final openRooms = rooms.where((room) => !room.isClosed).toList();
+            return Stack(
                 children: [
                   InteractiveViewer(
                     transformationController: _planViewport,
@@ -2512,7 +2513,17 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                           ),
                         ),
                       ),
+                    if (openRooms.isNotEmpty)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      right: 12,
+                      child: SafeArea(
+                        bottom: false,
+                        child: _OpenRoomsStatus(count: openRooms.length),
+                      ),
                     ),
+                  ),
                 ],
               );
             },
@@ -3221,6 +3232,44 @@ class _OpeningDirectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _OpeningDirectionPainter oldDelegate) => false;
+}
+
+class _OpenRoomsStatus extends StatelessWidget {
+  final int count;
+
+  const _OpenRoomsStatus({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
+      color: Theme.of(context).colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 20,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                count == 1
+                    ? l.planOpenContour
+                    : '${l.planOpenContour} ($count)',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _EmptyPlanView extends StatelessWidget {
