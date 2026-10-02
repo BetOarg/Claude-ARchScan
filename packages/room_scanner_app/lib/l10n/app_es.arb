@@ -409,6 +409,8 @@
   },
   "viewFloorPlan": "Ver plano",
   "delete": "Eliminar",
+  "deleteProjectConfirmationTitle": "¿Eliminar proyecto?",
+  "deleteProjectConfirmationMessage": "Se eliminará permanentemente “{projectName}” y todos sus ambientes y medidas guardados en este dispositivo. Los archivos exportados no se modifican.",
   "permissionsRequired": "Permisos requeridos",
   "cameraLocationPermissionsDenied": "No se otorgó el permiso de cámara. Habilitalo desde los ajustes del sistema para poder escanear.",
   "scannerUnavailable": "Escáner no disponible",
