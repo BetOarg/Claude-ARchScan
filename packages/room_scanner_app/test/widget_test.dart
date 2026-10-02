@@ -12,6 +12,7 @@ void main() {
     WidgetTester tester, {
     required Size size,
     required Locale locale,
+    double textScale = 1.3,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -27,7 +28,7 @@ void main() {
           final mediaQuery = MediaQuery.of(context);
           return MediaQuery(
             data: mediaQuery.copyWith(
-              textScaler: const TextScaler.linear(1.3),
+              textScaler: TextScaler.linear(textScale),
             ),
             child: child!,
           );
@@ -80,6 +81,24 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'el diálogo conserva sus acciones con texto al 200 por ciento',
+    (tester) async {
+      await pumpDialog(
+        tester,
+        size: const Size(320, 568),
+        locale: const Locale('es'),
+        textScale: 2.0,
+      );
+
+      expect(find.text('Espacio guardado'), findsOneWidget);
+      expect(find.text('Agregar otro espacio'), findsOneWidget);
+      expect(find.text('Ver plano completo'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'muestra una interfaz desde el primer cuadro durante el inicio',
     (tester) async {
@@ -131,5 +150,4 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
-
 }
