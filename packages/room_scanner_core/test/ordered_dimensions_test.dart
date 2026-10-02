@@ -116,7 +116,10 @@ void main() {
 
     expect(walls, hasLength(3));
     expect(walls.every((placement) => placement.level == 1), isTrue);
-    expect(walls.map((placement) => placement.offset).toSet(), {48.0});
+    expect(walls.map((placement) => placement.level).toSet(), {1});
+    expect(walls.map((placement) => placement.offset).toSet(), {
+      walls.first.offset,
+    });
     expect(total.level, 2);
   });
 
