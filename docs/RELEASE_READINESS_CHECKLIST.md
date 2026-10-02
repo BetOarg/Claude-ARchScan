@@ -1,7 +1,7 @@
 # Lista de preparación para publicación — ARchScan
 
-**Última revisión:** 24/09/2026  
-**Main de referencia:** `fb8033bab146bb91f06019e29ac3c818986499ec`  
+**Última revisión:** 02/10/2026  
+**Main de referencia:** `d95faf38d2b28c6c41727603f51c2fa4f5c1fb9f`  
 **Versión declarada:** `2.7.0+4`
 
 ## Estado verificable en repositorio
@@ -42,10 +42,10 @@ La rama de trabajo restante es administrativa; no forma parte del artefacto de p
 - [ ] Repetir Basic y ARCore sobre el candidato final firmado.
 - [ ] ARKit: validación física final.
 - [ ] RoomPlan: validación física final.
-- [ ] Primera apertura y permisos; denegación/recuperación.
+- [ ] Primera apertura y permisos; denegación/recuperación (flujo automatizado reforzado; falta validación física sobre candidato final).
 - [ ] Escaneo, cierre y continuación desde aberturas o extremos.
 - [ ] Puertas/ventanas, borrado de paredes y continuación.
-- [ ] Suspensión/reanudación de cámara y orientación.
+- [ ] Suspensión/reanudación de cámara y orientación (lógica de ciclo de vida automatizada; falta validación física sobre candidato final).
 - [ ] Plano 2D, edición, navegación y rotación.
 - [ ] Guardado, cierre y recuperación.
 - [ ] Proyectos históricos.
