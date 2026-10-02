@@ -58,6 +58,68 @@ void main() {
     expect(shortWall, lessThan(longWall));
   });
 
+  test('keeps consecutive wall segments on one dimension chain', () {
+    final segments = <DimensionSegment>[
+      const DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 1.5,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'wall-1',
+        centerX: 2,
+        centerY: 1,
+      ),
+      const DimensionSegment(
+        x1: 1.5,
+        y1: 0,
+        x2: 3,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'wall-2',
+        centerX: 2,
+        centerY: 1,
+      ),
+      const DimensionSegment(
+        x1: 3,
+        y1: 0,
+        x2: 5,
+        y2: 0,
+        kind: DimensionKind.wall,
+        id: 'wall-3',
+        centerX: 2,
+        centerY: 1,
+      ),
+      const DimensionSegment(
+        x1: 0,
+        y1: 0,
+        x2: 5,
+        y2: 0,
+        kind: DimensionKind.total,
+        id: 'total',
+        centerX: 2,
+        centerY: 1,
+      ),
+    ];
+
+    final placements = DimensionLayout.layout(
+      segments,
+      strictHierarchy: true,
+    );
+
+    final walls = placements
+        .where((placement) => placement.segment.kind == DimensionKind.wall)
+        .toList();
+    final total = placements.firstWhere(
+      (placement) => placement.segment.kind == DimensionKind.total,
+    );
+
+    expect(walls, hasLength(3));
+    expect(walls.every((placement) => placement.level == 1), isTrue);
+    expect(walls.map((placement) => placement.offset).toSet(), {34.0});
+    expect(total.level, 2);
+  });
+
   test('keeps the room name visible and other labels out of the drawing', () {
     final svg = PlanExportBuilder.buildFloorPlanSvg([
       roomWithFeatures(),
