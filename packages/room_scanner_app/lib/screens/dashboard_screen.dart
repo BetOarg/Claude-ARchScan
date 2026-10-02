@@ -521,7 +521,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         await _renameProject(project);
                         break;
                       case _ProjectAction.delete:
-                        await provider.deleteProject(project.uuid);
+                        if (await _confirmDeleteProject(project)) {
+                          await provider.deleteProject(project.uuid);
+                        }
                         break;
                     }
                   },
