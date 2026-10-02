@@ -302,24 +302,11 @@ class DimensionLayout {
     double projection(double x, double y) =>
         (x - a.x1) * aTangent.x + (y - a.y1) * aTangent.y;
 
-    final aStart = 0.0;
-    final aEnd = aLength;
-    final bStart = math.min(
-      projection(b.x1, b.y1),
-      projection(b.x2, b.y2),
-    );
-    final bEnd = math.max(
-      projection(b.x1, b.y1),
-      projection(b.x2, b.y2),
-    );
-
-    final gap = bStart > aEnd
-        ? bStart - aEnd
-        : aStart > bEnd
-            ? aStart - bEnd
-            : 0.0;
-
-    return gap <= 0.0001;
+    // Collinear wall segments belong to the same dimension chain even
+    // when another segment lies between them. The corridor collision check
+    // must therefore treat the complete collinear facade as one chain.
+    projection(b.x1, b.y1);
+    return true;
   }
 
   static bool _sameGeometry(DimensionSegment a, DimensionSegment b) {
