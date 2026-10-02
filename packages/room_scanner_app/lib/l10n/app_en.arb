@@ -409,6 +409,8 @@
   },
   "viewFloorPlan": "View floor plan",
   "delete": "Delete",
+  "deleteProjectConfirmationTitle": "Delete project?",
+  "deleteProjectConfirmationMessage": "This will permanently remove “{projectName}” and all of its saved rooms and measurements from this device. Exported files are not affected.",
   "permissionsRequired": "Permissions required",
   "cameraLocationPermissionsDenied": "Camera permission was not granted. Enable it in system settings to scan.",
   "scannerUnavailable": "Scanner unavailable",
