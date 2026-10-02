@@ -2524,7 +2524,6 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                         child: _OpenRoomsStatus(count: openRooms.length),
                       ),
                     ),
-                  ),
                 ],
               );
             },
