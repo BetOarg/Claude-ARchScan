@@ -2513,7 +2513,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                           ),
                         ),
                       ),
-                    if (openRooms.isNotEmpty)
+                    ),
+                  if (openRooms.isNotEmpty)
                     Positioned(
                       top: 12,
                       left: 12,
