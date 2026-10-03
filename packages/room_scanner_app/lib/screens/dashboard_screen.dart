@@ -210,20 +210,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final provider = context.read<ProjectProvider>();
 
     try {
-      final rooms = await provider.selectProject(
-        project,
-      );
+      final rooms = await provider.selectProject(project);
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       context.read<FloorPlanProvider>().loadProject(
         uuid: project.uuid,
         name: project.name,
         rooms: rooms,
       );
-
       context.read<ScannerProvider>().loadRooms(rooms);
 
       await ArCheckService.abrirEscanerConValidacion(
@@ -232,29 +227,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         projectName: project.name,
       );
     } catch (_) {
-      if (mounted) {
-        _showOperationError();
-      }
+      if (mounted) _showOperationError();
     }
-    return;
-
-    if (!mounted) {
-      return;
-    }
-
-    context.read<FloorPlanProvider>().loadProject(
-          uuid: project.uuid,
-          name: project.name,
-          rooms: rooms,
-        );
-
-    context.read<ScannerProvider>().loadRooms(rooms);
-
-    await ArCheckService.abrirEscanerConValidacion(
-      context,
-      projectUuid: project.uuid,
-      projectName: project.name,
-    );
   }
 
   Future<void> _viewFloorPlan(
@@ -262,26 +236,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) async {
     final provider = context.read<ProjectProvider>();
 
-    final rooms = await provider.selectProject(
-      project,
-    );
+    try {
+      final rooms = await provider.selectProject(project);
 
-    if (!mounted) {
-      return;
+      if (!mounted) return;
+
+      context.read<FloorPlanProvider>().loadProject(
+        uuid: project.uuid,
+        name: project.name,
+        rooms: rooms,
+      );
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const FloorPlanViewerScreen(),
+        ),
+      );
+    } catch (_) {
+      if (mounted) _showOperationError();
     }
-
-    context.read<FloorPlanProvider>().loadProject(
-          uuid: project.uuid,
-          name: project.name,
-          rooms: rooms,
-        );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const FloorPlanViewerScreen(),
-      ),
-    );
   }
 
   Future<void> _openPrivacyAndAccount() {
