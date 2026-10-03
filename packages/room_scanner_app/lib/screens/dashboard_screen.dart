@@ -78,29 +78,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final uuid = DateTime.now().millisecondsSinceEpoch.toString();
 
-    await context.read<ProjectProvider>().saveCurrentProject(
-      uuid: uuid,
-      name: name,
-      rooms: const [],
-    );
+    try {
+      await context.read<ProjectProvider>().saveCurrentProject(
+        uuid: uuid,
+        name: name,
+        rooms: const [],
+      );
 
-    if (!mounted) {
-      return;
+      if (!mounted) {
+        return;
+      }
+
+      context.read<FloorPlanProvider>().loadProject(
+        uuid: uuid,
+        name: name,
+        rooms: const [],
+      );
+
+      context.read<ScannerProvider>().loadRooms(const []);
+
+      await ArCheckService.abrirEscanerConValidacion(
+        context,
+        projectUuid: uuid,
+        projectName: name,
+      );
+    } catch (_) {
+      if (mounted) {
+        _showOperationError();
+      }
     }
+  }
 
-    context.read<FloorPlanProvider>().loadProject(
-      uuid: uuid,
-      name: name,
-      rooms: const [],
-    );
-
-    context.read<ScannerProvider>().loadRooms(const []);
-
-    await ArCheckService.abrirEscanerConValidacion(
-      context,
-      projectUuid: uuid,
-      projectName: name,
-    );
+  void _showOperationError() {
+    final localizations = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(localizations.unknownError),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   Future<bool> _confirmDeleteProject(ProjectRecord project) async {
@@ -174,10 +192,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
-    await context.read<ProjectProvider>().renameProject(
-      uuid: project.uuid,
-      name: name,
-    );
+    try {
+      await context.read<ProjectProvider>().renameProject(
+        uuid: project.uuid,
+        name: name,
+      );
+    } catch (_) {
+      if (mounted) {
+        _showOperationError();
+      }
+    }
   }
 
   Future<void> _openProject(
@@ -185,9 +209,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) async {
     final provider = context.read<ProjectProvider>();
 
-    final rooms = await provider.selectProject(
-      project,
-    );
+    try {
+      final rooms = await provider.selectProject(
+        project,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      context.read<FloorPlanProvider>().loadProject(
+        uuid: project.uuid,
+        name: project.name,
+        rooms: rooms,
+      );
+
+      context.read<ScannerProvider>().loadRooms(rooms);
+
+      await ArCheckService.abrirEscanerConValidacion(
+        context,
+        projectUuid: project.uuid,
+        projectName: project.name,
+      );
+    } catch (_) {
+      if (mounted) {
+        _showOperationError();
+      }
+    }
+    return;
 
     if (!mounted) {
       return;
