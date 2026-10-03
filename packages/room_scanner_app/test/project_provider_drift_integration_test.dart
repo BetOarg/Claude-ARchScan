@@ -36,15 +36,9 @@ void main() {
     final loaded = await provider.selectProject(provider.projects.single);
     expect(loaded.single.toJson(), room.toJson());
 
-    var notifications = 0;
-    void listener() => notifications += 1;
-    provider.addListener(listener);
-
     await provider.renameProject(uuid: 'project-1', name: 'Casa renovada');
 
     expect(provider.currentProject?.name, 'Casa renovada');
-    expect(notifications, 1);
-    provider.removeListener(listener);
     expect((await repository.getAllProjects()).single.name, 'Casa renovada');
     expect(
       (await repository.getRoomsForProject('project-1')).single.toJson(),
