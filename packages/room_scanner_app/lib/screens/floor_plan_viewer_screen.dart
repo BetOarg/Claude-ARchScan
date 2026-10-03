@@ -2773,8 +2773,8 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
 
   // ===========================================================================
   // PUERTAS / VENTANAS
-  // ===========================================================================  Future<void>
-  _showAddFeatureMenu({
+  // ===========================================================================
+  Future<void> _showAddFeatureMenu({
     required String roomId,
     required ARPoint location,
   }) async {
