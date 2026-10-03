@@ -42,7 +42,21 @@ class ProjectProvider with ChangeNotifier {
   }
 
   Future<void> loadProjects() async {
-    _projects = await _repository.getAllProjects();
+    final projects = await _repository.getAllProjects();
+    _projects = projects;
+
+    final currentUuid = _currentProject?.uuid;
+    if (currentUuid != null) {
+      ProjectRecord? refreshedCurrentProject;
+      for (final project in projects) {
+        if (project.uuid == currentUuid) {
+          refreshedCurrentProject = project;
+          break;
+        }
+      }
+      _currentProject = refreshedCurrentProject;
+    }
+
     notifyListeners();
   }
 
@@ -71,7 +85,16 @@ class ProjectProvider with ChangeNotifier {
 
   Future<List<RoomModel>> selectProject(ProjectRecord project) async {
     final rooms = await _repository.getRoomsForProject(project.uuid);
-    _currentProject = project;
+
+    ProjectRecord selectedProject = project;
+    for (final candidate in _projects) {
+      if (candidate.uuid == project.uuid) {
+        selectedProject = candidate;
+        break;
+      }
+    }
+
+    _currentProject = selectedProject;
     notifyListeners();
     return rooms;
   }
