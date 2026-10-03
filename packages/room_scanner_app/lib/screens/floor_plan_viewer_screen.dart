@@ -2655,21 +2655,23 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
   }
 
   Future<void> _saveJson(ExportDestination destination) async {
-    final localizations = AppLocalizations.of(context)!;
-    final provider = context.read<FloorPlanProvider>();
+    await _runExport(() async {
+      final localizations = AppLocalizations.of(context)!;
+      final provider = context.read<FloorPlanProvider>();
 
-    try {
-      await ImportExportService.exportToJson(
-        provider.completedRooms,
-        provider.projectName,
-        destination: destination,
-        sharePositionOrigin: _shareOrigin(),
-      );
-    } catch (_) {
-      if (mounted) {
-        _showMessage(localizations.fileSaveFailed, error: true);
+      try {
+        await ImportExportService.exportToJson(
+          provider.completedRooms,
+          provider.projectName,
+          destination: destination,
+          sharePositionOrigin: _shareOrigin(),
+        );
+      } catch (_) {
+        if (mounted) {
+          _showMessage(localizations.fileSaveFailed, error: true);
+        }
       }
-    }
+    });
   }
 
   bool _exporting = false;
