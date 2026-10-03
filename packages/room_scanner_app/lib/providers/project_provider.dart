@@ -14,6 +14,8 @@ class ProjectProvider with ChangeNotifier {
   List<ProjectRecord> _projects = [];
   ProjectRecord? _currentProject;
   bool _isLoading = false;
+  int _loadingOperations = 0;
+  int _loadGeneration = 0;
   Future<void> _mutations = Future<void>.value();
   final Set<String> _deletedIds = <String>{};
 
@@ -42,7 +44,9 @@ class ProjectProvider with ChangeNotifier {
   }
 
   Future<void> loadProjects() async {
+    final generation = ++_loadGeneration;
     final projects = await _repository.getAllProjects();
+    if (generation != _loadGeneration) return;
     _projects = projects;
 
     final currentUuid = _currentProject?.uuid;
@@ -204,7 +208,15 @@ class ProjectProvider with ChangeNotifier {
   }
 
   void _setLoading(bool value) {
-    _isLoading = value;
+    if (value) {
+      _loadingOperations += 1;
+    } else if (_loadingOperations > 0) {
+      _loadingOperations -= 1;
+    }
+
+    final nextValue = _loadingOperations > 0;
+    if (_isLoading == nextValue) return;
+    _isLoading = nextValue;
     notifyListeners();
   }
 }
