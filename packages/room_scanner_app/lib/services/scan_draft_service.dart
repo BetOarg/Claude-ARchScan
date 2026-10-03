@@ -158,9 +158,7 @@ class ScanDraftService {
     if (permanentlyDeleted) _deletedIds.add(projectUuid);
     return _serialize(() async {
     final preferences = await SharedPreferences.getInstance();
-    if (!await preferences.remove(_key(projectUuid))) {
-      throw StateError('Scan draft could not be deleted.');
-    }
+    await preferences.remove(_key(projectUuid));
 
     });
   }
