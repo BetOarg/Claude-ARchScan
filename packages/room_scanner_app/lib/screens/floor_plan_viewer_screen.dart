@@ -2685,9 +2685,9 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
   }
 
   Future<void> _exportDxf(ExportDestination destination) async {
-    final localizations = AppLocalizations.of(context)!;
-    final provider = context.read<FloorPlanProvider>();
     await _runExport(() async {
+      final localizations = AppLocalizations.of(context)!;
+      final provider = context.read<FloorPlanProvider>();
       try {
         await ImportExportService.exportToDxf(
           provider.completedRooms,
@@ -2697,49 +2697,52 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
           sharePositionOrigin: _shareOrigin(),
         );
       } catch (_) {
-        if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
+        if (mounted) {
+          _showMessage(localizations.fileSaveFailed, error: true);
+        }
       }
     });
   }
 
   Future<void> _exportPdf(ExportDestination destination) async {
-    return _runExport(() async {
-    final localizations = AppLocalizations.of(context)!;
-    final provider = context.read<FloorPlanProvider>();
-
-    try {
-      await ImportExportService.exportToPdf(
-        provider.completedRooms,
-        provider.projectName,
-        context.read<MeasurementSettingsProvider>().system,
-        languageCode: Localizations.localeOf(context).languageCode,
-        destination: destination,
-        sharePositionOrigin: _shareOrigin(),
-      );
-    } catch (_) {
-      if (mounted) {
-        _showMessage(localizations.fileSaveFailed, error: true);
+    await _runExport(() async {
+      final localizations = AppLocalizations.of(context)!;
+      final provider = context.read<FloorPlanProvider>();
+      try {
+        await ImportExportService.exportToPdf(
+          provider.completedRooms,
+          provider.projectName,
+          context.read<MeasurementSettingsProvider>().system,
+          languageCode: Localizations.localeOf(context).languageCode,
+          destination: destination,
+          sharePositionOrigin: _shareOrigin(),
+        );
+      } catch (_) {
+        if (mounted) {
+          _showMessage(localizations.fileSaveFailed, error: true);
+        }
       }
-    }
     });
   }
 
   Future<void> _exportSvg(ExportDestination destination) async {
-    return _runExport(() async {
-    final localizations = AppLocalizations.of(context)!;
-    final provider = context.read<FloorPlanProvider>();
-    try {
-      await ImportExportService.exportToSvg(
-        provider.completedRooms,
-        provider.projectName,
-        context.read<MeasurementSettingsProvider>().system,
-        languageCode: Localizations.localeOf(context).languageCode,
-        destination: destination,
-        sharePositionOrigin: _shareOrigin(),
-      );
-    } catch (_) {
-      if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
-    }
+    await _runExport(() async {
+      final localizations = AppLocalizations.of(context)!;
+      final provider = context.read<FloorPlanProvider>();
+      try {
+        await ImportExportService.exportToSvg(
+          provider.completedRooms,
+          provider.projectName,
+          context.read<MeasurementSettingsProvider>().system,
+          languageCode: Localizations.localeOf(context).languageCode,
+          destination: destination,
+          sharePositionOrigin: _shareOrigin(),
+        );
+      } catch (_) {
+        if (mounted) {
+          _showMessage(localizations.fileSaveFailed, error: true);
+        }
+      }
     });
   }
 
@@ -2747,22 +2750,24 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     ExportDestination destination, {
     required bool jpeg,
   }) async {
-    return _runExport(() async {
-    final localizations = AppLocalizations.of(context)!;
-    final provider = context.read<FloorPlanProvider>();
-    try {
-      await ImportExportService.exportToRasterImage(
-        provider.completedRooms,
-        provider.projectName,
-        context.read<MeasurementSettingsProvider>().system,
-        languageCode: Localizations.localeOf(context).languageCode,
-        jpeg: jpeg,
-        destination: destination,
-        sharePositionOrigin: _shareOrigin(),
-      );
-    } catch (_) {
-      if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
-    }
+    await _runExport(() async {
+      final localizations = AppLocalizations.of(context)!;
+      final provider = context.read<FloorPlanProvider>();
+      try {
+        await ImportExportService.exportToRasterImage(
+          provider.completedRooms,
+          provider.projectName,
+          context.read<MeasurementSettingsProvider>().system,
+          languageCode: Localizations.localeOf(context).languageCode,
+          jpeg: jpeg,
+          destination: destination,
+          sharePositionOrigin: _shareOrigin(),
+        );
+      } catch (_) {
+        if (mounted) {
+          _showMessage(localizations.fileSaveFailed, error: true);
+        }
+      }
     });
   }
 
