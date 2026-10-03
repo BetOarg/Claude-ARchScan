@@ -125,14 +125,6 @@ class ProjectProvider with ChangeNotifier {
         );
 
         await loadProjects();
-
-        for (final project in _projects) {
-          if (project.uuid == uuid) {
-            _currentProject = project;
-            break;
-          }
-        }
-        notifyListeners();
       } finally {
         _setLoading(false);
       }
