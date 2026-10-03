@@ -116,8 +116,10 @@ class ProjectProvider with ChangeNotifier {
     _deletedIds.add(uuid);
     return _serialize(() async {
       _setLoading(true);
+      var repositoryDeleted = false;
       try {
         await _repository.deleteProject(uuid);
+        repositoryDeleted = true;
         await const ScanDraftService().clear(
           uuid,
           permanentlyDeleted: true,
@@ -127,22 +129,26 @@ class ProjectProvider with ChangeNotifier {
         }
         await loadProjects();
       } finally {
+        if (!repositoryDeleted) {
+          _deletedIds.remove(uuid);
+        }
         _setLoading(false);
       }
     });
   }
 
   Future<void> deleteAllLocalProjects() async {
-    _deletedIds.addAll(_projects.map((project) => project.uuid));
+    final projectIds = _projects
+        .map((project) => project.uuid)
+        .toList(growable: false);
+    _deletedIds.addAll(projectIds);
     return _serialize(() async {
       _setLoading(true);
+      final deletedIds = <String>{};
       try {
-        final projectIds = _projects
-            .map((project) => project.uuid)
-            .toList(growable: false);
-
         for (final projectId in projectIds) {
           await _repository.deleteProject(projectId);
+          deletedIds.add(projectId);
         }
 
         for (final projectId in projectIds) {
@@ -156,6 +162,10 @@ class ProjectProvider with ChangeNotifier {
         _projects = [];
         _currentProject = null;
       } finally {
+        _deletedIds
+          ..removeWhere(
+            (id) => projectIds.contains(id) && !deletedIds.contains(id),
+          );
         _setLoading(false);
       }
     });
