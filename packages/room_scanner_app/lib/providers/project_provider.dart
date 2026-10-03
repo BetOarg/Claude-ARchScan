@@ -176,28 +176,34 @@ class ProjectProvider with ChangeNotifier {
     return _serialize(() async {
       _setLoading(true);
       final deletedIds = <String>{};
+      Object? firstError;
+      StackTrace? firstStack;
       try {
         for (final projectId in projectIds) {
-          await _repository.deleteProject(projectId);
-          deletedIds.add(projectId);
+          try {
+            await _repository.deleteProject(projectId);
+            deletedIds.add(projectId);
+            await const ScanDraftService().clear(
+              projectId,
+              permanentlyDeleted: true,
+            );
+          } catch (error, stack) {
+            firstError ??= error;
+            firstStack ??= stack;
+          }
         }
 
-        for (final projectId in projectIds) {
-          await const ScanDraftService().clear(
-            projectId,
-            permanentlyDeleted: true,
-          );
-        }
-        await const ScanDraftService().clearAll();
-
-        _projects = [];
-        _currentProject = null;
+        await loadProjects();
       } finally {
         _deletedIds
           ..removeWhere(
             (id) => projectIds.contains(id) && !deletedIds.contains(id),
           );
         _setLoading(false);
+      }
+
+      if (firstError != null) {
+        Error.throwWithStackTrace(firstError!, firstStack!);
       }
     });
   }
