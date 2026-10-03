@@ -88,14 +88,26 @@ class ProjectProvider with ChangeNotifier {
   }
 
   Future<List<RoomModel>> selectProject(ProjectRecord project) async {
+    if (_deletedIds.contains(project.uuid)) {
+      throw StateError('Project was deleted.');
+    }
+
     final rooms = await _repository.getRoomsForProject(project.uuid);
 
-    ProjectRecord selectedProject = project;
+    if (_deletedIds.contains(project.uuid)) {
+      throw StateError('Project was deleted.');
+    }
+
+    ProjectRecord? selectedProject;
     for (final candidate in _projects) {
       if (candidate.uuid == project.uuid) {
         selectedProject = candidate;
         break;
       }
+    }
+
+    if (selectedProject == null) {
+      throw StateError('Project was not found.');
     }
 
     _currentProject = selectedProject;
