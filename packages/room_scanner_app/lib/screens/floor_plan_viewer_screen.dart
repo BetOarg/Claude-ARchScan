@@ -2672,14 +2672,22 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     }
   }
 
-  bool _exportingDxf = false;
+  bool _exporting = false;
+
+  Future<void> _runExport(Future<void> Function() action) async {
+    if (_exporting) return;
+    _exporting = true;
+    try {
+      await action();
+    } finally {
+      _exporting = false;
+    }
+  }
 
   Future<void> _exportDxf(ExportDestination destination) async {
-    if (_exportingDxf) return;
     final localizations = AppLocalizations.of(context)!;
     final provider = context.read<FloorPlanProvider>();
-    _exportingDxf = true;
-    try {
+    await _runExport(() async {
       await ImportExportService.exportToDxf(
         provider.completedRooms,
         provider.projectName,
@@ -2689,12 +2697,11 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
       );
     } catch (_) {
       if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
-    } finally {
-      _exportingDxf = false;
-    }
+    });
   }
 
   Future<void> _exportPdf(ExportDestination destination) async {
+    return _runExport(() async {
     final localizations = AppLocalizations.of(context)!;
     final provider = context.read<FloorPlanProvider>();
 
@@ -2712,9 +2719,11 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
         _showMessage(localizations.fileSaveFailed, error: true);
       }
     }
+    });
   }
 
   Future<void> _exportSvg(ExportDestination destination) async {
+    return _runExport(() async {
     final localizations = AppLocalizations.of(context)!;
     final provider = context.read<FloorPlanProvider>();
     try {
@@ -2729,12 +2738,14 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     } catch (_) {
       if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
     }
+    });
   }
 
   Future<void> _exportRaster(
     ExportDestination destination, {
     required bool jpeg,
   }) async {
+    return _runExport(() async {
     final localizations = AppLocalizations.of(context)!;
     final provider = context.read<FloorPlanProvider>();
     try {
@@ -2750,6 +2761,7 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     } catch (_) {
       if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
     }
+    });
   }
 
   // ===========================================================================
