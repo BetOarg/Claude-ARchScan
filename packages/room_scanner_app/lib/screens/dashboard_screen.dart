@@ -271,11 +271,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final floorPlanProvider = context.read<FloorPlanProvider>();
     final uuid = DateTime.now().microsecondsSinceEpoch.toString();
 
-    final result = await ImportExportService.importProject(
-      floorPlanProvider,
-      newProjectUuid: uuid,
-      confirmReplacement: () async => true,
-    );
+    JsonImportResult result;
+    try {
+      result = await ImportExportService.importProject(
+        floorPlanProvider,
+        newProjectUuid: uuid,
+        confirmReplacement: () async => true,
+      );
+    } catch (_) {
+      if (mounted) _showOperationError();
+      return;
+    }
 
     if (!mounted || result == JsonImportResult.cancelled) {
       return;
@@ -327,24 +333,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (!mounted || project == null) return;
 
-    final rooms = await provider.selectProject(project);
-    if (!mounted) return;
+    try {
+      final rooms = await provider.selectProject(project);
+      if (!mounted) return;
 
-    context.read<FloorPlanProvider>().loadProject(
-      uuid: project.uuid,
-      name: project.name,
-      rooms: rooms,
-    );
-    context.read<ScannerProvider>().loadRooms(rooms);
+      context.read<FloorPlanProvider>().loadProject(
+        uuid: project.uuid,
+        name: project.name,
+        rooms: rooms,
+      );
+      context.read<ScannerProvider>().loadRooms(rooms);
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const FloorPlanViewerScreen(
-          openExportOnLoad: true,
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const FloorPlanViewerScreen(
+            openExportOnLoad: true,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      if (mounted) _showOperationError();
+    }
   }
 
   @override
@@ -545,7 +555,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         break;
                       case _ProjectAction.delete:
                         if (await _confirmDeleteProject(project)) {
-                          await provider.deleteProject(project.uuid);
+                          try {
+                            await provider.deleteProject(project.uuid);
+                          } catch (_) {
+                            if (mounted) _showOperationError();
+                          }
                         }
                         break;
                     }
