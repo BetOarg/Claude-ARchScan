@@ -2540,10 +2540,12 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
   Future<void> _importProject() async {
     final localizations = AppLocalizations.of(context)!;
     final provider = context.read<FloorPlanProvider>();
-    final result = await ImportExportService.importProject(
-      provider,
-      confirmReplacement: () async {
-        if (provider.completedRooms.isEmpty) return true;
+    JsonImportResult result;
+    try {
+      result = await ImportExportService.importProject(
+        provider,
+        confirmReplacement: () async {
+          if (provider.completedRooms.isEmpty) return true;
         return await showDialog<bool>(
               context: context,
               builder: (dialogContext) => AlertDialog(
@@ -2561,9 +2563,15 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
                 ],
               ),
             ) ??
-            false;
-      },
-    );
+              false;
+        },
+      );
+    } catch (_) {
+      if (mounted) {
+        _showMessage(localizations.planImportInvalid, error: true);
+      }
+      return;
+    }
     if (!mounted) {
       return;
     }
