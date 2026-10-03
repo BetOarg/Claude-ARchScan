@@ -2688,15 +2688,17 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     final localizations = AppLocalizations.of(context)!;
     final provider = context.read<FloorPlanProvider>();
     await _runExport(() async {
-      await ImportExportService.exportToDxf(
-        provider.completedRooms,
-        provider.projectName,
-        languageCode: Localizations.localeOf(context).languageCode,
-        destination: destination,
-        sharePositionOrigin: _shareOrigin(),
-      );
-    } catch (_) {
-      if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
+      try {
+        await ImportExportService.exportToDxf(
+          provider.completedRooms,
+          provider.projectName,
+          languageCode: Localizations.localeOf(context).languageCode,
+          destination: destination,
+          sharePositionOrigin: _shareOrigin(),
+        );
+      } catch (_) {
+        if (mounted) _showMessage(localizations.fileSaveFailed, error: true);
+      }
     });
   }
 
