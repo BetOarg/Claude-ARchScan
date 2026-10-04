@@ -14,7 +14,8 @@ enum WallAlignmentResult {
   aligned,
   noCandidate,
   overlapPrevented,
-  stalePreview;
+  stalePreview,
+  persistenceFailed;
 
   bool get isSuccess => this == WallAlignmentResult.aligned;
 }
