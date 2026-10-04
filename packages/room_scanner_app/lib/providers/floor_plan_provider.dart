@@ -1556,10 +1556,7 @@ class FloorPlanProvider extends ChangeNotifier {
       );
     }
 
-    _recordTransform(before);
-    notifyListeners();
-    await _persist();
-    return true;
+    return _saveTransform(before);
   }
 
   /// Alinea rígidamente el ambiente seleccionado con la pared externa más
