@@ -137,6 +137,10 @@ class ScanDraftService {
   }
 
   Future<ScanDraft?> load(String projectUuid) async {
+    if (_deletedIds.contains(projectUuid)) {
+      return null;
+    }
+
     final preferences = await SharedPreferences.getInstance();
     final encoded = preferences.getString(_key(projectUuid));
 
