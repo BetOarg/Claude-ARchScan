@@ -284,29 +284,35 @@ class FloorPlanProvider extends ChangeNotifier {
     notifyListeners();
 
     if (normalized.changed) {
-      Future<void>.microtask(
-        () async { await _persist(); },
-      );
+      final normalizedUuid = uuid;
+      final normalizedName = name;
+      final normalizedRooms = normalized.rooms;
+      Future<void>.microtask(() async {
+        await _persistSnapshot(
+          uuid: normalizedUuid,
+          name: normalizedName,
+          rooms: normalizedRooms,
+        );
+      });
     }
   }
 
   Future<bool> _saveQueue = Future<bool>.value(true);
 
-  Future<bool> _persist() {
-    final uuid = _projectUuid;
+  Future<bool> _persistSnapshot({
+    required String uuid,
+    required String name,
+    required List<RoomModel> rooms,
+  }) {
     final save = persister;
-    final name = _projectName;
-    final rooms = List<RoomModel>.unmodifiable(_completedRooms);
-
-    if (uuid == null ||
-        save == null) {
+    if (save == null) {
       return Future<bool>.value(true);
     }
 
-    // Capture identity and data now; execute writes in request order.
+    final snapshot = List<RoomModel>.unmodifiable(rooms);
     final operation = _saveQueue.then((_) async {
       try {
-        await save(uuid: uuid, name: name, rooms: rooms);
+        await save(uuid: uuid, name: name, rooms: snapshot);
         return true;
       } catch (e) {
         debugPrint('No se pudo guardar el proyecto "$name": $e');
@@ -315,6 +321,18 @@ class FloorPlanProvider extends ChangeNotifier {
     });
     _saveQueue = operation;
     return operation;
+  }
+
+  Future<bool> _persist() {
+    final uuid = _projectUuid;
+    if (uuid == null) {
+      return Future<bool>.value(true);
+    }
+    return _persistSnapshot(
+      uuid: uuid,
+      name: _projectName,
+      rooms: _completedRooms,
+    );
   }
 
   /// A failed scan save must not leave an apparently completed room in memory.
