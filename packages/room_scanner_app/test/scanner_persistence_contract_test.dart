@@ -33,6 +33,35 @@ RoomModel _room() {
 }
 
 void main() {
+  test('persists normalized room IDs for the project that was loaded', () async {
+    final saves = <String>[];
+    final provider = FloorPlanProvider()
+      ..persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        saves.add(uuid + ':' + rooms.map((room) => room.id).join(','));
+      };
+    final room = RoomModel(
+      id: '',
+      name: 'Ambiente',
+      type: RoomType.other,
+      points: [
+        ARPoint(x: 0, y: 0, z: 0),
+        ARPoint(x: 1, y: 0, z: 0),
+        ARPoint(x: 1, y: 0, z: 1),
+      ],
+      isClosed: false,
+    );
+    provider.loadProject(uuid: 'project-normalized', name: 'Proyecto normalizado', rooms: [room]);
+    provider.loadProject(uuid: 'project-next', name: 'Proyecto siguiente', rooms: const []);
+    await Future<void>.delayed(Duration.zero);
+    expect(saves, contains(startsWith('project-normalized:')));
+    expect(saves, isNot(contains(startsWith('project-next:'))));
+    provider.dispose();
+  });
+
   test('scanner completion persists the exact RoomModel through FloorPlanProvider',
       () async {
     final room = _room();
