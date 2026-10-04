@@ -280,4 +280,120 @@ void main() {
     provider.dispose();
   });
 
+
+  test('undo conserva el historial y permite reintentar tras un fallo de persistencia', () async {
+    var failPersistence = false;
+    final provider = FloorPlanProvider()
+      ..persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        if (failPersistence) {
+          throw StateError('database unavailable');
+        }
+      };
+
+    provider.loadProject(
+      uuid: 'project-undo-retry',
+      name: 'Proyecto',
+      rooms: [
+        RoomModel(
+          id: 'room-a',
+          name: 'Ambiente',
+          type: RoomType.other,
+          points: [
+            ARPoint(x: 0, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 2),
+            ARPoint(x: 0, y: 0, z: 2),
+          ],
+          isClosed: true,
+        ),
+      ],
+    );
+
+    expect(
+      await provider.transformRoomPrecisely(
+        roomId: 'room-a',
+        offsetX: 1,
+        offsetZ: 0,
+        angleDegrees: 0,
+      ),
+      isTrue,
+    );
+    expect(provider.canUndoTransform, isTrue);
+    failPersistence = true;
+
+    expect(await provider.undoTransform(), isFalse);
+    expect(provider.completedRooms.single.points.first.x, closeTo(1, 0.000001));
+    expect(provider.canUndoTransform, isTrue);
+    expect(provider.canRedoTransform, isFalse);
+
+    failPersistence = false;
+    expect(await provider.undoTransform(), isTrue);
+    expect(provider.completedRooms.single.points.first.x, closeTo(0, 0.000001));
+    expect(provider.canUndoTransform, isFalse);
+    expect(provider.canRedoTransform, isTrue);
+    provider.dispose();
+  });
+
+  test('redo conserva el historial y permite reintentar tras un fallo de persistencia', () async {
+    var failPersistence = false;
+    final provider = FloorPlanProvider()
+      ..persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        if (failPersistence) {
+          throw StateError('database unavailable');
+        }
+      };
+
+    provider.loadProject(
+      uuid: 'project-redo-retry',
+      name: 'Proyecto',
+      rooms: [
+        RoomModel(
+          id: 'room-a',
+          name: 'Ambiente',
+          type: RoomType.other,
+          points: [
+            ARPoint(x: 0, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 2),
+            ARPoint(x: 0, y: 0, z: 2),
+          ],
+          isClosed: true,
+        ),
+      ],
+    );
+
+    expect(
+      await provider.transformRoomPrecisely(
+        roomId: 'room-a',
+        offsetX: 1,
+        offsetZ: 0,
+        angleDegrees: 0,
+      ),
+      isTrue,
+    );
+    expect(await provider.undoTransform(), isTrue);
+    expect(provider.canRedoTransform, isTrue);
+    failPersistence = true;
+
+    expect(await provider.redoTransform(), isFalse);
+    expect(provider.completedRooms.single.points.first.x, closeTo(0, 0.000001));
+    expect(provider.canRedoTransform, isTrue);
+    expect(provider.canUndoTransform, isFalse);
+
+    failPersistence = false;
+    expect(await provider.redoTransform(), isTrue);
+    expect(provider.completedRooms.single.points.first.x, closeTo(1, 0.000001));
+    expect(provider.canRedoTransform, isFalse);
+    expect(provider.canUndoTransform, isTrue);
+    provider.dispose();
+  });
+
 }
