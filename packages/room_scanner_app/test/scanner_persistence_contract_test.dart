@@ -238,4 +238,46 @@ void main() {
   });
 
 
+  test('precise transform rolls back when persistence fails', () async {
+    final provider = FloorPlanProvider()
+      ..persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        throw StateError('save failed');
+      };
+
+    provider.loadProject(
+      uuid: 'project-precise-failure',
+      name: 'Proyecto',
+      rooms: [
+        RoomModel(
+          id: 'room-a',
+          name: 'Ambiente',
+          type: RoomType.other,
+          points: [
+            ARPoint(x: 0, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 0),
+            ARPoint(x: 2, y: 0, z: 2),
+            ARPoint(x: 0, y: 0, z: 2),
+          ],
+          isClosed: true,
+        ),
+      ],
+    );
+
+    final changed = await provider.transformRoomPrecisely(
+      roomId: 'room-a',
+      offsetX: 1,
+      offsetZ: 0,
+      angleDegrees: 0,
+    );
+
+    expect(changed, isFalse);
+    expect(provider.completedRooms.single.points.first.x, closeTo(0, 0.000001));
+    expect(provider.canUndoTransform, isFalse);
+    provider.dispose();
+  });
+
 }
