@@ -172,9 +172,7 @@ class ScanDraftService {
     final preferences = await SharedPreferences.getInstance();
     final keys = preferences.getKeys().where((key) => key.startsWith(_keyPrefix)).toList();
     for (final key in keys) {
-      if (!await preferences.remove(key)) {
-        throw StateError('Scan draft could not be deleted.');
-      }
+      await preferences.remove(key);
     }
 
     });
