@@ -399,7 +399,9 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
   @override
   void dispose() {
-    _flushDraft();
+    unawaited(_flushDraft().catchError((Object error) {
+      debugPrint('No se pudo guardar el borrador al cerrar: $error');
+    }));
     _draftSaveTimer?.cancel();
     _draftProvider?.removeListener(_onScannerDraftChanged);
     _arInitializationTimer?.cancel();
