@@ -606,7 +606,9 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
 
   @override
   void dispose() {
-    _flushDraft();
+    unawaited(_flushDraft().catchError((Object error) {
+      debugPrint('No se pudo guardar el borrador al cerrar: $error');
+    }));
     _draftSaveTimer?.cancel();
     _draftProvider?.removeListener(_onScannerDraftChanged);
     _shouldResumeCamera = false;
