@@ -2113,7 +2113,8 @@ class FloorPlanProvider extends ChangeNotifier {
   }
 
   Future<bool> undoTransform() async {
-    if (_transformHistoryOperationInProgress || !canUndoTransform) {
+    if (_transformHistoryOperationInProgress) return false;
+    if (!canUndoTransform) {
       _clearTransformHistory();
       return false;
     }
@@ -2141,7 +2142,8 @@ class FloorPlanProvider extends ChangeNotifier {
   }
 
   Future<bool> redoTransform() async {
-    if (_transformHistoryOperationInProgress || !canRedoTransform) {
+    if (_transformHistoryOperationInProgress) return false;
+    if (!canRedoTransform) {
       _clearTransformHistory();
       return false;
     }
