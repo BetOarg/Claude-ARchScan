@@ -37,6 +37,17 @@ void main() {
     expect(await service.load('other-test'), isNotNull);
   });
 
+  test('load ignores drafts for permanently deleted projects', () async {
+    SharedPreferences.setMockInitialValues({
+      'scan_draft_v1_deleted-load': '{}',
+    });
+    const service = ScanDraftService();
+
+    await service.clear('deleted-load', permanentlyDeleted: true);
+
+    expect(await service.load('deleted-load'), isNull);
+  });
+
   test('clearAll removes orphan drafts but preserves unrelated settings', () async {
     SharedPreferences.setMockInitialValues({
       'scan_draft_v1_a': '{}',
