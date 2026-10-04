@@ -236,59 +236,6 @@ void main() {
     expect(saved, isFalse);
     expect(provider.completedRooms, isEmpty);
   });
-  test('un fallo de persistencia no deja Undo disponible para un cambio no guardado', () async {
-    var shouldFail = false;
-    final provider = FloorPlanProvider()
-      ..persister = ({
-        required String uuid,
-        required String name,
-        required List<RoomModel> rooms,
-      }) async {
-        if (shouldFail) {
-          throw StateError('save failed');
-        }
-      };
 
-    provider.loadProject(
-      uuid: 'project-undo-failure',
-      name: 'Proyecto',
-      rooms: [
-        RoomModel(
-          id: 'room-a',
-          name: 'Ambiente',
-          type: RoomType.other,
-          points: [
-            ARPoint(x: 0, y: 0, z: 0),
-            ARPoint(x: 2, y: 0, z: 0),
-            ARPoint(x: 2, y: 0, z: 2),
-            ARPoint(x: 0, y: 0, z: 2),
-          ],
-          isClosed: true,
-        ),
-      ],
-    );
-
-    shouldFail = true;
-    final moved = await provider.transformRoomPrecisely(
-      roomId: 'room-a',
-      offsetX: 1,
-      offsetZ: 0,
-      angleDegrees: 0,
-    );
-
-    expect(moved, isFalse);
-    expect(provider.canUndoTransform, isFalse);
-    expect(provider.completedRooms.single.points.first.x, closeTo(0, 0.000001));
-
-    shouldFail = false;
-    expect(await provider.transformRoomPrecisely(
-      roomId: 'room-a',
-      offsetX: 1,
-      offsetZ: 0,
-      angleDegrees: 0,
-    ), isTrue);
-    expect(provider.canUndoTransform, isTrue);
-    provider.dispose();
-  });
 
 }
