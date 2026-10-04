@@ -101,7 +101,7 @@ class ScanDraftService {
   static Future<void> _mutations = Future<void>.value();
   static final Set<String> _deletedIds = <String>{};
 
-  Future<void> _serialize(Future<void> Function() action) {
+  Future<T> _serialize<T>(Future<T> Function() action) {
     final result = _mutations.then((_) => action());
     _mutations = result.then<void>((_) {}, onError: (Object error, StackTrace stack) {});
     return result;
@@ -136,26 +136,32 @@ class ScanDraftService {
     });
   }
 
-  Future<ScanDraft?> load(String projectUuid) async {
+  Future<ScanDraft?> load(String projectUuid) {
     if (_deletedIds.contains(projectUuid)) {
-      return null;
+      return Future<ScanDraft?>.value(null);
     }
 
-    final preferences = await SharedPreferences.getInstance();
-    final encoded = preferences.getString(_key(projectUuid));
+    return _serialize<ScanDraft?>(() async {
+      if (_deletedIds.contains(projectUuid)) {
+        return null;
+      }
 
-    if (encoded == null || encoded.isEmpty) {
-      return null;
-    }
+      final preferences = await SharedPreferences.getInstance();
+      final encoded = preferences.getString(_key(projectUuid));
 
-    try {
-      return ScanDraft.fromJson(
-        Map<String, dynamic>.from(jsonDecode(encoded) as Map),
-      );
-    } catch (_) {
-      await preferences.remove(_key(projectUuid));
-      return null;
-    }
+      if (encoded == null || encoded.isEmpty) {
+        return null;
+      }
+
+      try {
+        return ScanDraft.fromJson(
+          Map<String, dynamic>.from(jsonDecode(encoded) as Map),
+        );
+      } catch (_) {
+        await preferences.remove(_key(projectUuid));
+        return null;
+      }
+    });
   }
 
   Future<void> clear(String projectUuid, {bool permanentlyDeleted = false}) async {
