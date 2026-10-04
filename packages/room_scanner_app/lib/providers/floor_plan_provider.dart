@@ -1081,10 +1081,7 @@ class FloorPlanProvider extends ChangeNotifier {
     _completedRooms
       ..clear()
       ..addAll(arranged);
-    _recordTransform(before);
-    notifyListeners();
-    await _persist();
-    return true;
+    return _saveTransform(before);
   }
 
   bool _roomsAreVisuallyAttached(
