@@ -167,6 +167,7 @@ class FloorPlanProvider extends ChangeNotifier {
   List<RoomModel>? _touchTransformLastValid;
   String? _touchTransformRoomId;
   int _touchTransformSnapCount = 0;
+  bool _transformHistoryOperationInProgress = false;
 
   ProjectPersister? persister;
 
@@ -281,6 +282,7 @@ class FloorPlanProvider extends ChangeNotifier {
       );
 
     _clearTransformHistory();
+    _clearTouchTransformState();
 
     notifyListeners();
 
@@ -2111,13 +2113,15 @@ class FloorPlanProvider extends ChangeNotifier {
   }
 
   Future<bool> undoTransform() async {
-    if (!canUndoTransform) {
+    if (_transformHistoryOperationInProgress || !canUndoTransform) {
       _clearTransformHistory();
       return false;
     }
 
-    final uuid = _projectUuid;
-    final entry = _transformUndoHistory.last;
+    _transformHistoryOperationInProgress = true;
+    try {
+      final uuid = _projectUuid;
+      final entry = _transformUndoHistory.last;
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms
       ..clear()
@@ -2130,17 +2134,22 @@ class FloorPlanProvider extends ChangeNotifier {
       _transformRedoHistory.add(entry);
       notifyListeners();
     }
-    return true;
+      return true;
+    } finally {
+      _transformHistoryOperationInProgress = false;
+    }
   }
 
   Future<bool> redoTransform() async {
-    if (!canRedoTransform) {
+    if (_transformHistoryOperationInProgress || !canRedoTransform) {
       _clearTransformHistory();
       return false;
     }
 
-    final uuid = _projectUuid;
-    final entry = _transformRedoHistory.last;
+    _transformHistoryOperationInProgress = true;
+    try {
+      final uuid = _projectUuid;
+      final entry = _transformRedoHistory.last;
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms
       ..clear()
@@ -2153,7 +2162,10 @@ class FloorPlanProvider extends ChangeNotifier {
       _transformUndoHistory.add(entry);
       notifyListeners();
     }
-    return true;
+      return true;
+    } finally {
+      _transformHistoryOperationInProgress = false;
+    }
   }
 
   void _recordTransform(List<RoomModel> before) {
@@ -2174,6 +2186,13 @@ class FloorPlanProvider extends ChangeNotifier {
   void _clearTransformHistory() {
     _transformUndoHistory.clear();
     _transformRedoHistory.clear();
+  }
+
+  void _clearTouchTransformState() {
+    _touchTransformBefore = null;
+    _touchTransformLastValid = null;
+    _touchTransformRoomId = null;
+    _touchTransformSnapCount = 0;
   }
 
   bool _sameRoomSnapshot(
@@ -2930,6 +2949,7 @@ class FloorPlanProvider extends ChangeNotifier {
     _projectUuid = null;
     _completedRooms.clear();
     _clearTransformHistory();
+    _clearTouchTransformState();
     _projectName =
         'Mi Casa Completa';
 
