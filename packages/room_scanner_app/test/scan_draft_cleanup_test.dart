@@ -70,6 +70,19 @@ void main() {
     expect(preferences.getKeys(), {'measurement_system'});
   });
 
+  test('load is ordered after a queued draft mutation', () async {
+    SharedPreferences.setMockInitialValues({
+      'scan_draft_v1_ordered': '{}',
+    });
+    const service = ScanDraftService();
+
+    final clear = service.clear('ordered');
+    final load = service.load('ordered');
+
+    await clear;
+    expect(await load, isNull);
+  });
+
   test('clear removes only the selected project draft', () async {
     SharedPreferences.setMockInitialValues({
       'scan_draft_v1_a': '{}',
