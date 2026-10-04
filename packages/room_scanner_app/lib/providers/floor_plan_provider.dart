@@ -1637,9 +1637,14 @@ class FloorPlanProvider extends ChangeNotifier {
     _completedRooms
       ..clear()
       ..addAll(preview.proposedRooms);
-    _recordTransform(before);
-    notifyListeners();
-    await _persist();
+    if (!await _persistRoomChange(before)) {
+      return WallAlignmentResult.persistenceFailed;
+    }
+    if (_projectUuid != null &&
+        _sameRoomSnapshot(preview.proposedRooms, _completedRooms)) {
+      _recordTransform(before);
+      notifyListeners();
+    }
     return WallAlignmentResult.aligned;
   }
 
