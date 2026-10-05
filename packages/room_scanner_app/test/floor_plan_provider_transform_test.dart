@@ -611,6 +611,98 @@ void main() {
     });
 
 
+    test('una nueva edición después de Undo elimina Redo y conserva el encadenamiento', () async {
+      final provider = FloorPlanProvider()
+        ..loadProject(
+          uuid: 'project-history-branch',
+          name: 'Casa',
+          rooms: _connectedRooms(),
+        );
+      addTearDown(provider.dispose);
+
+      expect(await provider.translateRoom(
+        roomId: 'room-a',
+        offsetX: 1,
+        offsetZ: 0,
+      ), isTrue);
+      final firstEdit = provider.completedRooms.first.points.first.x;
+
+      expect(await provider.translateRoom(
+        roomId: 'room-a',
+        offsetX: 1,
+        offsetZ: 0,
+      ), isTrue);
+      final secondEdit = provider.completedRooms.first.points.first.x;
+
+      expect(await provider.undoTransform(), isTrue);
+      expect(provider.completedRooms.first.points.first.x,
+          closeTo(firstEdit, 0.000001));
+      expect(provider.canRedoTransform, isTrue);
+
+      expect(await provider.translateRoom(
+        roomId: 'room-a',
+        offsetX: 2,
+        offsetZ: 0,
+      ), isTrue);
+      expect(provider.completedRooms.first.points.first.x,
+          closeTo(secondEdit + 2, 0.000001));
+      expect(provider.canRedoTransform, isFalse);
+
+      expect(await provider.undoTransform(), isTrue);
+      expect(provider.completedRooms.first.points.first.x,
+          closeTo(firstEdit, 0.000001));
+      expect(await provider.undoTransform(), isTrue);
+      expect(provider.completedRooms.first.points.first.x,
+          closeTo(0, 0.000001));
+      expect(provider.canUndoTransform, isFalse);
+    });
+
+    test('una nueva edición fallida no destruye un Redo pendiente', () async {
+      final provider = FloorPlanProvider()
+        ..loadProject(
+          uuid: 'project-history-branch-failure',
+          name: 'Casa',
+          rooms: _connectedRooms(),
+        );
+      addTearDown(provider.dispose);
+
+      expect(await provider.transformRoomPrecisely(
+        roomId: 'room-a',
+        offsetX: 1,
+        offsetZ: 0,
+        angleDegrees: 0,
+      ), isTrue);
+      final moved = provider.completedRooms.map((r) => r.toJson()).toList();
+
+      expect(await provider.undoTransform(), isTrue);
+      expect(provider.canRedoTransform, isTrue);
+
+      provider.persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        throw StateError('Save failed');
+      };
+
+      expect(await provider.transformRoomPrecisely(
+        roomId: 'room-a',
+        offsetX: 2,
+        offsetZ: 0,
+        angleDegrees: 0,
+      ), isFalse);
+      expect(provider.completedRooms.first.points.first.x,
+          closeTo(0, 0.000001));
+      expect(provider.canRedoTransform, isTrue);
+      expect(provider.canUndoTransform, isFalse);
+
+      provider.persister = null;
+      expect(await provider.redoTransform(), isTrue);
+      expect(provider.completedRooms.map((r) => r.toJson()).toList(), moved);
+      expect(provider.canRedoTransform, isFalse);
+      expect(provider.canUndoTransform, isTrue);
+    });
+
     test('undo conserva el historial cuando falla la persistencia y permite reintentar', () async {
       final provider = FloorPlanProvider()
         ..loadProject(
