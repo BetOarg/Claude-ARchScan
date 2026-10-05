@@ -611,6 +611,77 @@ void main() {
     });
 
 
+    test('undo conserva el historial cuando falla la persistencia y permite reintentar', () async {
+      final provider = FloorPlanProvider()
+        ..loadProject(
+          uuid: 'project-undo-retry',
+          name: 'Casa',
+          rooms: _connectedRooms(),
+        );
+      addTearDown(provider.dispose);
+
+      expect(await provider.transformRoomPrecisely(
+        roomId: 'room-a',
+        offsetX: 1,
+        offsetZ: 0,
+        angleDegrees: 0,
+      ), isTrue);
+      final moved = provider.completedRooms.map((r) => r.toJson()).toList();
+      var fail = true;
+      provider.persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        if (fail) throw StateError('Save failed');
+      };
+
+      expect(await provider.undoTransform(), isFalse);
+      expect(provider.completedRooms.map((r) => r.toJson()).toList(), moved);
+      expect(provider.canUndoTransform, isTrue);
+      expect(provider.canRedoTransform, isFalse);
+
+      fail = false;
+      expect(await provider.undoTransform(), isTrue);
+      expect(provider.canUndoTransform, isFalse);
+      expect(provider.canRedoTransform, isTrue);
+    });
+
+    test('redo conserva el historial cuando falla la persistencia y permite reintentar', () async {
+      final provider = FloorPlanProvider()
+        ..loadProject(
+          uuid: 'project-redo-retry',
+          name: 'Casa',
+          rooms: _connectedRooms(),
+        );
+      addTearDown(provider.dispose);
+
+      expect(await provider.transformRoomPrecisely(
+        roomId: 'room-a',
+        offsetX: 1,
+        offsetZ: 0,
+        angleDegrees: 0,
+      ), isTrue);
+      expect(await provider.undoTransform(), isTrue);
+      var fail = true;
+      provider.persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        if (fail) throw StateError('Save failed');
+      };
+
+      expect(await provider.redoTransform(), isFalse);
+      expect(provider.canRedoTransform, isTrue);
+      expect(provider.canUndoTransform, isFalse);
+
+      fail = false;
+      expect(await provider.redoTransform(), isTrue);
+      expect(provider.canRedoTransform, isFalse);
+      expect(provider.canUndoTransform, isTrue);
+    });
+
     test('aplica un ajuste preciso como una sola operación', () async {
       final provider = FloorPlanProvider();
       provider.loadProject(
