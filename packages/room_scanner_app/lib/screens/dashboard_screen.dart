@@ -108,6 +108,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         projectUuid: uuid,
         projectName: name,
       );
+
+      if (mounted) {
+        await context.read<ProjectProvider>().loadProjects();
+      }
     } catch (_) {
       if (mounted) {
         _showOperationError();
@@ -232,6 +236,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         projectUuid: project.uuid,
         projectName: project.name,
       );
+
+      if (mounted) {
+        await provider.loadProjects();
+      }
     } catch (_) {
       if (mounted) _showOperationError();
     }
