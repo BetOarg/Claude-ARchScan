@@ -396,4 +396,43 @@ void main() {
     provider.dispose();
   });
 
+  test('opening geometry rolls back and retries after persistence failure', () async {
+    var failPersistence = true;
+    final provider = FloorPlanProvider()
+      ..loadProject(uuid: 'project-opening', name: 'Home', rooms: [_room()])
+      ..persister = ({required uuid, required name, required rooms}) async {
+        if (failPersistence) throw StateError('save failed');
+      };
+    addTearDown(provider.dispose);
+
+    final failed = await provider.updateOpeningGeometry(
+      roomId: 'scanner-room',
+      featureId: 'door-1',
+      widthMeters: 1.0,
+      distanceFromWallStartMeters: 1.5,
+    );
+
+    expect(failed.isSuccess, isFalse);
+    expect(provider.completedRooms.single.features.single.start.x,
+        closeTo(1.0, 0.000001));
+    expect(provider.completedRooms.single.features.single.end.x,
+        closeTo(2.0, 0.000001));
+    expect(provider.canUndoTransform, isFalse);
+
+    failPersistence = false;
+    final retried = await provider.updateOpeningGeometry(
+      roomId: 'scanner-room',
+      featureId: 'door-1',
+      widthMeters: 1.0,
+      distanceFromWallStartMeters: 1.5,
+    );
+
+    expect(retried.isSuccess, isTrue);
+    expect(provider.completedRooms.single.features.single.start.x,
+        closeTo(1.5, 0.000001));
+    expect(provider.completedRooms.single.features.single.end.x,
+        closeTo(2.5, 0.000001));
+    expect(provider.canUndoTransform, isTrue);
+  });
+
 }
