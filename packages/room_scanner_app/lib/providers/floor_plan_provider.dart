@@ -139,13 +139,7 @@ class FloorPlanProvider extends ChangeNotifier {
     }
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms..clear()..addAll(proposal.after);
-    notifyListeners();
-    if (!await _persistRoomChange(before)) return false;
-    if (_sameRoomSnapshot(proposal.after, _completedRooms)) {
-      _recordTransform(before);
-      notifyListeners();
-    }
-    return true;
+    return _saveTransform(before);
   }
 
   static const double _defaultRoomSpacing = 1.0;
@@ -1641,13 +1635,8 @@ class FloorPlanProvider extends ChangeNotifier {
     _completedRooms
       ..clear()
       ..addAll(preview.proposedRooms);
-    if (!await _persistRoomChange(before)) {
+    if (!await _saveTransform(before)) {
       return WallAlignmentResult.persistenceFailed;
-    }
-    if (_projectUuid != null &&
-        _sameRoomSnapshot(preview.proposedRooms, _completedRooms)) {
-      _recordTransform(before);
-      notifyListeners();
     }
     return WallAlignmentResult.aligned;
   }
@@ -2478,11 +2467,7 @@ class FloorPlanProvider extends ChangeNotifier {
       return false;
     }
 
-    notifyListeners();
-    if (!await _persistRoomChange(before)) return false;
-    _recordTransform(before);
-    notifyListeners();
-    return true;
+    return _saveTransform(before);
   }
 
   OpeningPlacement? getOpeningPlacement({
@@ -2659,14 +2644,11 @@ class FloorPlanProvider extends ChangeNotifier {
       );
     }
 
-    notifyListeners();
-    if (!await _persistRoomChange(before)) {
+    if (!await _saveTransform(before)) {
       return const OpeningGeometryUpdateResult.invalid(
         'No se pudo guardar el cambio.',
       );
     }
-    _recordTransform(before);
-    notifyListeners();
     return const OpeningGeometryUpdateResult.success();
   }
 
@@ -2832,14 +2814,11 @@ class FloorPlanProvider extends ChangeNotifier {
       }
       _completedRooms[i] = target.copyWith(features: features);
     }
-    notifyListeners();
-    if (!await _persistRoomChange(before)) {
+    if (!await _saveTransform(before)) {
       return const OpeningGeometryUpdateResult.invalid(
         'No se pudo guardar el cambio.',
       );
     }
-    _recordTransform(before);
-    notifyListeners();
     return const OpeningGeometryUpdateResult.success();
   }
 
