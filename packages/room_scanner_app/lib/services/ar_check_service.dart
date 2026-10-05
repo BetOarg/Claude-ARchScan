@@ -57,7 +57,7 @@ class ArCheckService {
         return;
       }
 
-      Navigator.push(
+      await Navigator.push<void>(
         context,
         MaterialPageRoute(
           builder: (_) => scannerScreen,
