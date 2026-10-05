@@ -190,6 +190,59 @@ void main() {
     expect(await plan.redoTransform(), isTrue);
     expect(plan.completedRooms.first.isClosed, isFalse);
   });
+  test('open wall deletion reassigns shared opening to retained fragment', () async {
+    final opening = WallFeature(
+      id: 'shared-opening',
+      type: FeatureType.door,
+      start: p(1, 2),
+      end: p(1.8, 2),
+      connectedRoomId: 'neighbour',
+      connectionSide: OpeningConnectionSide.left,
+    );
+    final source = room(
+      'source',
+      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+      closed: false,
+      features: [opening],
+    );
+    final neighbour = room(
+      'neighbour',
+      [p(0, 2), p(-2, 2), p(-2, 4), p(0, 4)],
+      features: [
+        opening.copyWith(
+          connectedRoomId: 'source',
+          connectionSide: OpeningConnectionSide.right,
+        ),
+      ],
+    );
+    final plan = provider([source, neighbour]);
+    addTearDown(plan.dispose);
+
+    final proposal = plan.previewDeleteWall(plan.completedRooms.first, 1);
+    expect(await plan.applyPlanEdit(proposal), isTrue);
+
+    final fragments = plan.completedRooms.where((r) => r.id != 'neighbour').toList();
+    expect(fragments, hasLength(2));
+    final retained = fragments
+        .where((r) => r.features.any((f) => f.id == 'shared-opening'))
+        .single;
+    final counterpart = plan.completedRooms
+        .singleWhere((r) => r.id == 'neighbour')
+        .features
+        .single;
+    expect(counterpart.connectedRoomId, retained.id);
+    expect(counterpart.connectionSide, OpeningConnectionSide.right);
+
+    expect(await plan.undoTransform(), isTrue);
+    expect(plan.completedRooms.singleWhere((r) => r.id == 'source').id, 'source');
+    expect(await plan.redoTransform(), isTrue);
+    expect(
+      plan.completedRooms.singleWhere((r) => r.id == 'neighbour')
+          .features.single.connectedRoomId,
+      retained.id,
+    );
+  });
+
   test('wall length changes are undoable and reject stale previews', () async {
     final plan = provider([
       room('r', [p(0, 0), p(4, 0), p(4, 3), p(0, 3)])
