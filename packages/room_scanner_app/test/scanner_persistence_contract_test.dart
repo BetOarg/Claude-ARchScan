@@ -435,4 +435,30 @@ void main() {
     expect(provider.canUndoTransform, isTrue);
   });
 
+
+  test('project rename rolls back and can retry after persistence failure', () async {
+    var failPersistence = true;
+    final provider = FloorPlanProvider()
+      ..loadProject(
+        uuid: 'project-rename-retry',
+        name: 'Proyecto original',
+        rooms: const [],
+      )
+      ..persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        if (failPersistence) throw StateError('save failed');
+      };
+    addTearDown(provider.dispose);
+
+    expect(await provider.setProjectName('Nuevo nombre'), isFalse);
+    expect(provider.projectName, 'Proyecto original');
+
+    failPersistence = false;
+    expect(await provider.setProjectName('Nuevo nombre'), isTrue);
+    expect(provider.projectName, 'Nuevo nombre');
+  });
+
 }
