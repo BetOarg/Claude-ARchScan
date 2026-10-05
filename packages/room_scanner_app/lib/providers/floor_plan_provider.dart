@@ -2473,16 +2473,15 @@ class FloorPlanProvider extends ChangeNotifier {
         roomIndex++) {
       final afterRoom = _completedRooms[roomIndex];
       final beforeRoom = before[roomIndex];
-      final afterFeature = afterRoom.features.firstWhere(
-        (feature) => feature.id == featureId,
-        orElse: () => beforeRoom.features.firstWhere(
-          (feature) => feature.id == featureId,
-        ),
-      );
-      final beforeFeature = beforeRoom.features.firstWhere(
-        (feature) => feature.id == featureId,
-        orElse: () => afterFeature,
-      );
+      final beforeFeature = beforeRoom.features
+          .where((feature) => feature.id == featureId)
+          .firstOrNull;
+      final afterFeature = afterRoom.features
+          .where((feature) => feature.id == featureId)
+          .firstOrNull;
+      if (beforeFeature == null || afterFeature == null) {
+        continue;
+      }
       if (afterFeature.doorHingeSide != beforeFeature.doorHingeSide ||
           afterFeature.doorSwingSide != beforeFeature.doorSwingSide ||
           afterFeature.doorOpeningDirection !=
