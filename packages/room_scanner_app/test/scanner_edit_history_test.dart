@@ -44,6 +44,31 @@ void main() {
     expect(provider.canRedo, isFalse);
   });
 
+  test('shared opening removal is atomic across both rooms and undo restores both', () async {
+    final provider = FloorPlanProvider();
+    provider.loadProject(
+      uuid: 'project-shared-remove',
+      name: 'Shared',
+      rooms: _sharedOpeningRooms(),
+    );
+
+    expect(await provider.removeOpening('room-a', 'shared-door'), isTrue);
+    expect(
+      provider.completedRooms.every((room) => room.features.isEmpty),
+      isTrue,
+    );
+    expect(await provider.undoTransform(), isTrue);
+    expect(
+      provider.completedRooms.every((room) => room.features.length == 1),
+      isTrue,
+    );
+    expect(
+      provider.completedRooms
+          .every((room) => room.features.single.connectedRoomId != null),
+      isTrue,
+    );
+  });
+
   test('orphan opening can be removed and restored without changing contour', () async {
     final provider = FloorPlanProvider();
     provider.loadProject(uuid: 'project', name: 'House', rooms: [RoomModel(
@@ -58,4 +83,37 @@ void main() {
     expect(await provider.undoTransform(), isTrue);
     expect(provider.completedRooms.single.features, hasLength(1));
   });
+}
+
+List<RoomModel> _sharedOpeningRooms() {
+  final first = WallFeature(
+    id: 'shared-door',
+    type: FeatureType.door,
+    start: point(2, 0.5),
+    end: point(2, 1.5),
+    connectedRoomId: 'room-b',
+    connectionSide: OpeningConnectionSide.right,
+  );
+  final second = first.copyWith(
+    connectedRoomId: 'room-a',
+    connectionSide: OpeningConnectionSide.left,
+  );
+  return [
+    RoomModel(
+      id: 'room-a',
+      name: 'A',
+      type: RoomType.living,
+      points: [point(0,0), point(2,0), point(2,2), point(0,2)],
+      features: [first],
+      isClosed: true,
+    ),
+    RoomModel(
+      id: 'room-b',
+      name: 'B',
+      type: RoomType.cocina,
+      points: [point(2,0), point(4,0), point(4,2), point(2,2)],
+      features: [second],
+      isClosed: true,
+    ),
+  ];
 }
