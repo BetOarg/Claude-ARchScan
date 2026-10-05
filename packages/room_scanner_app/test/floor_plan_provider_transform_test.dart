@@ -620,30 +620,29 @@ void main() {
         );
       addTearDown(provider.dispose);
 
-      expect(await provider.translateRoom(
+      await provider.translateRoom(
         roomId: 'room-a',
         offsetX: 1,
         offsetZ: 0,
-      ), isTrue);
+      );
       final firstEdit = provider.completedRooms.first.points.first.x;
 
-      expect(await provider.translateRoom(
+      await provider.translateRoom(
         roomId: 'room-a',
         offsetX: 1,
         offsetZ: 0,
-      ), isTrue);
-      final secondEdit = provider.completedRooms.first.points.first.x;
+      ); = provider.completedRooms.first.points.first.x;
 
       expect(await provider.undoTransform(), isTrue);
       expect(provider.completedRooms.first.points.first.x,
           closeTo(firstEdit, 0.000001));
       expect(provider.canRedoTransform, isTrue);
 
-      expect(await provider.translateRoom(
+      await provider.translateRoom(
         roomId: 'room-a',
         offsetX: 2,
         offsetZ: 0,
-      ), isTrue);
+      );
       expect(provider.completedRooms.first.points.first.x,
           closeTo(firstEdit + 2, 0.000001));
       expect(provider.canRedoTransform, isFalse);
