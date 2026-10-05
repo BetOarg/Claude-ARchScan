@@ -374,21 +374,31 @@ class FloorPlanProvider extends ChangeNotifier {
     return true;
   }
 
-  Future<void> setProjectName(
+  Future<bool> setProjectName(
     String name,
   ) async {
-    final normalized =
-        name.trim();
+    final normalized = name.trim();
 
     if (normalized.isEmpty) {
-      return;
+      return false;
     }
 
+    final uuid = _projectUuid;
+    final before = _projectName;
     _projectName = normalized;
 
     notifyListeners();
 
-    await _persist();
+    if (await _persist()) {
+      return true;
+    }
+
+    // Never overwrite a newer project/name change after an older save fails.
+    if (_projectUuid == uuid && _projectName == normalized) {
+      _projectName = before;
+      notifyListeners();
+    }
+    return false;
   }
 
   // ===========================================================================
