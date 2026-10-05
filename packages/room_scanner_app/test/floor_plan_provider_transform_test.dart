@@ -645,7 +645,7 @@ void main() {
         offsetZ: 0,
       ), isTrue);
       expect(provider.completedRooms.first.points.first.x,
-          closeTo(secondEdit + 2, 0.000001));
+          closeTo(firstEdit + 2, 0.000001));
       expect(provider.canRedoTransform, isFalse);
 
       expect(await provider.undoTransform(), isTrue);
