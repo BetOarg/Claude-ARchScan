@@ -49,6 +49,25 @@ void main() {
     expect(plan.completedRooms, [source]);
     expect(plan.canRedoTransform, isTrue);
   });
+  test('failed wall length update restores geometry and reports persistence failure', () async {
+    final source = room('source', [p(0, 0), p(2, 0), p(2, 1), p(0, 1)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      throw StateError('Save failed');
+    };
+
+    final result = await plan.updateWallLength(
+      roomId: 'source',
+      wallIndex: 0,
+      lengthMeters: 3,
+    );
+
+    expect(result.isValid, isFalse);
+    expect(plan.completedRooms.single.points[1].x, 2);
+    expect(plan.canUndoTransform, isFalse);
+  });
+
   test('queued saves preserve snapshots and continue after a failure', () async {
     final plan = provider([]);
     addTearDown(plan.dispose);
