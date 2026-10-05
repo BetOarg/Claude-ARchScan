@@ -2467,6 +2467,37 @@ class FloorPlanProvider extends ChangeNotifier {
       return false;
     }
 
+    var hasSemanticChange = false;
+    for (var roomIndex = 0;
+        roomIndex < _completedRooms.length;
+        roomIndex++) {
+      final afterRoom = _completedRooms[roomIndex];
+      final beforeRoom = before[roomIndex];
+      final afterFeature = afterRoom.features.firstWhere(
+        (feature) => feature.id == featureId,
+        orElse: () => beforeRoom.features.firstWhere(
+          (feature) => feature.id == featureId,
+        ),
+      );
+      final beforeFeature = beforeRoom.features.firstWhere(
+        (feature) => feature.id == featureId,
+        orElse: () => afterFeature,
+      );
+      if (afterFeature.doorHingeSide != beforeFeature.doorHingeSide ||
+          afterFeature.doorSwingSide != beforeFeature.doorSwingSide ||
+          afterFeature.doorOpeningDirection !=
+              beforeFeature.doorOpeningDirection) {
+        hasSemanticChange = true;
+        break;
+      }
+    }
+    if (!hasSemanticChange) {
+      _completedRooms
+        ..clear()
+        ..addAll(before);
+      return false;
+    }
+
     return _saveTransform(before);
   }
 
@@ -2641,6 +2672,27 @@ class FloorPlanProvider extends ChangeNotifier {
     if (!changed) {
       return const OpeningGeometryUpdateResult.invalid(
         'No se pudo actualizar la abertura.',
+      );
+    }
+
+    final sourceAfter = _completedRooms
+        .firstWhere((candidate) => candidate.id == roomId)
+        .features
+        .firstWhere((candidate) => candidate.id == featureId);
+    final semanticChange = sourceAfter.start.x != feature.start.x ||
+        sourceAfter.start.y != feature.start.y ||
+        sourceAfter.start.z != feature.start.z ||
+        sourceAfter.end.x != feature.end.x ||
+        sourceAfter.end.y != feature.end.y ||
+        sourceAfter.end.z != feature.end.z ||
+        sourceAfter.openingHeightMeters != feature.openingHeightMeters ||
+        sourceAfter.sillHeightMeters != feature.sillHeightMeters;
+    if (!semanticChange) {
+      _completedRooms
+        ..clear()
+        ..addAll(before);
+      return const OpeningGeometryUpdateResult.invalid(
+        'No hay cambios para guardar.',
       );
     }
 
