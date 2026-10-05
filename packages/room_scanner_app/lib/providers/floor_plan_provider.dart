@@ -841,7 +841,7 @@ class FloorPlanProvider extends ChangeNotifier {
     );
 
     notifyListeners();
-    await _persistRoomChange(before);
+    await _saveTransform(before);
   }
 
   // ===========================================================================  // POSICIONAMIENTO GLOBAL  // ===========================================================================
@@ -1154,7 +1154,7 @@ class FloorPlanProvider extends ChangeNotifier {
     }
 
     notifyListeners();
-    await _persistRoomChange(before);
+    await _saveTransform(before);
   }
 
   /// Mueve el ambiente y ajusta automáticamente un hueco pequeño cercano.
