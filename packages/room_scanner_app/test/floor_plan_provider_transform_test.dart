@@ -631,7 +631,8 @@ void main() {
         roomId: 'room-a',
         offsetX: 1,
         offsetZ: 0,
-      ); = provider.completedRooms.first.points.first.x;
+      );
+      final secondEdit = provider.completedRooms.first.points.first.x;
 
       expect(await provider.undoTransform(), isTrue);
       expect(provider.completedRooms.first.points.first.x,
