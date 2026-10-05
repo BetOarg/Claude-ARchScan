@@ -840,10 +840,8 @@ class FloorPlanProvider extends ChangeNotifier {
       name: normalized,
     );
 
-    _recordTransform(before);
     notifyListeners();
-
-    await _persist();
+    await _persistRoomChange(before);
   }
 
   // ===========================================================================  // POSICIONAMIENTO GLOBAL  // ===========================================================================
@@ -1155,11 +1153,8 @@ class FloorPlanProvider extends ChangeNotifier {
       );
     }
 
-    _recordTransform(before);
-
     notifyListeners();
-
-    await _persist();
+    await _persistRoomChange(before);
   }
 
   /// Mueve el ambiente y ajusta automáticamente un hueco pequeño cercano.
@@ -1283,11 +1278,7 @@ class FloorPlanProvider extends ChangeNotifier {
       );
     }
 
-    _recordTransform(before);
-
-    notifyListeners();
-    await _persist();
-    return true;
+    return _saveTransform(before);
   }
 
   /// Inicia una corrección táctil de un único ambiente.
@@ -2477,9 +2468,10 @@ class FloorPlanProvider extends ChangeNotifier {
       return false;
     }
 
+    notifyListeners();
+    if (!await _persistRoomChange(before)) return false;
     _recordTransform(before);
     notifyListeners();
-    await _persist();
     return true;
   }
 
@@ -2657,9 +2649,14 @@ class FloorPlanProvider extends ChangeNotifier {
       );
     }
 
+    notifyListeners();
+    if (!await _persistRoomChange(before)) {
+      return const OpeningGeometryUpdateResult.invalid(
+        'No se pudo guardar el cambio.',
+      );
+    }
     _recordTransform(before);
     notifyListeners();
-    await _persist();
     return const OpeningGeometryUpdateResult.success();
   }
 
@@ -2825,9 +2822,14 @@ class FloorPlanProvider extends ChangeNotifier {
       }
       _completedRooms[i] = target.copyWith(features: features);
     }
+    notifyListeners();
+    if (!await _persistRoomChange(before)) {
+      return const OpeningGeometryUpdateResult.invalid(
+        'No se pudo guardar el cambio.',
+      );
+    }
     _recordTransform(before);
     notifyListeners();
-    await _persist();
     return const OpeningGeometryUpdateResult.success();
   }
 
