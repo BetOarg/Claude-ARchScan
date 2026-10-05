@@ -640,6 +640,45 @@ void main() {
       expect(provider.canUndoTransform, isFalse);
     });
 
+    test('el arrastre táctil revierte si Drift rechaza la persistencia', () async {
+      final provider = FloorPlanProvider()
+        ..loadProject(
+          uuid: 'project-touch-save-failure',
+          name: 'Casa con fallo de guardado',
+          rooms: [
+            _roomAt('anchor', 0, 0),
+            _roomAt('movable', 4, 0),
+          ],
+        );
+      addTearDown(provider.dispose);
+      provider.persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        throw StateError('Save failed');
+      };
+
+      final before = provider.completedRooms.map((r) => r.toJson()).toList();
+      expect(provider.beginTouchRoomTransform('movable'), isTrue);
+      expect(
+        provider.updateTouchRoomTransform(
+          roomId: 'movable',
+          offsetX: -1.8,
+          offsetZ: 0,
+          angleDegrees: 0,
+        ),
+        isTrue,
+      );
+
+      expect(await provider.endTouchRoomTransform(roomId: 'movable'), isFalse);
+      expect(
+        provider.completedRooms.map((r) => r.toJson()).toList(),
+        before,
+      );
+      expect(provider.canUndoTransform, isFalse);
+    });
+
     test('el imán ajusta una pared durante el arrastre', () async {
       final provider = FloorPlanProvider()
         ..loadProject(
