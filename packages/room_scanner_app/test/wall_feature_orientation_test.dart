@@ -109,6 +109,29 @@ void main() {
       expect(roomC.points.first.z, closeTo(10, 0.000001));
     });
 
+    test('no crea historial al elegir la misma orientación de una puerta', () async {
+      final provider = FloorPlanProvider();
+      provider.loadProject(
+        uuid: 'project-door-noop',
+        name: 'Casa conectada',
+        rooms: _connectedRooms(),
+      );
+
+      final updated = await provider.updateDoorOrientation(
+        featureId: 'shared-door',
+        hingeSide: DoorHingeSide.start,
+        swingSide: DoorSwingSide.left,
+        openingDirection: DoorOpeningDirection.interior,
+      );
+
+      expect(updated, isFalse);
+      expect(provider.canUndoTransform, isFalse);
+      expect(
+        provider.completedRooms.first.features.single.doorOpeningDirection,
+        DoorOpeningDirection.interior,
+      );
+    });
+
     test('sincroniza interior o exterior en una puerta compartida', () async {
       final provider = FloorPlanProvider();
       provider.loadProject(
