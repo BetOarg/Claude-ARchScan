@@ -2981,7 +2981,10 @@ class FloorPlanProvider extends ChangeNotifier {
       return ValidationResult.invalid(
         'El cambio genera un cruce, solapamiento o modifica una conexión. Revisá el plano.');
     }
-    await applyPlanEdit(proposal);
+    final applied = await applyPlanEdit(proposal);
+    if (!applied) {
+      return ValidationResult.invalid('No se pudo guardar el cambio.');
+    }
     return ValidationResult.valid;
   }
 
