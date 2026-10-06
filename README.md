@@ -17,7 +17,7 @@ ARchScan permite medir ambientes, paredes, puertas y ventanas; conectar espacios
 
 La preparación comercial y los pasos de Google Play están en [Freemium y Google Play](docs/GOOGLE_PLAY_FREEMIUM.md). La guía completa, primero en inglés y luego en español, está en [User Guide / Guía de uso](docs/USER_GUIDE.md).
 
-La auditoría final del estado del repositorio al 16/09/2026 está en [Auditoría final del repositorio](docs/FINAL_REPOSITORY_AUDIT.md).
+La auditoría y el estado de lanzamiento se mantienen en [Auditoría final del repositorio](docs/FINAL_REPOSITORY_AUDIT.md) y [lista de preparación](docs/RELEASE_READINESS_CHECKLIST.md).
 
 ## Funciones implementadas
 
@@ -141,7 +141,7 @@ No se ejecutan ni supervisan workflows automáticamente como parte de esta docum
 
 ## Estado de lanzamiento
 
-La migración de persistencia a Drift/SQLite está integrada en `main` y el CI de validación quedó verde. La firma Android de producción está configurada para CI mediante secretos de GitHub; el workflow genera, audita y elimina las credenciales temporales al finalizar. El candidato comercial sigue siendo beta: no se declara publicación aprobada en Google Play ni App Store.
+La migración de persistencia a Drift/SQLite está integrada en `main`. El último commit de `main` (`eab2b376…`, 06/10/2026) tiene el CI de validación en ejecución al momento de esta actualización; no se considera verde hasta que finalice correctamente. La firma Android de producción está configurada para CI mediante secretos de GitHub; el workflow genera, audita y elimina las credenciales temporales al finalizar. El candidato comercial sigue siendo beta: no se declara publicación aprobada en Google Play ni App Store.
 
 Antes de enviar la beta a revisión todavía corresponde:
 
