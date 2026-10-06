@@ -1,7 +1,7 @@
 # Lista de preparación para publicación — ARchScan
 
 **Última revisión:** 06/10/2026  
-**Main de referencia:** `9444324743700b6131def47f315529bbbafa1e57`  
+**Main de referencia:** `ed44dcb81f6cc2d2711962aa670de9831708e134`  
 **Versión declarada:** `2.7.0+4`
 
 ## Estado verificable en repositorio
@@ -32,11 +32,12 @@
 ## Estado administrativo
 
 - [x] No hay PR abiertos.
-- [ ] Eliminar físicamente la rama de trabajo fusionada que todavía aparece en GitHub: `fix/project-switch-rename-dimensions`.
+- [ ] Eliminar físicamente las ramas ya clasificadas como obsoletas: `migration/drift-persistence`, `fix/android-splash-logo-clipping`, `test/ux-accessibility-scale`, `chore/final-audit-state`, `fix/camera-permission-recovery`, `fix/camera-resume-restart`, `fix/home-import-export-menu` y `fix/project-switch-rename-dimensions`.
+- [ ] Conservar `refactor/archscan-stabilization-v2` como rama histórica hasta decidir su archivo/eliminación.
 - [ ] Proteger `main`.
 - [ ] Activar eliminación automática de ramas fusionadas si se desea mantener el repositorio limpio.
 
-La rama de trabajo restante es administrativa; no forma parte del artefacto de publicación.
+La revisión semántica de ramas confirmó que las ocho ramas anteriores no aportan código necesario que no esté ya superado por `main`. La eliminación física y la protección de `main` requieren permisos administrativos de GitHub no expuestos por la conexión actual.
 
 ## Validación física final
 
