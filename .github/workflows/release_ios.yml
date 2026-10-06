@@ -97,8 +97,24 @@ jobs:
           security set-key-partition-list             -S apple-tool:,apple:             -k "$keychain_password" "$keychain_path"
 
           security cms -D -i "$profile_path" > "$RUNNER_TEMP/profile.plist"
-          profile_uuid=$(/usr/libexec/PlistBuddy             -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
-          profile_name=$(/usr/libexec/PlistBuddy             -c "Print :Name" "$RUNNER_TEMP/profile.plist")
+          profile_uuid=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
+          profile_name=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profile.plist")
+          profile_app_id=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" "$RUNNER_TEMP/profile.plist")
+          profile_team_id=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.team-identifier" "$RUNNER_TEMP/profile.plist")
+          profile_get_task_allow=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:get-task-allow" "$RUNNER_TEMP/profile.plist" 2>/dev/null || printf 'false')
+
+          test "$profile_app_id" = "$APPLE_TEAM_ID.com.bet0.ARchScan" || {
+            echo "::error::El provisioning profile no corresponde a com.bet0.ARchScan: $profile_app_id"
+            exit 1
+          }
+          test "$profile_team_id" = "$APPLE_TEAM_ID" || {
+            echo "::error::El Team ID del provisioning profile no coincide: $profile_team_id"
+            exit 1
+          }
+          test "$profile_get_task_allow" != "true" || {
+            echo "::error::El provisioning profile permite depuración (get-task-allow=true)"
+            exit 1
+          }
 
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$profile_path"             "$HOME/Library/MobileDevice/Provisioning Profiles/$profile_uuid.mobileprovision"
