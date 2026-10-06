@@ -2248,7 +2248,13 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     }
   }
 
-  void _closeProject() {
+  Future<void> _closeProject() async {
+    try {
+      await _flushDraft();
+    } catch (error) {
+      debugPrint('No se pudo guardar el borrador al cerrar: $error');
+    }
+    if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
