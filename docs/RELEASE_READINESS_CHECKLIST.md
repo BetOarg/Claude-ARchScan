@@ -1,7 +1,7 @@
 # Lista de preparación para publicación — ARchScan
 
-**Última revisión:** 02/10/2026  
-**Main de referencia:** `d95faf38d2b28c6c41727603f51c2fa4f5c1fb9f`  
+**Última revisión:** 06/10/2026  
+**Main de referencia:** `9444324743700b6131def47f315529bbbafa1e57`  
 **Versión declarada:** `2.7.0+4`
 
 ## Estado verificable en repositorio
@@ -22,6 +22,9 @@
 - [x] Nombre del ambiente conservado como texto visible en el plano; sin leyendas/reportes redundantes.
 - [x] CI con análisis, pruebas y verificaciones Android/iOS.
 - [x] Cerrar proyecto y cambiar de proyecto sin cerrar la aplicación.
+- [x] Persistencia de borradores al cerrar el escáner.
+- [x] Actualización del Dashboard después de volver del escáner.
+- [x] Actualización del Dashboard después de importar un proyecto.
 - [x] Renombrar proyectos conservando UUID y datos locales.
 - [x] Cotas de puertas sin fragmentación redundante del muro.
 - [x] Sitio público bilingüe, privacidad, soporte y eliminación de datos locales documentados.
