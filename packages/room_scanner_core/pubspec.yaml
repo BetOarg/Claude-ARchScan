@@ -26,7 +26,9 @@ dev_dependencies:
   test: ^1.25.0
   lints: ^3.0.0
 
-  # 2.15.3 is the last build_runner line before 2.16.x and is compatible
-  # with the analyzer 14.x API used by the current Flutter toolchain.
+  # Keep the generator/analyzer pair pinned: analyzer 14.5.0 removed an API
+  # still used by build_runner 2.15.3. Flutter 3.47 currently resolves
+  # analyzer 14.5.0 unless this upper bound is explicit.
   build_runner: 2.15.3
+  analyzer: 14.4.0
   drift_dev: ^2.35.0
