@@ -301,6 +301,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
+    if (result == JsonImportResult.imported) {
+      try {
+        await context.read<ProjectProvider>().loadProjects();
+      } catch (_) {
+        if (mounted) {
+          _showOperationError();
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
