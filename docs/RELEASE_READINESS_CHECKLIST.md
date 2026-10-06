@@ -1,8 +1,7 @@
 # Lista de preparación para publicación — ARchScan
 
 **Última revisión:** 06/10/2026  
-**Main de referencia:** `ed44dcb81f6cc2d2711962aa670de9831708e134`  
-**Versión declarada:** `2.7.0+4`
+**Versión candidata actual:** `2.7.2+6`
 
 ## Estado verificable en repositorio
 
@@ -32,12 +31,12 @@
 ## Estado administrativo
 
 - [x] No hay PR abiertos.
-- [ ] Eliminar físicamente las ramas ya clasificadas como obsoletas: `migration/drift-persistence`, `fix/android-splash-logo-clipping`, `test/ux-accessibility-scale`, `chore/final-audit-state`, `fix/camera-permission-recovery`, `fix/camera-resume-restart`, `fix/home-import-export-menu` y `fix/project-switch-rename-dimensions`.
-- [ ] Conservar `refactor/archscan-stabilization-v2` como rama histórica hasta decidir su archivo/eliminación.
-- [ ] Proteger `main`.
-- [ ] Activar eliminación automática de ramas fusionadas si se desea mantener el repositorio limpio.
+- [x] Las ocho ramas clasificadas como obsoletas fueron eliminadas.
+- [x] Se conserva `refactor/archscan-stabilization-v2` como rama histórica.
+- [x] `main` fue protegido por el propietario del repositorio.
+- [x] El mantenimiento automático de ramas fusionadas queda opcional.
 
-La revisión semántica de ramas confirmó que las ocho ramas anteriores no aportan código necesario que no esté ya superado por `main`. La eliminación física y la protección de `main` requieren permisos administrativos de GitHub no expuestos por la conexión actual.
+La eliminación física de ramas y la protección de `main` fueron realizadas por el propietario. La conexión actual no expone permisos suficientes para volver a certificar esas configuraciones mediante la API.
 
 ## Validación física final
 
@@ -46,10 +45,10 @@ La revisión semántica de ramas confirmó que las ocho ramas anteriores no apor
 - [ ] Repetir Basic y ARCore sobre el candidato final firmado.
 - [ ] ARKit: validación física final.
 - [ ] RoomPlan: validación física final.
-- [ ] Primera apertura y permisos; denegación/recuperación (flujo automatizado reforzado; falta validación física sobre candidato final).
+- [ ] Primera apertura y permisos; denegación/recuperación sobre candidato final.
 - [ ] Escaneo, cierre y continuación desde aberturas o extremos.
 - [ ] Puertas/ventanas, borrado de paredes y continuación.
-- [ ] Suspensión/reanudación de cámara y orientación (lógica de ciclo de vida automatizada; falta validación física sobre candidato final).
+- [ ] Suspensión/reanudación de cámara y orientación sobre candidato final.
 - [ ] Plano 2D, edición, navegación y rotación.
 - [ ] Guardado, cierre y recuperación.
 - [ ] Proyectos históricos.
@@ -62,7 +61,7 @@ La revisión semántica de ramas confirmó que las ocho ramas anteriores no apor
 ## Artefactos de publicación
 
 - [x] Keystore Android de producción utilizado por CI; la clave privada permanece fuera de Git.
-- [ ] Configurar Play App Signing.
+- [ ] Actualizar/verificar secretos Android de producción antes de generar el AAB definitivo.
 - [ ] Generar AAB firmado definitivo.
 - [ ] Auditar firma, manifiesto fusionado, permisos, SDK y bibliotecas nativas, incluidas páginas de 16 KB.
 - [ ] Generar archive/IPA firmado definitivo.
