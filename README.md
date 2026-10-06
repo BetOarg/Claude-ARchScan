@@ -8,7 +8,7 @@ ARchScan permite medir ambientes, paredes, puertas y ventanas; conectar espacios
 
 ## Estado y modelo comercial
 
-- Versión declarada: **2.7.0+4**. Núcleo de dominio: **1.0.0**.
+- Versión candidata actual: **2.7.2+6**. Núcleo de dominio: **1.0.0**.
 - Candidato de beta abierta: gratuito, sin anuncios y sin compras integradas. La publicación depende del AAB/IPA firmado y de la configuración de las tiendas.
 - Modelo previsto: **freemium sin anuncios**, con funciones locales esenciales gratuitas y un desbloqueo Pro opcional.
 - **Pro todavía no está implementado ni a la venta.** Funciones, precio y modalidad de cobro requieren definición antes de integrar compras.
@@ -141,7 +141,7 @@ No se ejecutan ni supervisan workflows automáticamente como parte de esta docum
 
 ## Estado de lanzamiento
 
-La migración de persistencia a Drift/SQLite está integrada en `main`. El último commit de `main` (`eab2b376…`, 06/10/2026) tiene el CI de validación en ejecución al momento de esta actualización; no se considera verde hasta que finalice correctamente. La firma Android de producción está configurada para CI mediante secretos de GitHub; el workflow genera, audita y elimina las credenciales temporales al finalizar. El candidato comercial sigue siendo beta: no se declara publicación aprobada en Google Play ni App Store.
+La migración de persistencia a Drift/SQLite está integrada en `main`. La versión candidata actual es **2.7.2+6**. El commit de versión anterior (`v2.7.1`) quedó descartado como candidato de publicación porque su workflow de Android falló durante la generación de modelos; el fallo fue corregido fijando `build_runner` a una versión compatible con el Analyzer del toolchain actual. El AAB definitivo todavía no se ha generado. La firma Android de producción está configurada para CI mediante secretos de GitHub; el workflow genera, audita y elimina las credenciales temporales al finalizar. El candidato comercial sigue siendo beta: no se declara publicación aprobada en Google Play ni App Store.
 
 Antes de enviar la beta a revisión todavía corresponde:
 
