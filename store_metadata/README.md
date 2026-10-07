@@ -1,6 +1,6 @@
 # Metadatos versionados de ARchScan
 
-Esta carpeta conserva el texto exacto preparado para las tiendas. La versión preparada está en `v2.7.0`; `v2.6.1` se conserva como histórico. La versión de tienda sigue pendiente de envío y aprobación.
+Esta carpeta conserva el texto exacto preparado para las tiendas. La versión preparada está en `v2.7.2`; `v2.7.0` y `v2.6.1` se conservan como históricos. La versión de tienda sigue pendiente de envío y aprobación.
 
 Antes de publicar:
 
