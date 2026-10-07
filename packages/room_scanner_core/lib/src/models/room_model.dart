@@ -243,6 +243,8 @@ class ScanContinuationReference {
   final ARPoint globalEnd;
   final OpeningConnectionSide side;
   final ContinuationStartEndpoint startEndpoint;
+  final String? targetRoomId;
+  final ARPoint? targetGlobalPoint;
 
   const ScanContinuationReference({
     required this.sourceRoomId,
@@ -252,6 +254,8 @@ class ScanContinuationReference {
     required this.globalEnd,
     required this.side,
     required this.startEndpoint,
+    this.targetRoomId,
+    this.targetGlobalPoint,
   });
 
   factory ScanContinuationReference.fromFeature({
@@ -268,6 +272,25 @@ class ScanContinuationReference {
       globalEnd: feature.end,
       side: side,
       startEndpoint: startEndpoint,
+    );
+  }
+
+  factory ScanContinuationReference.fromCorners({
+    required String sourceRoomId,
+    required ARPoint sourcePoint,
+    required String targetRoomId,
+    required ARPoint targetPoint,
+  }) {
+    return ScanContinuationReference(
+      sourceRoomId: sourceRoomId,
+      featureId: '__corner_continuation__',
+      featureType: FeatureType.door,
+      globalStart: sourcePoint,
+      globalEnd: targetPoint,
+      side: OpeningConnectionSide.left,
+      startEndpoint: ContinuationStartEndpoint.start,
+      targetRoomId: targetRoomId,
+      targetGlobalPoint: targetPoint,
     );
   }
 
