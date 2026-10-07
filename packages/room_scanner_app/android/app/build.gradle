@@ -163,23 +163,21 @@ flutter {
     source '../../'
 }
 
-// ARchScan uses ar_flutter_plugin_2, whose published Android plugin pins
-// SceneView 2.2.1. That stack ships 4 KB-aligned Filament JNI binaries.
-// SceneView 4.16.8 is the first compatible upstream line documented with
-// Google Play 16 KB native-library support. Keep both artifacts on the same
-// SceneView generation so Gradle cannot resolve a mixed runtime.
-configurations.all {
-    resolutionStrategy.eachDependency { details ->
-        if (details.requested.group == 'io.github.sceneview' &&
-                (details.requested.name == 'arsceneview' ||
-                 details.requested.name == 'sceneview')) {
-            details.useVersion('4.16.8')
-            details.because('Require 16 KB page-size-compatible SceneView native libraries')
+dependencies {
+
+    // ar_flutter_plugin_2 still targets the SceneView 2.x API. Version 2.3.3
+    // is the latest 2.x release and is kept as a matched pair for both AR and
+    // 3D artifacts; newer 4.x releases are API-incompatible with the plugin.
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'io.github.sceneview' &&
+                    (details.requested.name == 'arsceneview' ||
+                     details.requested.name == 'sceneview')) {
+                details.useVersion('2.3.3')
+                details.because('Keep ar_flutter_plugin_2 on the compatible SceneView 2.x API')
+            }
         }
     }
-}
-
-dependencies {
 
     // ================================================================
     // ANDROIDX
