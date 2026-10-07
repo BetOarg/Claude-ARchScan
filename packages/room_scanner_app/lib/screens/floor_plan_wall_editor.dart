@@ -23,7 +23,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
 
     final l10n = AppLocalizations.of(context)!;
     var selectedVertexIndex = vertexIndex;
-    int? closingVertexIndex;
+    _PlanHit? closingCorner;
 
     // When the action starts from a selected wall, do not silently return to
     // the historical first point. Let the user choose either valid endpoint.
@@ -65,11 +65,11 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     }
 
     if (room.isClosed) {
-      closingVertexIndex = await _chooseContinuationClosingCorner(
+      closingCorner = await _chooseContinuationClosingCorner(
         room,
         selectedVertexIndex,
       );
-      if (!mounted || closingVertexIndex == null) return;
+      if (!mounted || closingCorner == null) return;
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
     }
@@ -77,7 +77,8 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     final preparedRoom = _plan.prepareOpenRoomContinuation(
       roomId: room.id,
       vertexIndex: selectedVertexIndex,
-      closingVertexIndex: closingVertexIndex,
+      closingVertexIndex: closingCorner?.index,
+      closingRoomId: closingCorner?.roomId,
     );
     if (preparedRoom == null) return;
 
@@ -129,7 +130,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
   PlanEditProposal? _pendingPlanEdit;
   String? _previewTitle;
   bool _deletingPreview = false;
-  Completer<int?>? _closingCornerCompleter;
+  Completer<_PlanHit?>? _closingCornerCompleter;
   _PlanHit? _continuationStartHit;
   _PlanHit? _continuationClosingHit;
   bool get _choosingContinuationClosing =>
@@ -153,11 +154,11 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     super.dispose();
   }
 
-  Future<int?> _chooseContinuationClosingCorner(
+  Future<_PlanHit?> _chooseContinuationClosingCorner(
     RoomModel room,
     int startVertexIndex,
   ) async {
-    final completer = Completer<int?>();
+    final completer = Completer<_PlanHit?>();
     setState(() {
       _closingCornerCompleter = completer;
       _continuationStartHit =
@@ -251,17 +252,18 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     final closingCompleter = _closingCornerCompleter;
     final startHit = _continuationStartHit;
     if (closingCompleter != null && startHit != null) {
+      // The closing corner can belong to any room in the
+      // project. Do not restrict hit-testing to the source room.
       final cornerHits = _planHits(
         position,
         rooms,
-        onlyRoom: startHit.roomId,
       ).where((hit) => hit.corner).toList();
       if (cornerHits.isEmpty) {
         _showMessage(AppLocalizations.of(context)!.chooseClosingCorner);
         return true;
       }
       final hit = cornerHits.first;
-      if (hit.index == startHit.index) {
+      if (hit.roomId == startHit.roomId && hit.index == startHit.index) {
         _showMessage(AppLocalizations.of(context)!.chooseDifferentCorner);
         return true;
       }
