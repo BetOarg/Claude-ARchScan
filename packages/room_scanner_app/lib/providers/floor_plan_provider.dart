@@ -471,6 +471,7 @@ class FloorPlanProvider extends ChangeNotifier {
     required String roomId,
     required int vertexIndex,
     int? closingVertexIndex,
+    String? closingRoomId,
   }) {
     final room = _completedRooms
         .where((candidate) => candidate.id == roomId)
@@ -478,6 +479,37 @@ class FloorPlanProvider extends ChangeNotifier {
     if (room == null || room.points.length < 2) return null;
     if (vertexIndex < 0 || vertexIndex >= room.points.length) return null;
     if (room.isClosed) {
+      // The closing corner may belong to another room. In that case the new
+      // room starts at that global corner and ends at the selected source
+      // corner, so the scanner can continue from the source corner and close
+      // back at the selected corner in the other room.
+      if (closingRoomId != null && closingRoomId != room.id) {
+        final targetRoom = _completedRooms
+            .where((candidate) => candidate.id == closingRoomId)
+            .firstOrNull;
+        if (targetRoom == null ||
+            closingVertexIndex == null ||
+            closingVertexIndex < 0 ||
+            closingVertexIndex >= targetRoom.points.length) {
+          return null;
+        }
+        final targetPoint = targetRoom.points[closingVertexIndex];
+        final startPoint = room.points[vertexIndex];
+        final distance = GeometryService.calculateDistance(
+          targetPoint,
+          startPoint,
+        );
+        if (distance <= 0.000001) return null;
+        return RoomModel(
+          id: _nextUniqueId(),
+          name: room.name,
+          type: room.type,
+          points: [targetPoint, startPoint],
+          features: const [],
+          isClosed: false,
+        );
+      }
+
       final closingIndex = closingVertexIndex;
       if (closingIndex == null ||
           closingIndex < 0 ||
