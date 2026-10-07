@@ -1,0 +1,20 @@
+ARchScan helps capture indoor and outdoor spaces from a mobile device. Depending on device capabilities, it uses supported augmented reality or a conventional camera with manual measurement input.
+
+Measure walls, doors, and windows; connect rooms; organize the complete floor plan; and save projects to continue later. Edit measurements, work in metric or imperial units, and identify shared walls.
+
+Export 2D DXF plans, import and export projects as JSON, and create technical PDF documents containing plans, dimensions, areas, and perimeters.
+
+Main features:
+
+- automatic selection between AR and conventional camera with manual measurements;
+- measurement and editing of rooms, walls, doors, and windows;
+- dimensioned 2D plans and room organization;
+- projects stored only on the device, without an ARchScan account;
+- recovery and compatibility with historical projects;
+- JSON export/import, technical PDF documents and 2D DXF export;
+- Spanish and English interface;
+- metric and imperial units.
+
+This version is free, with no ads or in-app purchases. DXF import and DWG export are not included.
+
+ARchScan is a surveying aid. Verify measurements before using them for construction documents, estimates, or professional decisions.
