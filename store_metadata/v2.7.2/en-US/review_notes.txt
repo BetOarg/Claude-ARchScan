@@ -1,0 +1,13 @@
+ARchScan works without an account, login, subscription, advertising, or in-app purchases. All projects are stored locally on the device.
+
+Camera access is required only while measuring. On supported devices the app selects the shared AR scanner; otherwise it offers the Basic Scanner, where measurements are entered manually.
+
+Suggested review:
+1. Create a project and a room.
+2. Grant camera permission.
+3. Measure and close the room.
+4. Open the 2D plan to edit walls and add doors or windows.
+5. Export JSON, PDF, or 2D DXF through the system share sheet.
+6. Open Privacy and Data to delete local projects.
+
+No review credentials are required. Support: bet0.archscan@gmail.com
