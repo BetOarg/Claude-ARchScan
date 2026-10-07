@@ -63,6 +63,8 @@ class ScanDraft {
         'globalEnd': reference.globalEnd.toJson(),
         'side': reference.side.name,
         'startEndpoint': reference.startEndpoint.name,
+        if (reference.targetRoomId != null) 'targetRoomId': reference.targetRoomId,
+        if (reference.targetGlobalPoint != null) 'targetGlobalPoint': reference.targetGlobalPoint!.toJson(),
       };
 
   static ScanContinuationReference? _continuationFromJson(
@@ -91,6 +93,10 @@ class ScanDraft {
       startEndpoint: ContinuationStartEndpoint.values.firstWhere(
         (endpoint) => endpoint.name == json['startEndpoint'],
       ),
+      targetRoomId: json['targetRoomId'] as String?,
+      targetGlobalPoint: json['targetGlobalPoint'] is Map
+          ? ARPoint.fromJson(Map<String, dynamic>.from(json['targetGlobalPoint'] as Map))
+          : null,
     );
   }
 }
