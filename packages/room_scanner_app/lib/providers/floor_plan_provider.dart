@@ -628,6 +628,42 @@ class FloorPlanProvider extends ChangeNotifier {
     }
 
     final sourceRoom = _completedRooms[sourceRoomIndex];
+
+    // Corner-to-corner continuation does not use an opening feature. Both
+    // existing rooms remain intact; the new scan becomes a third room aligned
+    // between the selected source and target corners.
+    if (reference.targetRoomId != null && reference.targetGlobalPoint != null) {
+      final targetRoomIndex = _completedRooms.indexWhere(
+        (existing) => existing.id == reference.targetRoomId,
+      );
+      if (targetRoomIndex == -1 || targetRoomIndex == sourceRoomIndex) {
+        return false;
+      }
+
+      final targetPoint = reference.targetGlobalPoint!;
+      final targetRoom = _completedRooms[targetRoomIndex];
+      final targetMatches = targetRoom.points.any(
+        (point) =>
+            (point.x - targetPoint.x).abs() < 0.000001 &&
+            (point.y - targetPoint.y).abs() < 0.000001 &&
+            (point.z - targetPoint.z).abs() < 0.000001,
+      );
+      if (!targetMatches) return false;
+
+      var roomToAdd = _alignRoomToContinuation(room, reference);
+      if (roomToAdd.id.trim().isEmpty ||
+          _completedRooms.any((existing) => existing.id == roomToAdd.id)) {
+        roomToAdd = roomToAdd.copyWith(id: _nextUniqueId());
+      }
+
+      if (!canPlaceScannedRoom(roomToAdd)) return false;
+
+      final before = List<RoomModel>.from(_completedRooms);
+      _completedRooms.add(roomToAdd);
+      notifyListeners();
+      return _persistRoomChange(before);
+    }
+
     final sourceFeatureIndex = sourceRoom.features.indexWhere(
       (feature) => feature.id == reference.featureId,
     );
