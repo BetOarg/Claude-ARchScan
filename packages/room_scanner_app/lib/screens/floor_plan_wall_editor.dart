@@ -74,13 +74,28 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
       if (!mounted) return;
     }
 
-    final preparedRoom = _plan.prepareOpenRoomContinuation(
-      roomId: room.id,
-      vertexIndex: selectedVertexIndex,
-      closingVertexIndex: closingCorner?.index,
-      closingRoomId: closingCorner?.roomId,
-    );
-    if (preparedRoom == null) return;
+    final isCrossRoomCornerContinuation =
+        closingCorner != null && closingCorner.roomId != room.id;
+
+    final preparedRoom = isCrossRoomCornerContinuation
+        ? null
+        : _plan.prepareOpenRoomContinuation(
+            roomId: room.id,
+            vertexIndex: selectedVertexIndex,
+            closingVertexIndex: closingCorner?.index,
+          );
+    final cornerReference = isCrossRoomCornerContinuation
+        ? ScanContinuationReference.fromCorners(
+            sourceRoomId: room.id,
+            sourcePoint: room.points[selectedVertexIndex],
+            targetRoomId: closingCorner!.roomId,
+            targetPoint:
+                _plan.completedRooms
+                    .firstWhere((candidate) => candidate.id == closingCorner.roomId)
+                    .points[closingCorner.index],
+          )
+        : null;
+    if (preparedRoom == null && cornerReference == null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -110,6 +125,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
       projectUuid: projectUuid,
       projectName: _plan.projectName,
       resumeRoom: preparedRoom,
+      continuationReference: cornerReference,
     );
   }
   Future<void> _placeOpeningOnWall(
