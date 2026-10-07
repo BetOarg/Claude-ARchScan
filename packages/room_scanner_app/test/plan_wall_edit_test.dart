@@ -402,7 +402,7 @@ void main() {
     }
   });
 
-  test('closed continuation can target a corner from another room', () {
+  test('closed continuation can target a corner from another room', () async {
     final source = room(
       'source-cross',
       [p(0, 0), p(3, 0), p(3, 3), p(0, 3)],
