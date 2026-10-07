@@ -1,0 +1,1 @@
+Medí espacios con AR compatible o Basic Scanner, organizá ambientes, editá cotas y exportá proyectos locales como JSON, PDF y DXF 2D.
