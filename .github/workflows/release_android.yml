@@ -141,18 +141,35 @@ jobs:
           find "$report/native" -type f -name '*.so' | sort > "$report/native-libraries.txt"
 
           incompatible=0
+          checked_64bit=0
           : > "$report/page-alignment-16kb.txt"
           while IFS= read -r library; do
             relative="${library#"$report/native/"}"
             alignments="$(readelf -lW "$library" | awk '$1 == "LOAD" { print $NF }')"
             printf '%s: %s\n' "$relative" "$alignments" | tee -a "$report/page-alignment-16kb.txt"
-            for alignment in $alignments; do
-              if (( alignment < 0x4000 )); then
-                echo "::error::$relative usa alineación $alignment (< 0x4000)"
-                incompatible=1
-              fi
-            done
+
+            # Google Play's 16 KB requirement applies to 64-bit devices.
+            # Android's official checker evaluates arm64-v8a and x86_64;
+            # armeabi-v7a remains a 4 KB/32-bit ABI and must not make the
+            # release fail merely because a legacy prebuilt SDK uses 4 KB ELF
+            # alignment there.
+            case "$relative" in
+              base/lib/arm64-v8a/*.so|base/lib/x86_64/*.so)
+                checked_64bit=1
+                for alignment in $alignments; do
+                  if (( alignment < 0x4000 )); then
+                    echo "::error::$relative usa alineación $alignment (< 0x4000)"
+                    incompatible=1
+                  fi
+                done
+                ;;
+            esac
           done < "$report/native-libraries.txt"
+
+          if [ "$checked_64bit" -eq 0 ]; then
+            echo "::error::El AAB no contiene bibliotecas nativas 64-bit para validar 16 KB"
+            exit 1
+          fi
 
           if [ "$incompatible" -ne 0 ]; then
             exit 1
