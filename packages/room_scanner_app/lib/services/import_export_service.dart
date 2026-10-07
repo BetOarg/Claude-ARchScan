@@ -225,9 +225,12 @@ class ImportExportService {
     String? newProjectUuid,
   }) async {
     try {
+      // Android document providers can expose JSON/SVG with a MIME type that
+      // does not match the custom-extension filter. Use the unrestricted
+      // document picker and validate the extension after selection so a valid
+      // ARchScan backup can always be selected.
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json', 'svg'],
+        type: FileType.any,
         withData: false,
       );
 
@@ -236,6 +239,10 @@ class ImportExportService {
       }
 
       final selected = result.files.single;
+      final extension = selected.extension?.toLowerCase();
+      if (extension != 'json' && extension != 'svg') {
+        return JsonImportResult.invalid;
+      }
       if (selected.size > PlanExportBuilder.maxImportBytes) {
         return JsonImportResult.invalid;
       }
@@ -244,7 +251,6 @@ class ImportExportService {
         return JsonImportResult.invalid;
       }
 
-      final extension = selected.extension?.toLowerCase();
       final parsed = extension == 'svg'
           ? await compute(PlanExportBuilder.parseProjectSvg, fileContent)
           : await compute(PlanExportBuilder.parseProjectJson, fileContent);
