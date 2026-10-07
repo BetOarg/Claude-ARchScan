@@ -1,0 +1,1 @@
+Measure spaces with compatible AR or the Basic Scanner, organize rooms, edit dimensions, and export local projects as JSON, PDF, and 2D DXF.
