@@ -1,0 +1,3 @@
+Please test camera permission and recovery, automatic AR/Basic selection, room closure, oblique walls, continuation from either endpoint, doors and windows added from the plan, undo/redo, saving and reopening projects, JSON import/export, PDF and 2D DXF export, local data deletion, and camera recovery after locking and unlocking the screen.
+
+Measurements are automatic in AR and manually entered in Basic Scanner. Please verify important measurements physically before professional use.
