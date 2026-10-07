@@ -1,0 +1,1 @@
+Touch editing for walls and corners, closure previews, doors and windows from the plan, undo/redo and 2D DXF export.
