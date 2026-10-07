@@ -1,0 +1,3 @@
+Probá el permiso y la recuperación de cámara, la selección automática AR/Basic, el cierre del ambiente, paredes oblicuas, continuidad desde cualquiera de los extremos, puertas y ventanas agregadas desde el plano, deshacer/rehacer, guardar y reabrir proyectos, importar/exportar JSON, exportar PDF y DXF 2D, eliminar datos locales y recuperar la cámara después de bloquear y desbloquear la pantalla.
+
+Las medidas son automáticas en AR y se ingresan manualmente en Basic Scanner. Verificá físicamente las medidas importantes antes de utilizarlas profesionalmente.
