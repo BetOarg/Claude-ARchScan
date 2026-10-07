@@ -1,0 +1,1 @@
+Edición táctil de paredes y esquinas, cierre con vista previa, puertas y ventanas desde el plano, deshacer/rehacer y exportación DXF 2D.
