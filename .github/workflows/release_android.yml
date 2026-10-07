@@ -175,6 +175,42 @@ jobs:
             exit 1
           fi
 
+      - name: Validate AAB ZIP alignment with bundletool
+        working-directory: packages/room_scanner_app
+        shell: bash
+        run: |
+          set -euo pipefail
+          aab="build/app/outputs/bundle/release/app-release.aab"
+          report="build/store-audit"
+          bundletool_version="1.18.3"
+          bundletool_jar="build/bundletool-all-${bundletool_version}.jar"
+          expected_sha256="a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29"
+
+          curl --fail --location --silent --show-error \
+            "https://github.com/google/bundletool/releases/download/${bundletool_version}/bundletool-all-${bundletool_version}.jar" \
+            --output "$bundletool_jar"
+
+          actual_sha256="$(sha256sum "$bundletool_jar" | awk '{print $1}')"
+          if [ "$actual_sha256" != "$expected_sha256" ]; then
+            echo "::error::La SHA-256 de bundletool ${bundletool_version} no coincide"
+            echo "Esperada: $expected_sha256"
+            echo "Obtenida: $actual_sha256"
+            exit 1
+          fi
+
+          java -jar "$bundletool_jar" version | tee "$report/bundletool-version.txt"
+
+          java -jar "$bundletool_jar" dump config --bundle="$aab" \
+            | tee "$report/bundletool-config.txt"
+
+          if ! grep -Fq 'PAGE_ALIGNMENT_16K' "$report/bundletool-config.txt"; then
+            echo "::error::El AAB no solicita PAGE_ALIGNMENT_16K según bundletool"
+            exit 1
+          fi
+
+          echo "PAGE_ALIGNMENT_16K" | tee "$report/bundletool-16kb.txt"
+          rm -f "$bundletool_jar"
+
       - name: Upload Android App Bundle
         uses: actions/upload-artifact@v4
         with:
