@@ -426,7 +426,30 @@ void main() {
     expect(prepared.points, [target.points[3], source.points[1]]);
     expect(prepared.id, isNot(source.id));
     expect(prepared.id, isNot(target.id));
-    expect(plan.completedRooms, [source, target]);
+    final reference = ScanContinuationReference.fromCorners(
+      sourceRoomId: source.id,
+      sourcePoint: source.points[1],
+      targetRoomId: target.id,
+      targetPoint: target.points[3],
+    );
+    final scanned = RoomModel(
+      id: 'new',
+      name: 'new',
+      type: RoomType.other,
+      points: [source.points[1], p(4.5, 0), target.points[3]],
+      isClosed: true,
+    );
+    expect(
+      await plan.addCompletedRoomFromContinuation(
+        room: scanned,
+        reference: reference,
+      ),
+      isTrue,
+    );
+    expect(plan.completedRooms, hasLength(3));
+    expect(plan.completedRooms.first.id, source.id);
+    expect(plan.completedRooms[1].id, target.id);
+    expect(plan.completedRooms[2].id, 'new');
   });
 
   test('saved continuation preserves its closed source and shared wall',
