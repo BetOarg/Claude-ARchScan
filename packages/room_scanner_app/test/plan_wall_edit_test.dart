@@ -402,6 +402,33 @@ void main() {
     }
   });
 
+  test('closed continuation can target a corner from another room', () {
+    final source = room(
+      'source-cross',
+      [p(0, 0), p(3, 0), p(3, 3), p(0, 3)],
+    );
+    final target = room(
+      'target-cross',
+      [p(6, 0), p(8, 0), p(8, 2), p(6, 2)],
+    );
+    final plan = provider([source, target]);
+    addTearDown(plan.dispose);
+
+    final prepared = plan.prepareOpenRoomContinuation(
+      roomId: source.id,
+      vertexIndex: 1,
+      closingRoomId: target.id,
+      closingVertexIndex: 3,
+    );
+
+    expect(prepared, isNotNull);
+    expect(prepared!.isClosed, isFalse);
+    expect(prepared.points, [target.points[3], source.points[1]]);
+    expect(prepared.id, isNot(source.id));
+    expect(prepared.id, isNot(target.id));
+    expect(plan.completedRooms, [source, target]);
+  });
+
   test('saved continuation preserves its closed source and shared wall',
       () async {
     final closed = room(
