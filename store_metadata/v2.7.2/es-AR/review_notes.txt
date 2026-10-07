@@ -1,0 +1,13 @@
+ARchScan funciona sin cuenta, inicio de sesión, suscripción, publicidad ni compras integradas. Todos los proyectos se guardan localmente en el dispositivo.
+
+El acceso a la cámara se utiliza solamente durante la medición. En dispositivos compatibles la aplicación selecciona el escáner AR compartido; en los demás ofrece Basic Scanner, donde las medidas se ingresan manualmente.
+
+Revisión sugerida:
+1. Crear un proyecto y un ambiente.
+2. Autorizar la cámara.
+3. Medir y cerrar el ambiente.
+4. Abrir el plano 2D para editar paredes y agregar puertas o ventanas.
+5. Exportar JSON, PDF o DXF 2D mediante el menú de compartir del sistema.
+6. Abrir Privacidad y datos para eliminar proyectos locales.
+
+No se requieren credenciales de revisión. Soporte: bet0.archscan@gmail.com
