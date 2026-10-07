@@ -224,6 +224,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     List<RoomModel> rooms, {
     bool corners = true,
     String? onlyRoom,
+    bool deduplicateRooms = true,
   }) {
     final zoom = _planViewport.value.getMaxScaleOnAxis();
     final hits = <({double distance, _PlanHit hit})>[];
@@ -254,6 +255,9 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
       if (a.hit.corner != b.hit.corner) return a.hit.corner ? -1 : 1;
       return a.distance.compareTo(b.distance);
     });
+    if (!deduplicateRooms) {
+      return [for (final item in hits) item.hit];
+    }
     final seen = <String>{};
     return [
       for (final item in hits)
@@ -273,6 +277,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
       final cornerHits = _planHits(
         position,
         rooms,
+        deduplicateRooms: false,
       ).where((hit) => hit.corner).toList();
       if (cornerHits.isEmpty) {
         _showMessage(AppLocalizations.of(context)!.chooseClosingCorner);
