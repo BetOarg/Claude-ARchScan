@@ -49,17 +49,17 @@ void main(List<String> arguments) {
     'docs/ACCOUNT_DELETION_PAGE.md',
     'docs/STORE_LISTING_ES_EN.md',
     'docs/RELEASE_READINESS_CHECKLIST.md',
-    'store_metadata/v2.7.0/submission_fields.md',
-    'store_metadata/v2.7.0/en-US/subtitle.txt',
-    'store_metadata/v2.7.0/en-US/keywords.txt',
-    'store_metadata/v2.7.0/en-US/promotional_text.txt',
-    'store_metadata/v2.7.0/en-US/review_notes.txt',
-    'store_metadata/v2.7.0/en-US/whats_to_test.txt',
-    'store_metadata/v2.7.0/es-AR/subtitle.txt',
-    'store_metadata/v2.7.0/es-AR/keywords.txt',
-    'store_metadata/v2.7.0/es-AR/promotional_text.txt',
-    'store_metadata/v2.7.0/es-AR/review_notes.txt',
-    'store_metadata/v2.7.0/es-AR/whats_to_test.txt',
+    'store_metadata/v2.7.2/submission_fields.md',
+    'store_metadata/v2.7.2/en-US/subtitle.txt',
+    'store_metadata/v2.7.2/en-US/keywords.txt',
+    'store_metadata/v2.7.2/en-US/promotional_text.txt',
+    'store_metadata/v2.7.2/en-US/review_notes.txt',
+    'store_metadata/v2.7.2/en-US/whats_to_test.txt',
+    'store_metadata/v2.7.2/es-AR/subtitle.txt',
+    'store_metadata/v2.7.2/es-AR/keywords.txt',
+    'store_metadata/v2.7.2/es-AR/promotional_text.txt',
+    'store_metadata/v2.7.2/es-AR/review_notes.txt',
+    'store_metadata/v2.7.2/es-AR/whats_to_test.txt',
   ];
   for (final path in requiredFiles) {
     requireFile(path);
@@ -159,7 +159,7 @@ void main(List<String> arguments) {
   }
 
   for (final locale in ['en-US', 'es-AR']) {
-    final prefix = 'store_metadata/v2.7.0/$locale';
+    final prefix = 'store_metadata/v2.7.2/$locale';
     requireMaxCharacters('$prefix/subtitle.txt', 30);
     requireMaxCharacters('$prefix/keywords.txt', 100);
     requireMaxCharacters('$prefix/promotional_text.txt', 170);
@@ -186,9 +186,9 @@ void main(List<String> arguments) {
     'docs/PUBLIC_PRIVACY_POLICY.md',
     'docs/ACCOUNT_DELETION_PAGE.md',
     'docs/STORE_LISTING_ES_EN.md',
-    'store_metadata/v2.7.0/submission_fields.md',
-    'store_metadata/v2.7.0/en-US/review_notes.txt',
-    'store_metadata/v2.7.0/es-AR/review_notes.txt',
+    'store_metadata/v2.7.2/submission_fields.md',
+    'store_metadata/v2.7.2/en-US/review_notes.txt',
+    'store_metadata/v2.7.2/es-AR/review_notes.txt',
   ];
   for (final path in publicDocuments) {
     final file = File('${root.path}/$path');
