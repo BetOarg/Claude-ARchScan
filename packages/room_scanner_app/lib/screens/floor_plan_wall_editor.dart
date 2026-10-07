@@ -70,12 +70,14 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
         selectedVertexIndex,
       );
       if (!mounted || closingCorner == null) return;
+      final selectedClosingCorner = closingCorner;
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
     }
 
+    final selectedClosingCorner = closingCorner;
     final isCrossRoomCornerContinuation =
-        closingCorner != null && closingCorner.roomId != room.id;
+        selectedClosingCorner != null && selectedClosingCorner.roomId != room.id;
 
     final preparedRoom = isCrossRoomCornerContinuation
         ? null
@@ -88,11 +90,11 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
         ? ScanContinuationReference.fromCorners(
             sourceRoomId: room.id,
             sourcePoint: room.points[selectedVertexIndex],
-            targetRoomId: closingCorner!.roomId,
+            targetRoomId: selectedClosingCorner!.roomId,
             targetPoint:
                 _plan.completedRooms
-                    .firstWhere((candidate) => candidate.id == closingCorner.roomId)
-                    .points[closingCorner.index],
+                    .firstWhere((candidate) => candidate.id == selectedClosingCorner.roomId)
+                    .points[selectedClosingCorner.index],
           )
         : null;
     if (preparedRoom == null && cornerReference == null) return;
@@ -290,7 +292,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
       }
       setState(() => _continuationClosingHit = hit);
       if (!closingCompleter.isCompleted) {
-        closingCompleter.complete(hit.index);
+        closingCompleter.complete(hit);
       }
       return true;
     }
