@@ -267,17 +267,20 @@ class ImportExportService {
         if (requestedNewProjectUuid.isEmpty) {
           return JsonImportResult.invalid;
         }
-        provider.loadProject(
+        // Persist the complete imported project before switching active state.
+        // A failed save must not replace the project currently being edited.
+        if (!await provider.loadImportedProject(
           uuid: requestedNewProjectUuid,
           name: parsed.projectName,
-          rooms: const [],
-        );
-      } else if (provider.projectUuid == null) {
-        return JsonImportResult.invalid;
-      }
-
-      if (!await provider.loadExistingRooms(parsed.rooms, parsed.projectName)) {
-        return JsonImportResult.invalid;
+          rooms: parsed.rooms,
+        )) {
+          return JsonImportResult.invalid;
+        }
+      } else {
+        if (provider.projectUuid == null) return JsonImportResult.invalid;
+        if (!await provider.loadExistingRooms(parsed.rooms, parsed.projectName)) {
+          return JsonImportResult.invalid;
+        }
       }
       return JsonImportResult.imported;
     } catch (_) {
