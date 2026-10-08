@@ -41,6 +41,54 @@ void main() {
     expect(disconnected.end.toJson(), feature.end.toJson());
   });
 
+  test('duplicate room IDs disconnect ambiguous shared-opening references', () {
+    final first = room(
+      'duplicate',
+      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+      features: [
+        WallFeature(
+          id: 'opening-a',
+          type: FeatureType.door,
+          start: p(2, 0.5),
+          end: p(2, 1.5),
+          connectedRoomId: 'duplicate',
+          connectionSide: OpeningConnectionSide.right,
+        ),
+      ],
+    );
+    final second = room(
+      'duplicate',
+      [p(2, 0), p(4, 0), p(4, 2), p(2, 2)],
+      features: [
+        WallFeature(
+          id: 'opening-b',
+          type: FeatureType.door,
+          start: p(2, 0.5),
+          end: p(2, 1.5),
+          connectedRoomId: 'duplicate',
+          connectionSide: OpeningConnectionSide.left,
+        ),
+      ],
+    );
+
+    final plan = provider([first, second]);
+    addTearDown(plan.dispose);
+
+    expect(plan.completedRooms, hasLength(2));
+    expect(
+      plan.completedRooms.map((room) => room.id).toSet(),
+      hasLength(2),
+    );
+    expect(
+      plan.completedRooms.every(
+        (room) => room.features.every(
+          (feature) => !feature.isConnected && feature.connectionSide == null,
+        ),
+      ),
+      isTrue,
+    );
+  });
+
   test('failed room deletion preserves room and history', () async {
     final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
     final plan = provider([source]);
