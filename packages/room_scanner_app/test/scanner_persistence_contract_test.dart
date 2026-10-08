@@ -222,6 +222,106 @@ void main() {
     expect(sharedOpening.end.toJson(), sourceOpening.end.toJson());
   });
 
+  test('shared opening removal and undo/redo round-trip through Drift', () async {
+    final database = ArchScanDatabase.inMemory();
+    final repository = DriftProjectRepository(database: database);
+    addTearDown(repository.dispose);
+
+    final provider = FloorPlanProvider()
+      ..loadProject(
+        uuid: 'project-shared-undo',
+        name: 'Shared',
+        rooms: [
+          RoomModel(
+            id: 'room-a',
+            name: 'A',
+            type: RoomType.living,
+            isClosed: true,
+            points: [
+              ARPoint(x: 0, y: 0, z: 0),
+              ARPoint(x: 2, y: 0, z: 0),
+              ARPoint(x: 2, y: 0, z: 2),
+              ARPoint(x: 0, y: 0, z: 2),
+            ],
+            features: [
+              WallFeature(
+                id: 'shared-door',
+                type: FeatureType.door,
+                start: ARPoint(x: 2, y: 0, z: 0.5),
+                end: ARPoint(x: 2, y: 0, z: 1.5),
+                connectedRoomId: 'room-b',
+                connectionSide: OpeningConnectionSide.right,
+              ),
+            ],
+          ),
+          RoomModel(
+            id: 'room-b',
+            name: 'B',
+            type: RoomType.cocina,
+            isClosed: true,
+            points: [
+              ARPoint(x: 2, y: 0, z: 0),
+              ARPoint(x: 4, y: 0, z: 0),
+              ARPoint(x: 4, y: 0, z: 2),
+              ARPoint(x: 2, y: 0, z: 2),
+            ],
+            features: [
+              WallFeature(
+                id: 'shared-door',
+                type: FeatureType.door,
+                start: ARPoint(x: 2, y: 0, z: 0.5),
+                end: ARPoint(x: 2, y: 0, z: 1.5),
+                connectedRoomId: 'room-a',
+                connectionSide: OpeningConnectionSide.left,
+              ),
+            ],
+          ),
+        ],
+      )
+      ..persister = repository.saveProject;
+    addTearDown(provider.dispose);
+
+    // loadProject does not persist when no normalization is required, so seed
+    // the exact initial state in Drift before exercising the edit history.
+    await repository.saveProject(
+      uuid: 'project-shared-undo',
+      name: 'Shared',
+      rooms: provider.completedRooms,
+    );
+
+    expect(await provider.removeOpening('room-a', 'shared-door'), isTrue);
+    expect(
+      (await repository.getRoomsForProject('project-shared-undo'))
+          .every((room) => room.features.isEmpty),
+      isTrue,
+    );
+
+    expect(await provider.undoTransform(), isTrue);
+    final restored = await repository.getRoomsForProject('project-shared-undo');
+    expect(restored, hasLength(2));
+    expect(restored.every((room) => room.features.length == 1), isTrue);
+    expect(
+      restored
+          .singleWhere((room) => room.id == 'room-a')
+          .features
+          .single
+          .connectedRoomId,
+      'room-b',
+    );
+    expect(
+      restored
+          .singleWhere((room) => room.id == 'room-b')
+          .features
+          .single
+          .connectedRoomId,
+      'room-a',
+    );
+
+    expect(await provider.redoTransform(), isTrue);
+    final redone = await repository.getRoomsForProject('project-shared-undo');
+    expect(redone.every((room) => room.features.isEmpty), isTrue);
+  });
+
   test('scanner completion rolls back when Drift persistence fails', () async {
     final room = _room();
     final provider = FloorPlanProvider()
