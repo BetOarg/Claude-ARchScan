@@ -271,6 +271,36 @@ void main() {
     expect(plan.completedRooms, [source]);
   });
 
+  test('new-project import switches state only after successful persistence', () async {
+    final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
+    final imported = room('imported-room', [p(4, 0), p(5, 0), p(5, 1)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    String? savedUuid;
+    String? savedName;
+    List<RoomModel>? savedRooms;
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      savedUuid = uuid;
+      savedName = name;
+      savedRooms = List<RoomModel>.from(rooms);
+    };
+
+    expect(
+      await plan.loadImportedProject(
+        uuid: 'new-project',
+        name: 'Imported',
+        rooms: [imported],
+      ),
+      isTrue,
+    );
+    expect(savedUuid, 'new-project');
+    expect(savedName, 'Imported');
+    expect(savedRooms?.single.id, 'imported-room');
+    expect(plan.projectUuid, 'new-project');
+    expect(plan.projectName, 'Imported');
+    expect(plan.completedRooms, [imported]);
+  });
+
   test('failed new-project import preserves active project and rooms', () async {
     final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
     final plan = provider([source]);
