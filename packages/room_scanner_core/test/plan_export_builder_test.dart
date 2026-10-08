@@ -80,6 +80,42 @@ void main() {
     });
   });
 
+  test('rejects JSON explicitly marked for another application', () {
+    final source = jsonEncode({
+      'application': 'OtherPlanner',
+      'formatVersion': 2,
+      'projectName': 'Foreign',
+      'rooms': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'room',
+          'name': 'Room',
+          'type': 'dormitorio',
+          'points': <dynamic>[],
+          'features': <dynamic>[],
+          'isClosed': false,
+        },
+      ],
+    });
+    expect(PlanExportBuilder.parseProjectJson(source), isNull);
+  });
+
+  test('keeps accepting legacy ARchScan JSON without application marker', () {
+    final source = jsonEncode({
+      'projectName': 'Legacy',
+      'rooms': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'legacy-room',
+          'name': 'Legacy room',
+          'type': 'dormitorio',
+          'points': <dynamic>[],
+          'features': <dynamic>[],
+          'isClosed': false,
+        },
+      ],
+    });
+    expect(PlanExportBuilder.parseProjectJson(source)?.projectName, 'Legacy');
+  });
+
   test('JSON round-trip preserves project and geometry data', () {
     final room = rectangularRoom(
       id: 'round-trip',
