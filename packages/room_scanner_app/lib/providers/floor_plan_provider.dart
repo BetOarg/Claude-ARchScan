@@ -323,6 +323,11 @@ class FloorPlanProvider extends ChangeNotifier {
             connectionSide: null,
           );
         }
+        if (targetId != feature.connectedRoomId) {
+          changed = true;
+          featuresChanged = true;
+          return feature.copyWith(connectedRoomId: targetId);
+        }
         return feature;
       }).toList();
       if (featuresChanged) {
