@@ -181,6 +181,8 @@ void main() {
     expect(plan.completedRooms.single.id, 'b');
     expect(plan.completedRooms.single.points, b.points);
     expect(plan.completedRooms.single.features.single.isConnected, isFalse);
+    expect(plan.completedRooms.single.features.single.connectedRoomId, isNull);
+    expect(plan.completedRooms.single.features.single.connectionSide, isNull);
     expect(await plan.undoTransform(), isTrue);
     expect(plan.completedRooms.map((r) => r.toJson()).toList(), before);
     expect(await plan.redoTransform(), isTrue);
