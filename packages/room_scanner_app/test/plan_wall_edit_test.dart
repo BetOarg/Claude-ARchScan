@@ -231,6 +231,30 @@ void main() {
     expect(plan.completedRooms, [source]);
   });
 
+  test('failed new-project import preserves active project and rooms', () async {
+    final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
+    final plan = provider([source]);
+    addTearDown(plan.dispose);
+    plan.persister = ({required String uuid, required String name, required List<RoomModel> rooms}) async {
+      expect(uuid, 'new-project');
+      expect(name, 'Imported');
+      expect(rooms, isEmpty);
+      throw StateError('Save failed');
+    };
+
+    expect(
+      await plan.loadImportedProject(
+        uuid: 'new-project',
+        name: 'Imported',
+        rooms: const [],
+      ),
+      isFalse,
+    );
+    expect(plan.projectUuid, 'p');
+    expect(plan.projectName, 'Plan');
+    expect(plan.completedRooms, [source]);
+  });
+
   test('failed plan edit restores geometry without adding undo history', () async {
     final source = room('source', [p(0, 0), p(1, 0), p(1, 1), p(0, 1)]);
     final plan = provider([source]);
