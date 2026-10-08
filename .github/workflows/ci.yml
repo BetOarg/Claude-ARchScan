@@ -50,8 +50,8 @@ jobs:
           else
             files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
           fi
-          files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)"
-          
+          files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)
+
           if [ -z "$files" ]; then
             echo "No changed production Dart files to format-check."
             exit 0
@@ -229,7 +229,33 @@ jobs:
 
       - name: Verify Android Release App Bundle
         working-directory: packages/room_scanner_app
-        run: flutter build appbundle --release
+        shell: bash
+        run: |
+          set -o pipefail
+
+          max_attempts=5
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "Android release build attempt $attempt of $max_attempts"
+
+            if flutter build appbundle --release 2>&1 | tee android_release_build.log; then
+              exit 0
+            fi
+
+            if ! grep -Eiq               'Could not resolve all files|Could not resolve all artifacts|Could not find .*org\.jetbrains\.kotlin|Could not parse POM|Temporary failure in name resolution|Connection reset|timed out|timeout|502 Bad Gateway|503 Service Unavailable|429'               android_release_build.log; then
+              echo "Non-transient Android/Gradle build error."
+              exit 1
+            fi
+
+            if [ "$attempt" -eq "$max_attempts" ]; then
+              echo "Android dependencies remained unavailable after $max_attempts attempts."
+              exit 1
+            fi
+
+            wait_seconds=$((attempt * 30))
+            echo "Transient Gradle dependency resolution failure. Retrying in $wait_seconds seconds."
+            sleep "$wait_seconds"
+          done
 
   check-ios:
     name: Verify iOS Build
