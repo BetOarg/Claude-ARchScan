@@ -18,6 +18,29 @@ FloorPlanProvider provider(List<RoomModel> rooms) =>
     FloorPlanProvider()..loadProject(uuid: 'p', name: 'Plan', rooms: rooms);
 
 void main() {
+  test('WallFeature copyWith can explicitly clear shared-opening references', () {
+    final feature = WallFeature(
+      id: 'shared',
+      type: FeatureType.door,
+      start: p(0, 0),
+      end: p(1, 0),
+      connectedRoomId: 'other',
+      connectionSide: OpeningConnectionSide.right,
+    );
+
+    final disconnected = feature.copyWith(
+      connectedRoomId: null,
+      connectionSide: null,
+    );
+
+    expect(disconnected.connectedRoomId, isNull);
+    expect(disconnected.connectionSide, isNull);
+    expect(disconnected.id, feature.id);
+    expect(disconnected.type, feature.type);
+    expect(disconnected.start.toJson(), feature.start.toJson());
+    expect(disconnected.end.toJson(), feature.end.toJson());
+  });
+
   test('failed room deletion preserves room and history', () async {
     final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
     final plan = provider([source]);
