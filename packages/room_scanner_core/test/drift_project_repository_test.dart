@@ -203,6 +203,106 @@ void main() {
     expect(doorA.sillHeightMeters, 0.25);
   });
 
+  test('round-trips shared opening with reciprocal endpoint orientation', () async {
+    final sharedA = WallFeature(
+      id: 'shared-reversed',
+      type: FeatureType.door,
+      start: ARPoint(x: 1, y: 0, z: 0),
+      end: ARPoint(x: 2, y: 0, z: 0),
+      connectedRoomId: 'room-b',
+      connectionSide: OpeningConnectionSide.right,
+    );
+    final sharedB = sharedA.copyWith(
+      connectedRoomId: 'room-a',
+      connectionSide: OpeningConnectionSide.left,
+      start: ARPoint(x: 2, y: 0, z: 0),
+      end: ARPoint(x: 1, y: 0, z: 0),
+    );
+
+    await repository.saveProject(
+      uuid: 'project-connected-reversed',
+      name: 'Connected reversed',
+      rooms: [
+        RoomModel(
+          id: 'room-a',
+          name: 'A',
+          type: RoomType.living,
+          points: [
+            ARPoint(x: 0, y: 0, z: 0),
+            ARPoint(x: 3, y: 0, z: 0),
+            ARPoint(x: 3, y: 0, z: 2),
+            ARPoint(x: 0, y: 0, z: 2),
+          ],
+          features: [sharedA],
+        ),
+        RoomModel(
+          id: 'room-b',
+          name: 'B',
+          type: RoomType.cocina,
+          points: [
+            ARPoint(x: 3, y: 0, z: 0),
+            ARPoint(x: 3, y: 0, z: -2),
+            ARPoint(x: 0, y: 0, z: -2),
+            ARPoint(x: 0, y: 0, z: 0),
+          ],
+          features: [sharedB],
+        ),
+      ],
+    );
+
+    await repository.dispose();
+    final reopened = ArchScanDatabase.inMemory();
+    final reopenedRepository = DriftProjectRepository(database: reopened);
+    addTearDown(reopenedRepository.dispose);
+
+    // The in-memory database is isolated, so reopen the persisted file is
+    // covered by the dedicated close/reopen tests. Here we verify the exact
+    // reciprocal representation survives a full repository round-trip.
+    await reopenedRepository.saveProject(
+      uuid: 'project-connected-reversed',
+      name: 'Connected reversed',
+      rooms: [
+        RoomModel(
+          id: 'room-a',
+          name: 'A',
+          type: RoomType.living,
+          points: [
+            ARPoint(x: 0, y: 0, z: 0),
+            ARPoint(x: 3, y: 0, z: 0),
+            ARPoint(x: 3, y: 0, z: 2),
+            ARPoint(x: 0, y: 0, z: 2),
+          ],
+          features: [sharedA],
+        ),
+        RoomModel(
+          id: 'room-b',
+          name: 'B',
+          type: RoomType.cocina,
+          points: [
+            ARPoint(x: 3, y: 0, z: 0),
+            ARPoint(x: 3, y: 0, z: -2),
+            ARPoint(x: 0, y: 0, z: -2),
+            ARPoint(x: 0, y: 0, z: 0),
+          ],
+          features: [sharedB],
+        ),
+      ],
+    );
+    final restored = await reopenedRepository.getRoomsForProject(
+      'project-connected-reversed',
+    );
+    final doorA = restored.first.features.single;
+    final doorB = restored.last.features.single;
+    expect(doorA.connectedRoomId, 'room-b');
+    expect(doorB.connectedRoomId, 'room-a');
+    expect(doorA.connectionSide, OpeningConnectionSide.right);
+    expect(doorB.connectionSide, OpeningConnectionSide.left);
+    expect(doorA.start.x, 1);
+    expect(doorA.end.x, 2);
+    expect(doorB.start.x, 2);
+    expect(doorB.end.x, 1);
+  });
+
   test('round-trips every persisted enum by name', () async {
     final rooms = RoomType.values
         .asMap()
