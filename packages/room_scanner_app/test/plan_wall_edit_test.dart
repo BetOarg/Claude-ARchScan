@@ -89,6 +89,39 @@ void main() {
     );
   });
 
+  test('duplicate opening IDs are normalized only within each room', () {
+    final sharedA = WallFeature(
+      id: 'shared-opening',
+      type: FeatureType.door,
+      start: p(2, 0.5),
+      end: p(2, 1.5),
+      connectedRoomId: 'room-b',
+      connectionSide: OpeningConnectionSide.right,
+    );
+    final sharedB = sharedA.copyWith(
+      connectedRoomId: 'room-a',
+      connectionSide: OpeningConnectionSide.left,
+      start: p(2, 1.5),
+      end: p(2, 0.5),
+    );
+    final first = room('room-a', [p(0, 0), p(2, 0), p(2, 2)], features: [
+      sharedA,
+      sharedA.copyWith(start: p(1, 0.2), end: p(1, 0.8)),
+    ]);
+    final second = room('room-b', [p(2, 0), p(4, 0), p(4, 2)], features: [
+      sharedB,
+    ]);
+
+    final plan = provider([first, second]);
+    addTearDown(plan.dispose);
+
+    final roomA = plan.completedRooms.firstWhere((room) => room.id == 'room-a');
+    final roomB = plan.completedRooms.firstWhere((room) => room.id == 'room-b');
+    expect(roomA.features.map((feature) => feature.id).toSet(), hasLength(2));
+    expect(roomA.features.first.id, 'shared-opening');
+    expect(roomB.features.single.id, 'shared-opening');
+  });
+
   test('failed room deletion preserves room and history', () async {
     final source = room('source', [p(0, 0), p(1, 0), p(1, 1)]);
     final plan = provider([source]);
