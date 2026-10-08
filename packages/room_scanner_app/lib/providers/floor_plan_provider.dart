@@ -236,12 +236,31 @@ class FloorPlanProvider extends ChangeNotifier {
 
       usedIds.add(id);
 
-      if (id != room.id) {
-        normalized.add(
-          room.copyWith(
-            id: id,
-          ),
+      final usedFeatureIds = <String>{};
+      final normalizedFeatures = <WallFeature>[];
+      for (final feature in room.features) {
+        var featureId = feature.id.trim();
+        if (featureId.isEmpty || usedFeatureIds.contains(featureId)) {
+          featureId = _nextUniqueId();
+          changed = true;
+        }
+        usedFeatureIds.add(featureId);
+        normalizedFeatures.add(
+          featureId == feature.id
+              ? feature
+              : feature.copyWith(id: featureId),
         );
+      }
+
+      final normalizedRoom = room.copyWith(
+        id: id,
+        features: normalizedFeatures,
+      );
+      if (id != room.id ||
+          normalizedFeatures.asMap().entries.any(
+            (entry) => !identical(entry.value, room.features[entry.key]),
+          )) {
+        normalized.add(normalizedRoom);
       } else {
         normalized.add(room);
       }
