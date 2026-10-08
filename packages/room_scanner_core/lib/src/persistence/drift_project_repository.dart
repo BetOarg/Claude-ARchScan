@@ -60,8 +60,13 @@ class DriftProjectRepository implements ProjectRepository {
       return const [];
     }
 
+    // Room/point/feature order is part of the domain contract. SQLite does
+    // not guarantee row order unless it is explicit, while the original
+    // Isar collection order was stable. The auto-increment IDs are assigned
+    // in insertion order, so use them as the persisted sequence here.
     final roomRows = await (_db.select(_db.rooms)
-          ..where((r) => r.projectId.equals(project.id)))
+          ..where((r) => r.projectId.equals(project.id))
+          ..orderBy([(r) => OrderingTerm.asc(r.id)]))
         .get();
 
     if (roomRows.isEmpty) {
@@ -70,10 +75,12 @@ class DriftProjectRepository implements ProjectRepository {
 
     final roomDatabaseIds = roomRows.map((room) => room.id).toList();
     final pointRows = await (_db.select(_db.roomPoints)
-          ..where((p) => p.roomId.isIn(roomDatabaseIds)))
+          ..where((p) => p.roomId.isIn(roomDatabaseIds))
+          ..orderBy([(p) => OrderingTerm.asc(p.id)]))
         .get();
     final featureRows = await (_db.select(_db.wallFeaturesTable)
-          ..where((f) => f.roomId.isIn(roomDatabaseIds)))
+          ..where((f) => f.roomId.isIn(roomDatabaseIds))
+          ..orderBy([(f) => OrderingTerm.asc(f.id)]))
         .get();
 
     final pointsByRoom = <int, List<ARPoint>>{};
