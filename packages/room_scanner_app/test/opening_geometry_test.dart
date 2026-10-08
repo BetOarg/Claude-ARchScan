@@ -117,6 +117,44 @@ void main() {
     }
   });
 
+  test('shared opening geometry preserves each copy endpoint orientation', () async {
+    final shared = opening(id: 'shared', start: 1, end: 2)
+        .copyWith(connectedRoomId: 'room-2');
+    final reversed = shared.copyWith(
+      connectedRoomId: 'room-1',
+      start: point(2, 0),
+      end: point(1, 0),
+    );
+    final other = RoomModel(
+      id: 'room-2', name: 'Other', type: RoomType.living, isClosed: true,
+      points: [point(0, 0), point(0, -3), point(4, -3), point(4, 0)],
+      features: [reversed],
+    );
+    final provider = FloorPlanProvider()..loadProject(
+      uuid: 'p', name: 'Plan', rooms: [roomWithFeatures([shared]), other],
+    );
+    addTearDown(provider.dispose);
+
+    final result = await provider.updateOpeningGeometry(
+      roomId: 'room-1',
+      featureId: 'shared',
+      widthMeters: 0.8,
+      distanceFromWallStartMeters: 2,
+      openingHeightMeters: 2.2,
+      sillHeightMeters: 0.1,
+    );
+
+    expect(result.isSuccess, isTrue);
+    final first = provider.completedRooms[0].features.single;
+    final second = provider.completedRooms[1].features.single;
+    expect(first.start.x, closeTo(2, 1e-6));
+    expect(first.end.x, closeTo(2.8, 1e-6));
+    expect(second.start.x, closeTo(2.8, 1e-6));
+    expect(second.end.x, closeTo(2, 1e-6));
+    expect(second.openingHeightMeters, closeTo(2.2, 1e-6));
+    expect(second.sillHeightMeters, closeTo(0.1, 1e-6));
+  });
+
   test('placement follows a diagonal wall instead of the horizontal axis', () async {
     final provider = FloorPlanProvider()..loadProject(
       uuid: 'p', name: 'Plan', rooms: [RoomModel(
