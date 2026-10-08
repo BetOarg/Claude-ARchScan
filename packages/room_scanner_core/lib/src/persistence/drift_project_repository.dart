@@ -274,6 +274,88 @@ class DriftProjectRepository implements ProjectRepository {
     });
   }
 
+  /// Test hook used to prove transaction rollback without exposing
+  /// database internals to production callers.
+  Future<void> saveProjectForTestWithFailure({
+    required String uuid,
+    required String name,
+    required List<RoomModel> rooms,
+  }) async {
+    await _db.transaction(() async {
+      final existing = await (_db.select(_db.projects)
+            ..where((p) => p.uuid.equals(uuid)))
+          .getSingleOrNull();
+      final now = DateTime.now().toUtc();
+
+      late final int projectId;
+      if (existing == null) {
+        projectId = await _db.into(_db.projects).insert(
+              ProjectsCompanion(
+                uuid: Value(uuid),
+                name: Value(name),
+                createdAt: Value(now),
+                updatedAt: Value(now),
+              ),
+            );
+      } else {
+        await (_db.update(_db.projects)
+              ..where((p) => p.id.equals(existing.id)))
+            .write(
+          ProjectsCompanion(
+            name: Value(name),
+            updatedAt: Value(now),
+          ),
+        );
+        projectId = existing.id;
+      }
+
+      final oldRooms = await (_db.select(_db.rooms)
+            ..where((r) => r.projectId.equals(projectId)))
+          .get();
+      final oldRoomIds = oldRooms.map((room) => room.id).toList();
+      if (oldRoomIds.isNotEmpty) {
+        await (_db.delete(_db.wallFeaturesTable)
+              ..where((f) => f.roomId.isIn(oldRoomIds)))
+            .go();
+        await (_db.delete(_db.roomPoints)
+              ..where((point) => point.roomId.isIn(oldRoomIds)))
+            .go();
+        await (_db.delete(_db.rooms)
+              ..where((room) => room.id.isIn(oldRoomIds)))
+            .go();
+      }
+
+      for (final room in rooms) {
+        final roomDbId = await _db.into(_db.rooms).insert(
+              RoomsCompanion.insert(
+                projectId: projectId,
+                roomId: room.id,
+                name: room.name,
+                type: room.type.name,
+                isClosed: Value(room.isClosed),
+              ),
+            );
+        await _db.batch((batch) {
+          batch.insertAll(
+            _db.roomPoints,
+            room.points
+                .map(
+                  (point) => RoomPointsCompanion.insert(
+                    roomId: roomDbId,
+                    x: point.x,
+                    y: point.y,
+                    z: point.z,
+                  ),
+                )
+                .toList(),
+          );
+        });
+      }
+
+      throw StateError('Intentional rollback test failure');
+    });
+  }
+
   @override
   Future<void> deleteProject(String uuid) async {
     await _db.transaction(() async {
