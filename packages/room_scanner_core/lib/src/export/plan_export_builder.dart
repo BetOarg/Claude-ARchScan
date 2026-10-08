@@ -82,6 +82,12 @@ class PlanExportBuilder {
     try {
       final decoded = jsonDecode(source);
       if (decoded is! Map<String, dynamic>) return null;
+      // Preserve compatibility with older ARchScan backups that predate the
+      // application marker, but reject explicitly foreign-format JSON files.
+      for (final marker in ['application', 'generator']) {
+        final value = decoded[marker];
+        if (value != null && value != 'ARchScan') return null;
+      }
       final formatVersion = decoded['formatVersion'];
       if (formatVersion != null &&
           (formatVersion is! num ||
