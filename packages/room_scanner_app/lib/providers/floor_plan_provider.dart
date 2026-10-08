@@ -2938,8 +2938,17 @@ class FloorPlanProvider extends ChangeNotifier {
         features.add(created);
       } else {
         final at = features.indexWhere((f) => f.id == featureId);
-        features[at] = features[at].copyWith(
-          start: start, end: end, openingHeightMeters: openingHeightMeters,
+        final candidate = features[at];
+        final direct = PlanEditGeometry.distance(candidate.start, original!.start) +
+            PlanEditGeometry.distance(candidate.end, original.end);
+        final reversedDirection =
+            PlanEditGeometry.distance(candidate.start, original.end) +
+                PlanEditGeometry.distance(candidate.end, original.start);
+        final preservesDirection = direct <= reversedDirection;
+        features[at] = candidate.copyWith(
+          start: preservesDirection ? start : end,
+          end: preservesDirection ? end : start,
+          openingHeightMeters: openingHeightMeters,
           sillHeightMeters: sillHeightMeters,
         );
       }
