@@ -142,13 +142,15 @@ class WallFeature {
   bool get isConnected =>
       connectedRoomId != null && connectedRoomId!.trim().isNotEmpty;
 
+  static const Object _copyWithUnset = Object();
+
   WallFeature copyWith({
     String? id,
     FeatureType? type,
     ARPoint? start,
     ARPoint? end,
-    String? connectedRoomId,
-    OpeningConnectionSide? connectionSide,
+    Object? connectedRoomId = _copyWithUnset,
+    Object? connectionSide = _copyWithUnset,
     DoorHingeSide? doorHingeSide,
     DoorSwingSide? doorSwingSide,
     DoorOpeningDirection? doorOpeningDirection,
@@ -160,8 +162,12 @@ class WallFeature {
       type: type ?? this.type,
       start: start ?? this.start,
       end: end ?? this.end,
-      connectedRoomId: connectedRoomId ?? this.connectedRoomId,
-      connectionSide: connectionSide ?? this.connectionSide,
+      connectedRoomId: identical(connectedRoomId, _copyWithUnset)
+          ? this.connectedRoomId
+          : connectedRoomId as String?,
+      connectionSide: identical(connectionSide, _copyWithUnset)
+          ? this.connectionSide
+          : connectionSide as OpeningConnectionSide?,
       doorHingeSide: doorHingeSide ?? this.doorHingeSide,
       doorSwingSide: doorSwingSide ?? this.doorSwingSide,
       doorOpeningDirection: doorOpeningDirection ?? this.doorOpeningDirection,
