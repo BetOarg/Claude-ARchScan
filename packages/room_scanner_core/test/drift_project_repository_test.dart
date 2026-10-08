@@ -615,4 +615,82 @@ void main() {
   });
 
 
+
+  test('preserves room, point and feature insertion order after reopen', () async {
+    final directory =
+        await Directory.systemTemp.createTemp('archscan-drift-order-');
+    final firstRepository = DriftProjectRepository();
+
+    final roomA = RoomModel(
+      id: 'room-a',
+      name: 'A',
+      type: RoomType.living,
+      points: [
+        ARPoint(x: 10, y: 0, z: 10),
+        ARPoint(x: 20, y: 0, z: 10),
+        ARPoint(x: 20, y: 0, z: 20),
+        ARPoint(x: 10, y: 0, z: 20),
+      ],
+      features: [
+        WallFeature(
+          id: 'feature-a-1',
+          type: FeatureType.window,
+          start: ARPoint(x: 11, y: 0, z: 10),
+          end: ARPoint(x: 12, y: 0, z: 10),
+        ),
+        WallFeature(
+          id: 'feature-a-2',
+          type: FeatureType.door,
+          start: ARPoint(x: 13, y: 0, z: 10),
+          end: ARPoint(x: 14, y: 0, z: 10),
+        ),
+      ],
+    );
+    final roomB = RoomModel(
+      id: 'room-b',
+      name: 'B',
+      type: RoomType.cocina,
+      points: [
+        ARPoint(x: 30, y: 0, z: 30),
+        ARPoint(x: 40, y: 0, z: 30),
+        ARPoint(x: 40, y: 0, z: 40),
+      ],
+    );
+
+    try {
+      await firstRepository.init(directoryPath: directory.path);
+      await firstRepository.saveProject(
+        uuid: 'project-order',
+        name: 'Order',
+        rooms: [roomA, roomB],
+      );
+      await firstRepository.dispose();
+
+      final secondRepository = DriftProjectRepository();
+      try {
+        await secondRepository.init(directoryPath: directory.path);
+        final restored =
+            await secondRepository.getRoomsForProject('project-order');
+
+        expect(restored.map((room) => room.id), ['room-a', 'room-b']);
+        expect(
+          restored.first.points.map((point) => point.toJson()),
+          roomA.points.map((point) => point.toJson()),
+        );
+        expect(
+          restored.first.features.map((feature) => feature.id),
+          ['feature-a-1', 'feature-a-2'],
+        );
+        expect(
+          restored.last.points.map((point) => point.toJson()),
+          roomB.points.map((point) => point.toJson()),
+        );
+      } finally {
+        await secondRepository.dispose();
+      }
+    } finally {
+      await directory.delete(recursive: true);
+    }
+  });
+
 }
