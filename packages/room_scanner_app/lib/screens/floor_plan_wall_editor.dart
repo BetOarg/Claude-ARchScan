@@ -392,11 +392,13 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
         : PlanEditGeometry.moveWall(room, hit.index, dx, dz);
     if (hit.corner) {
       final old = points[hit.index];
-      // Wall editing disables InteractiveViewer pan/zoom, so the 16 px
-      // touch target is converted only through the plan's geometry scale.
-      // Including _planViewport here made the magnetic radius shrink/grow
-      // with a stale navigation zoom value and broke wall-to-wall snapping.
-      final radius = 16.0 / _scale;
+      // Wall editing disables InteractiveViewer pan/zoom. Convert the
+      // 16 px touch target through the plan's own scene transform, without
+      // including the navigation controller's potentially stale zoom.
+      final radius = PlanEditGeometry.distance(
+        _inverseTransform(Offset.zero),
+        _inverseTransform(const Offset(16, 0)),
+      );
       points[hit.index] = PlanEditGeometry.snapPoint(
         ARPoint(x: old.x + dx, y: old.y, z: old.z + dz),
         _plan.completedRooms.where((r) => r.id != room.id),
