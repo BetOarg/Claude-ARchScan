@@ -112,8 +112,10 @@ class FloorPlanProvider extends ChangeNotifier {
         final owner = parts.where((r) => r.features.any((e) => e.id == f.id)).firstOrNull;
         if (owner != null) return f.copyWith(connectedRoomId: owner.id);
         // Its wall still exists in the neighbour: keep that opening, disconnected.
-        final json = f.toJson()..remove('connectedRoomId')..remove('connectionSide');
-        return WallFeature.fromJson(json);
+        return f.copyWith(
+          connectedRoomId: null,
+          connectionSide: null,
+        );
       }).toList();
       proposed.add(room.copyWith(features: features));
     }
