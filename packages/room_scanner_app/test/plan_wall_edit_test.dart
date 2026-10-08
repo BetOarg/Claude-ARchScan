@@ -89,6 +89,46 @@ void main() {
     );
   });
 
+  test('orphaned shared-opening references are disconnected', () {
+    final roomA = room(
+      'room-a',
+      [p(0, 0), p(2, 0), p(2, 2)],
+      features: [
+        WallFeature(
+          id: 'missing-target',
+          type: FeatureType.door,
+          start: p(2, 0.5),
+          end: p(2, 1.5),
+          connectedRoomId: 'deleted-room',
+          connectionSide: OpeningConnectionSide.right,
+        ),
+        WallFeature(
+          id: 'self-target',
+          type: FeatureType.window,
+          start: p(0.5, 0),
+          end: p(1.5, 0),
+          connectedRoomId: 'room-a',
+          connectionSide: OpeningConnectionSide.left,
+        ),
+        WallFeature(
+          id: 'side-only',
+          type: FeatureType.window,
+          start: p(0.5, 2),
+          end: p(1.5, 2),
+          connectionSide: OpeningConnectionSide.left,
+        ),
+      ],
+    );
+    final plan = provider([roomA]);
+    addTearDown(plan.dispose);
+
+    for (final feature in plan.completedRooms.single.features) {
+      expect(feature.connectedRoomId, isNull);
+      expect(feature.connectionSide, isNull);
+      expect(feature.isConnected, isFalse);
+    }
+  });
+
   test('duplicate opening IDs are normalized only within each room', () {
     final sharedA = WallFeature(
       id: 'shared-opening',
