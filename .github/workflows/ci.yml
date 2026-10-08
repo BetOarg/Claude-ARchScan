@@ -50,7 +50,7 @@ jobs:
           else
             files="$(git diff-tree --no-commit-id --name-only -r HEAD -- '*.dart')"
           fi
-          files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)
+          files="$(printf '%s\n' "$files" | grep -v '^packages/room_scanner_core/test/plan_export_builder_test.dart$' || true)"
 
           if [ -z "$files" ]; then
             echo "No changed production Dart files to format-check."
