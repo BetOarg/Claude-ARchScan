@@ -114,11 +114,14 @@ void main() {
       openingHeightMeters: 2.1, sillHeightMeters: 0,
     );
     expect(moved.isSuccess, isTrue);
-    for (final room in provider.completedRooms) {
-      expect(room.features.single.start.x, 2);
-      expect(room.features.single.end.x, 3);
-      expect(room.features.single.isConnected, isTrue);
-    }
+    final first = provider.completedRooms[0].features.single;
+    final second = provider.completedRooms[1].features.single;
+    expect(first.start.x, 2);
+    expect(first.end.x, 3);
+    expect(second.start.x, 3);
+    expect(second.end.x, 2);
+    expect(first.isConnected, isTrue);
+    expect(second.isConnected, isTrue);
   });
 
   test('shared opening geometry preserves each copy endpoint orientation', () async {
