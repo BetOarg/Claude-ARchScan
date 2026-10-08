@@ -79,6 +79,74 @@ void main() {
     );
   });
 
+  test('rolls back a project replacement when a child insert fails', () async {
+    final originalRoom = RoomModel(
+      id: 'room-original',
+      name: 'Original room',
+      type: RoomType.living,
+      points: [
+        ARPoint(x: 1, y: 0, z: 1),
+        ARPoint(x: 2, y: 0, z: 1),
+      ],
+      features: [
+        WallFeature(
+          id: 'original-window',
+          type: FeatureType.window,
+          start: ARPoint(x: 1, y: 0, z: 1),
+          end: ARPoint(x: 2, y: 0, z: 1),
+        ),
+      ],
+    );
+
+    await repository.saveProject(
+      uuid: 'project-rollback',
+      name: 'Original project',
+      rooms: [originalRoom],
+    );
+
+    await database.customStatement('''
+      CREATE TRIGGER fail_feature_insert
+      BEFORE INSERT ON wall_features_table
+      BEGIN
+        SELECT RAISE(ABORT, 'forced feature insert failure');
+      END;
+    ''');
+
+    final replacementRoom = RoomModel(
+      id: 'room-replacement',
+      name: 'Replacement room',
+      type: RoomType.cocina,
+      points: [ARPoint(x: 9, y: 0, z: 9)],
+      features: [
+        WallFeature(
+          id: 'replacement-door',
+          type: FeatureType.door,
+          start: ARPoint(x: 9, y: 0, z: 9),
+          end: ARPoint(x: 10, y: 0, z: 9),
+        ),
+      ],
+    );
+
+    await expectLater(
+      repository.saveProject(
+        uuid: 'project-rollback',
+        name: 'Replacement project',
+        rooms: [replacementRoom],
+      ),
+      throwsA(anything),
+    );
+
+    final projects = await repository.getAllProjects();
+    final restored = await repository.getRoomsForProject('project-rollback');
+
+    expect(projects, hasLength(1));
+    expect(projects.single.name, 'Original project');
+    expect(restored, hasLength(1));
+    expect(restored.single.id, 'room-original');
+    expect(restored.single.points.map((point) => point.x), [1, 2]);
+    expect(restored.single.features.single.id, 'original-window');
+  });
+
   test('round-trips complete door metadata and opening dimensions', () async {
     final door = WallFeature(
       id: 'door-complete',
