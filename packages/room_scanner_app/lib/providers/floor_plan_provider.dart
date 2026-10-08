@@ -870,6 +870,30 @@ class FloorPlanProvider extends ChangeNotifier {
     );
   }
 
+  /// Persists an imported project before switching the active in-memory project.
+  /// If persistence fails, the currently open project remains untouched.
+  Future<bool> loadImportedProject({
+    required String uuid,
+    required String name,
+    required List<RoomModel> rooms,
+  }) async {
+    final normalized = _normalizeRoomIds(rooms);
+    final candidate = List<RoomModel>.unmodifiable(normalized.rooms);
+    if (!await _persistSnapshot(uuid: uuid, name: name, rooms: candidate)) {
+      return false;
+    }
+
+    _projectUuid = uuid;
+    _projectName = name;
+    _completedRooms
+      ..clear()
+      ..addAll(candidate);
+    _clearTransformHistory();
+    _clearTouchTransformState();
+    notifyListeners();
+    return true;
+  }
+
   Future<bool> loadExistingRooms(
     List<RoomModel> rooms,
     String projectName,
