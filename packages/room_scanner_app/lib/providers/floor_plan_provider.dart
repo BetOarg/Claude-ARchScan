@@ -864,7 +864,10 @@ class FloorPlanProvider extends ChangeNotifier {
       final room = _completedRooms[i];
       _completedRooms[i] = room.copyWith(features: room.features.map((f) {
         if (f.connectedRoomId != roomId) return f;
-        return WallFeature.fromJson(f.toJson()..remove('connectedRoomId')..remove('connectionSide'));
+        return f.copyWith(
+          connectedRoomId: null,
+          connectionSide: null,
+        );
       }).toList());
     }
     return _saveTransform(before);
