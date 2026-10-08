@@ -91,7 +91,11 @@ void main() {
     final other = RoomModel(
       id: 'room-2', name: 'Other', type: RoomType.living, isClosed: true,
       points: [point(0, 0), point(0, -3), point(4, -3), point(4, 0)],
-      features: [shared.copyWith(connectedRoomId: 'room-1')],
+      features: [shared.copyWith(
+        connectedRoomId: 'room-1',
+        start: point(2, 0),
+        end: point(1, 0),
+      )],
     );
     final provider = FloorPlanProvider()..loadProject(
       uuid: 'p', name: 'Plan', rooms: [roomWithFeatures([shared]), other],
