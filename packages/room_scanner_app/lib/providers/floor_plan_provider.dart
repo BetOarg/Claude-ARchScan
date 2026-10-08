@@ -301,6 +301,35 @@ class FloorPlanProvider extends ChangeNotifier {
       }
     }
 
+    // Shared-opening references are domain-level links rather than SQL
+    // foreign keys. Imports and legacy snapshots can therefore contain stale
+    // room IDs; clear those links instead of leaving phantom connections.
+    final validRoomIds = normalized.map((room) => room.id).toSet();
+    for (var i = 0; i < normalized.length; i++) {
+      final room = normalized[i];
+      var featuresChanged = false;
+      final features = room.features.map((feature) {
+        final targetId = feature.connectedRoomId?.trim();
+        final invalidTarget = targetId != null &&
+            (targetId.isEmpty ||
+                targetId == room.id ||
+                !validRoomIds.contains(targetId));
+        final orphanedSide = targetId == null && feature.connectionSide != null;
+        if (invalidTarget || orphanedSide) {
+          changed = true;
+          featuresChanged = true;
+          return feature.copyWith(
+            connectedRoomId: null,
+            connectionSide: null,
+          );
+        }
+        return feature;
+      }).toList();
+      if (featuresChanged) {
+        normalized[i] = room.copyWith(features: features);
+      }
+    }
+
     return _RoomNormalizationResult(
       rooms: normalized,
       changed: changed,
