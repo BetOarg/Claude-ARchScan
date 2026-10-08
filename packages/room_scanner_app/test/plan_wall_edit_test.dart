@@ -473,10 +473,11 @@ void main() {
         end: p(2, 0),
         connectedRoomId: 'other');
     final plan = provider([
-      room('r', [p(0, 0), p(4, 0), p(4, 3), p(0, 3)], features: [d])
+      room('r', [p(0, 0), p(4, 0), p(4, 3), p(0, 3)], features: [d]),
+      room('other', [p(10, 0), p(12, 0), p(12, 3), p(10, 3)]),
     ]);
     addTearDown(plan.dispose);
-    final original = plan.completedRooms.single;
+    final original = plan.completedRooms.firstWhere((room) => room.id == 'r');
     expect(
         plan
             .previewGeometry(
