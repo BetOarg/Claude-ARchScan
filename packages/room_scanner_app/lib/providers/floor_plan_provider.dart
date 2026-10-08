@@ -247,6 +247,41 @@ class FloorPlanProvider extends ChangeNotifier {
       }
     }
 
+    // A duplicated room ID is ambiguous for every connected opening that
+    // references that ID. There is no safe way to infer which duplicate was
+    // intended, so disconnect those references rather than silently pointing
+    // an opening at the wrong room.
+    if (usedIds.length != rooms.map((room) => room.id.trim()).where((id) => id.isNotEmpty).toSet().length) {
+      final originalCounts = <String, int>{};
+      for (final room in rooms) {
+        final id = room.id.trim();
+        if (id.isNotEmpty) {
+          originalCounts[id] = (originalCounts[id] ?? 0) + 1;
+        }
+      }
+      final ambiguousIds = originalCounts.entries
+          .where((entry) => entry.value > 1)
+          .map((entry) => entry.key)
+          .toSet();
+      if (ambiguousIds.isNotEmpty) {
+        for (var i = 0; i < normalized.length; i++) {
+          final room = normalized[i];
+          final features = room.features.map((feature) {
+            if (feature.connectedRoomId != null &&
+                ambiguousIds.contains(feature.connectedRoomId!.trim())) {
+              changed = true;
+              return feature.copyWith(
+                connectedRoomId: null,
+                connectionSide: null,
+              );
+            }
+            return feature;
+          }).toList();
+          normalized[i] = room.copyWith(features: features);
+        }
+      }
+    }
+
     return _RoomNormalizationResult(
       rooms: normalized,
       changed: changed,
