@@ -2724,11 +2724,13 @@ class FloorPlanProvider extends ChangeNotifier {
       );
       if (candidateFeatureIndex == -1) continue;
 
+      final candidateFeature = candidateRoom.features[candidateFeatureIndex];
+      final candidatePreservesDirection =
+          _sameEndpointDirection(candidateFeature, feature);
       final features = List<WallFeature>.from(candidateRoom.features);
-      features[candidateFeatureIndex] =
-          features[candidateFeatureIndex].copyWith(
-        start: updatedStart,
-        end: updatedEnd,
+      features[candidateFeatureIndex] = candidateFeature.copyWith(
+        start: candidatePreservesDirection ? updatedStart : updatedEnd,
+        end: candidatePreservesDirection ? updatedEnd : updatedStart,
         openingHeightMeters: openingHeightMeters,
         sillHeightMeters: sillHeightMeters,
       );
@@ -2771,6 +2773,14 @@ class FloorPlanProvider extends ChangeNotifier {
       );
     }
     return const OpeningGeometryUpdateResult.success();
+  }
+
+  bool _sameEndpointDirection(WallFeature candidate, WallFeature source) {
+    final direct = PlanEditGeometry.distance(candidate.start, source.start) +
+        PlanEditGeometry.distance(candidate.end, source.end);
+    final reversed = PlanEditGeometry.distance(candidate.start, source.end) +
+        PlanEditGeometry.distance(candidate.end, source.start);
+    return direct <= reversed;
   }
 
   _WallProjection? _nearestWallProjection(
