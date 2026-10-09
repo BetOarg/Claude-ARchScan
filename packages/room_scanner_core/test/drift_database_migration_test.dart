@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:test/test.dart';
 
-import '../lib/src/persistence/drift_database.dart';
+import 'package:room_scanner_core/src/persistence/drift_database.dart';
 
 void main() {
   test('fresh database exposes schema version 1 and all tables', () async {
