@@ -337,6 +337,40 @@ void main() {
     expect(plan.completedRooms, [source]);
     expect(plan.canUndoTransform, isFalse);
   });
+  test('removing an unknown room is a no-op and does not create undo history', () async {
+    final opening = WallFeature(
+      id: 'shared',
+      type: FeatureType.door,
+      start: p(2, 0.5),
+      end: p(2, 1.5),
+      connectedRoomId: 'b',
+      connectionSide: OpeningConnectionSide.right,
+    );
+    final a = room(
+      'a',
+      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+      features: [opening],
+    );
+    final b = room(
+      'b',
+      [p(2, 0), p(4, 0), p(4, 2), p(2, 2)],
+      features: [
+        opening.copyWith(
+          connectedRoomId: 'a',
+          connectionSide: OpeningConnectionSide.left,
+        ),
+      ],
+    );
+    final plan = provider([a, b]);
+    addTearDown(plan.dispose);
+    final before = plan.completedRooms.map((r) => r.toJson()).toList();
+
+    expect(await plan.removeRoom('missing-room'), isFalse);
+    expect(plan.completedRooms.map((r) => r.toJson()).toList(), before);
+    expect(plan.canUndoTransform, isFalse);
+    expect(plan.canRedoTransform, isFalse);
+  });
+
   test(
       'delete complete room preserves neighbour and restores connections with undo',
       () async {
