@@ -1,8 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:room_scanner_ar/providers/project_provider.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   test('ProjectProvider persists and reloads through its injected Drift repository',
       () async {
     final database = ArchScanDatabase.inMemory();
