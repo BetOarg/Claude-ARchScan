@@ -187,6 +187,23 @@ class ScanDraftService {
     });
   }
 
+  /// Removes drafts whose project UUID is no longer present in the database.
+  /// Preferences unrelated to scan drafts and drafts for valid projects are untouched.
+  Future<void> clearOrphanedDrafts(Set<String> validProjectUuids) {
+    return _serialize(() async {
+      final preferences = await SharedPreferences.getInstance();
+      final orphanedKeys = preferences.getKeys().where((key) {
+        if (!key.startsWith(_keyPrefix)) return false;
+        final projectUuid = key.substring(_keyPrefix.length);
+        return !validProjectUuids.contains(projectUuid);
+      }).toList(growable: false);
+
+      for (final key in orphanedKeys) {
+        await preferences.remove(key);
+      }
+    });
+  }
+
   Future<void> clearAll() async {
     return _serialize(() async {
     final preferences = await SharedPreferences.getInstance();
