@@ -38,9 +38,15 @@ class ProjectProvider with ChangeNotifier {
       final dir = await getApplicationDocumentsDirectory();
       await _repository.init(directoryPath: dir.path);
       await loadProjects();
-      await const ScanDraftService().clearOrphanedDrafts(
-        _projects.map((project) => project.uuid).toSet(),
-      );
+      // Draft cleanup is maintenance: a preferences failure must not prevent
+      // the user from opening projects already persisted in SQLite.
+      try {
+        await const ScanDraftService().clearOrphanedDrafts(
+          _projects.map((project) => project.uuid).toSet(),
+        );
+      } catch (_) {
+        // A later startup can retry cleanup; project data remains available.
+      }
     } finally {
       _setLoading(false);
     }
@@ -154,14 +160,20 @@ class ProjectProvider with ChangeNotifier {
       try {
         await _repository.deleteProject(uuid);
         repositoryDeleted = true;
-        await const ScanDraftService().clear(
-          uuid,
-          permanentlyDeleted: true,
-        );
-        if (_currentProject?.uuid == uuid) {
-          _currentProject = null;
+        try {
+          await const ScanDraftService().clear(
+            uuid,
+            permanentlyDeleted: true,
+          );
+        } finally {
+          // SQLite deletion has already committed. Refresh visible state even
+          // if clearing the separate preferences-backed draft fails; startup
+          // orphan cleanup can retry removing that draft later.
+          if (_currentProject?.uuid == uuid) {
+            _currentProject = null;
+          }
+          await loadProjects();
         }
-        await loadProjects();
       } finally {
         if (!repositoryDeleted) {
           _deletedIds.remove(uuid);
