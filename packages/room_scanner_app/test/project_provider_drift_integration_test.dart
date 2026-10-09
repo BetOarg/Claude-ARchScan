@@ -44,5 +44,12 @@ void main() {
       (await repository.getRoomsForProject('project-1')).single.toJson(),
       room.toJson(),
     );
+
+    await provider.deleteProject('project-1');
+
+    expect(provider.projects, isEmpty);
+    expect(provider.currentProject, isNull);
+    expect(await repository.getAllProjects(), isEmpty);
+    expect(await repository.getRoomsForProject('project-1'), isEmpty);
   });
 }
