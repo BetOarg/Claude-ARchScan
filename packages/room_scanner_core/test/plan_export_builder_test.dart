@@ -99,6 +99,45 @@ void main() {
     expect(PlanExportBuilder.parseProjectJson(source), isNull);
   });
 
+  test('rejects explicit unknown enum values without remapping the plan', () {
+    final roomWithUnknownType = jsonEncode({
+      'projectName': 'Unknown room type',
+      'rooms': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'room-unknown',
+          'name': 'Room',
+          'type': 'future_room_type',
+          'points': <dynamic>[],
+          'features': <dynamic>[],
+          'isClosed': false,
+        },
+      ],
+    });
+    final roomWithUnknownFeature = jsonEncode({
+      'projectName': 'Unknown feature type',
+      'rooms': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'room',
+          'name': 'Room',
+          'type': 'living',
+          'points': <dynamic>[],
+          'features': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'feature',
+              'type': 'future_feature_type',
+              'start': <String, dynamic>{'x': 0, 'y': 0, 'z': 0},
+              'end': <String, dynamic>{'x': 1, 'y': 0, 'z': 0},
+            },
+          ],
+          'isClosed': false,
+        },
+      ],
+    });
+
+    expect(PlanExportBuilder.parseProjectJson(roomWithUnknownType), isNull);
+    expect(PlanExportBuilder.parseProjectJson(roomWithUnknownFeature), isNull);
+  });
+
   test('keeps accepting legacy ARchScan JSON without application marker', () {
     final source = jsonEncode({
       'projectName': 'Legacy',
