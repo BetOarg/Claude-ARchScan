@@ -95,9 +95,10 @@ class DriftProjectRepository implements ProjectRepository {
       (featuresByRoom[feature.roomId] ??= []).add(
         WallFeature(
           id: feature.featureId,
-          type: FeatureType.values.firstWhere(
-            (value) => value.name == feature.type,
-            orElse: () => FeatureType.door,
+          type: _parsePersistedEnum(
+            FeatureType.values,
+            feature.type,
+            'wall_features_table.type',
           ),
           start: ARPoint(
             x: feature.startX,
@@ -111,17 +112,20 @@ class DriftProjectRepository implements ProjectRepository {
             y: feature.endY,
             z: feature.endZ,
           ),
-          doorHingeSide: DoorHingeSide.values.firstWhere(
-            (value) => value.name == feature.hingeSide,
-            orElse: () => DoorHingeSide.start,
+          doorHingeSide: _parsePersistedEnum(
+            DoorHingeSide.values,
+            feature.hingeSide,
+            'wall_features_table.hinge_side',
           ),
-          doorSwingSide: DoorSwingSide.values.firstWhere(
-            (value) => value.name == feature.swingSide,
-            orElse: () => DoorSwingSide.left,
+          doorSwingSide: _parsePersistedEnum(
+            DoorSwingSide.values,
+            feature.swingSide,
+            'wall_features_table.swing_side',
           ),
-          doorOpeningDirection: DoorOpeningDirection.values.firstWhere(
-            (value) => value.name == feature.openingDirection,
-            orElse: () => DoorOpeningDirection.interior,
+          doorOpeningDirection: _parsePersistedEnum(
+            DoorOpeningDirection.values,
+            feature.openingDirection,
+            'wall_features_table.opening_direction',
           ),
           openingHeightMeters: feature.openingHeight,
           sillHeightMeters: feature.sillHeight,
@@ -134,9 +138,10 @@ class DriftProjectRepository implements ProjectRepository {
           (room) => RoomModel(
             id: room.roomId,
             name: room.name,
-            type: RoomType.values.firstWhere(
-              (value) => value.name == room.type,
-              orElse: () => RoomType.living,
+            type: _parsePersistedEnum(
+              RoomType.values,
+              room.type,
+              'rooms.type',
             ),
             points: List<ARPoint>.unmodifiable(
               pointsByRoom[room.id] ?? const [],
@@ -313,8 +318,25 @@ OpeningConnectionSide? _parseConnectionSide(String? value) {
   if (value == null) {
     return null;
   }
-  return OpeningConnectionSide.values.firstWhere(
-    (entry) => entry.name == value,
-    orElse: () => OpeningConnectionSide.left,
+  return _parsePersistedEnum(
+    OpeningConnectionSide.values,
+    value,
+    'wall_features_table.connection_side',
+  );
+}
+
+T _parsePersistedEnum<T extends Enum>(
+  List<T> values,
+  String? value,
+  String field,
+) {
+  for (final candidate in values) {
+    if (candidate.name == value) {
+      return candidate;
+    }
+  }
+
+  throw StateError(
+    'Unknown persisted enum value "$value" for $field.',
   );
 }
