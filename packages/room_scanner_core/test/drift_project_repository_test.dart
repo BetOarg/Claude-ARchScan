@@ -414,6 +414,68 @@ void main() {
     );
   });
 
+  test('rejects unknown persisted enum values instead of remapping data', () async {
+    await repository.saveProject(
+      uuid: 'project-invalid-enum',
+      name: 'Enum validation',
+      rooms: [
+        RoomModel(
+          id: 'room-enum-validation',
+          name: 'Room',
+          type: RoomType.living,
+          points: [ARPoint(x: 0, y: 0, z: 0)],
+          features: [
+            WallFeature(
+              id: 'door-enum-validation',
+              type: FeatureType.door,
+              start: ARPoint(x: 0, y: 0, z: 0),
+              end: ARPoint(x: 1, y: 0, z: 0),
+              connectionSide: OpeningConnectionSide.left,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await database.customStatement(
+      "UPDATE rooms SET type = 'future_room_type'",
+    );
+    await expectLater(
+      repository.getRoomsForProject('project-invalid-enum'),
+      throwsA(isA<StateError>()),
+    );
+    await database.customStatement("UPDATE rooms SET type = 'living'");
+
+    final invalidFeatureColumns = <String, String>{
+      'type': 'future_feature_type',
+      'hinge_side': 'future_hinge_side',
+      'swing_side': 'future_swing_side',
+      'opening_direction': 'future_opening_direction',
+      'connection_side': 'future_connection_side',
+    };
+    for (final entry in invalidFeatureColumns.entries) {
+      await database.customStatement(
+        "UPDATE wall_features_table SET ${entry.key} = '${entry.value}'",
+      );
+      await expectLater(
+        repository.getRoomsForProject('project-invalid-enum'),
+        throwsA(isA<StateError>()),
+        reason: 'Unknown ${entry.key} must not silently change saved data',
+      );
+      final validValue = switch (entry.key) {
+        'type' => 'door',
+        'hinge_side' => 'start',
+        'swing_side' => 'left',
+        'opening_direction' => 'interior',
+        'connection_side' => 'left',
+        _ => throw StateError('Unexpected test column ${entry.key}'),
+      };
+      await database.customStatement(
+        "UPDATE wall_features_table SET ${entry.key} = '$validValue'",
+      );
+    }
+  });
+
   test('replacing a project does not duplicate rooms, points or features', () async {
     final initial = RoomModel(
       id: 'room-1',
