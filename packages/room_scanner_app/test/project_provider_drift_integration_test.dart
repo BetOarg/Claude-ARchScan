@@ -58,5 +58,27 @@ void main() {
     expect(provider.currentProject, isNull);
     expect(await repository.getAllProjects(), isEmpty);
     expect(await repository.getRoomsForProject('project-1'), isEmpty);
+
+    // Simulate a repository write that has not yet appeared in the provider's
+    // in-memory list. "Delete all" must use the authoritative persisted state.
+    await provider.saveCurrentProject(
+      uuid: 'project-2',
+      name: 'Casa dos',
+      rooms: [room],
+    );
+    await provider.selectProject(provider.projects.single);
+    await repository.saveProject(
+      uuid: 'project-3',
+      name: 'Casa externa',
+      rooms: [room],
+    );
+
+    await provider.deleteAllLocalProjects();
+
+    expect(provider.projects, isEmpty);
+    expect(provider.currentProject, isNull);
+    expect(await repository.getAllProjects(), isEmpty);
+    expect(await repository.getRoomsForProject('project-2'), isEmpty);
+    expect(await repository.getRoomsForProject('project-3'), isEmpty);
   });
 }
