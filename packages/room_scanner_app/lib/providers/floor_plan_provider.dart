@@ -970,6 +970,9 @@ class FloorPlanProvider extends ChangeNotifier {
   Future<bool> removeRoom(
     String roomId,
   ) async {
+    if (!_completedRooms.any((room) => room.id == roomId)) {
+      return false;
+    }
     final before = List<RoomModel>.from(_completedRooms);
     _completedRooms.removeWhere((room) => room.id == roomId);
     for (var i = 0; i < _completedRooms.length; i++) {
