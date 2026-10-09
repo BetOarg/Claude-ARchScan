@@ -184,16 +184,19 @@ class ProjectProvider with ChangeNotifier {
   }
 
   Future<void> deleteAllLocalProjects() async {
-    final projectIds = _projects
-        .map((project) => project.uuid)
-        .toList(growable: false);
-    _deletedIds.addAll(projectIds);
     return _serialize(() async {
       _setLoading(true);
       final deletedIds = <String>{};
       Object? firstError;
       StackTrace? firstStack;
+      var projectIds = <String>[];
       try {
+        // Read from the repository, not the possibly stale provider snapshot.
+        projectIds = (await _repository.getAllProjects())
+            .map((project) => project.uuid)
+            .toList(growable: false);
+        _deletedIds.addAll(projectIds);
+
         for (final projectId in projectIds) {
           try {
             await _repository.deleteProject(projectId);
