@@ -28,6 +28,10 @@ class ScanDraft {
       };
 
   factory ScanDraft.fromJson(Map<String, dynamic> json) {
+    final version = json['version'];
+    if (version != null && version != 1) {
+      throw UnsupportedError('Unsupported scan draft version: $version');
+    }
     final historyJson = json['basicHistory'] as List<dynamic>?;
 
     return ScanDraft(
@@ -163,6 +167,10 @@ class ScanDraftService {
         return ScanDraft.fromJson(
           Map<String, dynamic>.from(jsonDecode(encoded) as Map),
         );
+      } on UnsupportedError {
+        // A newer app may have written this draft. Preserve it for a compatible
+        // version rather than deleting data during a downgrade.
+        return null;
       } catch (_) {
         await preferences.remove(_key(projectUuid));
         return null;
