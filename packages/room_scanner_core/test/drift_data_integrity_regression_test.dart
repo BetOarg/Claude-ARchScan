@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:test/test.dart';
 
@@ -85,10 +84,14 @@ void main() {
       1.23456789,
       3.580246791,
     ]);
-    expect(restoredRooms.single.features.single.id, 'opening-room-protected');
+    expect(
+      restoredRooms.single.features.single.id,
+      'opening-room-protected',
+    );
   });
 
-  test('concurrent saves never mix child rows from different snapshots', () async {
+  test('concurrent saves never mix child rows from different snapshots',
+      () async {
     final roomA = room('snapshot-a', 10);
     final roomB = room('snapshot-b', 20);
 
@@ -120,35 +123,43 @@ void main() {
     }
   });
 
-  test('file-backed reopen preserves precise geometry and nullable opening metadata',
-      () async {
-    final originalRoom = room('room-precision', 1.23456789);
-    await repository.saveProject(
-      uuid: 'project-precision',
-      name: 'Precision and nullability',
-      rooms: [originalRoom],
-    );
-    await repository.dispose();
+  test(
+    'file-backed reopen preserves precise geometry and nullable opening metadata',
+    () async {
+      final originalRoom = room('room-precision', 1.23456789);
+      await repository.saveProject(
+        uuid: 'project-precision',
+        name: 'Precision and nullability',
+        rooms: [originalRoom],
+      );
+      await repository.dispose();
 
-    repository = DriftProjectRepository();
-    await repository.init(directoryPath: directory.path);
+      repository = DriftProjectRepository();
+      await repository.init(directoryPath: directory.path);
 
-    final projects = await repository.getAllProjects();
-    final restoredRooms = await repository.getRoomsForProject(
-      'project-precision',
-    );
+      final projects = await repository.getAllProjects();
+      final restoredRooms = await repository.getRoomsForProject(
+        'project-precision',
+      );
 
-    expect(projects, hasLength(1));
-    expect(projects.single.name, 'Precision and nullability');
-    expect(restoredRooms, hasLength(1));
-    expect(restoredRooms.single.isClosed, isTrue);
-    expect(restoredRooms.single.points.first.x, 1.23456789);
-    expect(restoredRooms.single.points.first.y, 0.123456789);
-    expect(restoredRooms.single.points.last.x, 3.580246791);
-    expect(restoredRooms.single.features.single.start.x, 1.358024679);
-    expect(restoredRooms.single.features.single.openingHeightMeters, 1.23456789);
-    expect(restoredRooms.single.features.single.sillHeightMeters, 0.87654321);
-    expect(restoredRooms.single.features.single.connectedRoomId, isNull);
-    expect(restoredRooms.single.features.single.connectionSide, isNull);
-  });
+      expect(projects, hasLength(1));
+      expect(projects.single.name, 'Precision and nullability');
+      expect(restoredRooms, hasLength(1));
+      expect(restoredRooms.single.isClosed, isTrue);
+      expect(restoredRooms.single.points.first.x, 1.23456789);
+      expect(restoredRooms.single.points.first.y, 0.123456789);
+      expect(restoredRooms.single.points.last.x, 3.580246791);
+      expect(restoredRooms.single.features.single.start.x, 1.358024679);
+      expect(
+        restoredRooms.single.features.single.openingHeightMeters,
+        1.23456789,
+      );
+      expect(
+        restoredRooms.single.features.single.sillHeightMeters,
+        0.87654321,
+      );
+      expect(restoredRooms.single.features.single.connectedRoomId, isNull);
+      expect(restoredRooms.single.features.single.connectionSide, isNull);
+    },
+  );
 }
