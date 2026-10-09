@@ -38,6 +38,9 @@ class ProjectProvider with ChangeNotifier {
       final dir = await getApplicationDocumentsDirectory();
       await _repository.init(directoryPath: dir.path);
       await loadProjects();
+      await const ScanDraftService().clearOrphanedDrafts(
+        _projects.map((project) => project.uuid).toSet(),
+      );
     } finally {
       _setLoading(false);
     }
