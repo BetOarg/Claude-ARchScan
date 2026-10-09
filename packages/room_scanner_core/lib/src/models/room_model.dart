@@ -198,36 +198,46 @@ class WallFeature {
     final swingName = json['doorSwingSide'] as String?;
     final openingDirectionName = json['doorOpeningDirection'] as String?;
 
-    OpeningConnectionSide? side;
-
-    if (sideName != null) {
-      for (final candidate in OpeningConnectionSide.values) {
-        if (candidate.name == sideName) {
-          side = candidate;
-          break;
-        }
-      }
-    }
+    final side = sideName == null
+        ? null
+        : _parseModelEnum(
+            OpeningConnectionSide.values,
+            sideName,
+            'connectionSide',
+          );
 
     return WallFeature(
       id: json['id'] as String,
-      type: FeatureType.values.firstWhere((e) => e.name == json['type']),
+      type: _parseModelEnum(
+        FeatureType.values,
+        json['type'] as String?,
+        'type',
+      ),
       start: ARPoint.fromJson(json['start'] as Map<String, dynamic>),
       end: ARPoint.fromJson(json['end'] as Map<String, dynamic>),
       connectedRoomId: json['connectedRoomId'] as String?,
       connectionSide: side,
-      doorHingeSide: DoorHingeSide.values.firstWhere(
-        (candidate) => candidate.name == hingeName,
-        orElse: () => DoorHingeSide.start,
-      ),
-      doorSwingSide: DoorSwingSide.values.firstWhere(
-        (candidate) => candidate.name == swingName,
-        orElse: () => DoorSwingSide.left,
-      ),
-      doorOpeningDirection: DoorOpeningDirection.values.firstWhere(
-        (candidate) => candidate.name == openingDirectionName,
-        orElse: () => DoorOpeningDirection.interior,
-      ),
+      doorHingeSide: hingeName == null
+          ? DoorHingeSide.start
+          : _parseModelEnum(
+              DoorHingeSide.values,
+              hingeName,
+              'doorHingeSide',
+            ),
+      doorSwingSide: swingName == null
+          ? DoorSwingSide.left
+          : _parseModelEnum(
+              DoorSwingSide.values,
+              swingName,
+              'doorSwingSide',
+            ),
+      doorOpeningDirection: openingDirectionName == null
+          ? DoorOpeningDirection.interior
+          : _parseModelEnum(
+              DoorOpeningDirection.values,
+              openingDirectionName,
+              'doorOpeningDirection',
+            ),
       openingHeightMeters: (json['openingHeightMeters'] as num?)?.toDouble(),
       sillHeightMeters: (json['sillHeightMeters'] as num?)?.toDouble(),
     );
@@ -373,10 +383,13 @@ class RoomModel {
     return RoomModel(
       id: json['id'] as String,
       name: json['name'] as String,
-      type: RoomType.values.firstWhere(
-        (e) => e.name == json['type'],
-        orElse: () => RoomType.living,
-      ),
+      type: json['type'] == null
+          ? RoomType.living
+          : _parseModelEnum(
+              RoomType.values,
+              json['type'] as String?,
+              'room.type',
+            ),
       points: (json['points'] as List)
           .map((p) => ARPoint.fromJson(p as Map<String, dynamic>))
           .toList(),
@@ -388,4 +401,16 @@ class RoomModel {
       isClosed: json['isClosed'] as bool? ?? false,
     );
   }
+}
+
+
+T _parseModelEnum<T extends Enum>(
+  List<T> values,
+  String? value,
+  String field,
+) {
+  for (final candidate in values) {
+    if (candidate.name == value) return candidate;
+  }
+  throw StateError('Unknown enum value "$value" for $field.');
 }
