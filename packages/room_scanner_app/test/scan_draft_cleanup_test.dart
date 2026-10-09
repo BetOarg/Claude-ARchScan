@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:room_scanner_core/room_scanner_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +22,53 @@ void main() {
     expect(restored.room.id, 'draft');
     final legacy = ScanDraft.fromJson({'room': room('legacy').toJson()});
     expect(legacy.resumeRoom, isNull);
+  });
+
+  test('draft round-trip preserves cross-room continuation and point history', () async {
+    SharedPreferences.setMockInitialValues({});
+    const service = ScanDraftService();
+    final sourcePoint = ARPoint(x: 1, y: 0, z: 2);
+    final targetPoint = ARPoint(x: 4, y: 0, z: 5);
+    final reference = ScanContinuationReference.fromCorners(
+      sourceRoomId: 'source-room',
+      sourcePoint: sourcePoint,
+      targetRoomId: 'target-room',
+      targetPoint: targetPoint,
+    );
+    final history = [
+      ARPoint(x: 0, y: 0, z: 0),
+      ARPoint(x: 2, y: 0, z: 0),
+    ];
+
+    await service.save(
+      projectUuid: 'continuation-round-trip',
+      room: room('draft-room'),
+      continuationReference: reference,
+      basicHistory: history,
+    );
+
+    final restored = await service.load('continuation-round-trip');
+    expect(restored, isNotNull);
+    expect(restored!.continuationReference!.sourceRoomId, 'source-room');
+    expect(restored.continuationReference!.targetRoomId, 'target-room');
+    expect(restored.continuationReference!.targetGlobalPoint!.toJson(),
+        targetPoint.toJson());
+    expect(restored.continuationReference!.globalStart.toJson(),
+        sourcePoint.toJson());
+    expect(restored.basicHistory.map((point) => point.toJson()).toList(),
+        history.map((point) => point.toJson()).toList());
+  });
+
+  test('does not delete drafts written by a newer format version', () async {
+    SharedPreferences.setMockInitialValues({
+      'scan_draft_v1_future': jsonEncode({'version': 2}),
+    });
+    const service = ScanDraftService();
+
+    expect(await service.load('future'), isNull);
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString('scan_draft_v1_future'), jsonEncode({'version': 2}));
   });
 
   test('deleted projects reject late saves and clear queued drafts', () async {
