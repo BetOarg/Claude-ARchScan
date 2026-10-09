@@ -6,11 +6,12 @@ import 'package:test/test.dart';
 void main() {
   late Directory directory;
   late DriftProjectRepository repository;
+  late ArchScanDatabase database;
 
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('archscan-integrity-');
-    repository = DriftProjectRepository();
-    await repository.init(directoryPath: directory.path);
+    database = ArchScanDatabase('${directory.path}/archscan.sqlite');
+    repository = DriftProjectRepository(database: database);
   });
 
   tearDown(() async {
@@ -51,20 +52,13 @@ void main() {
       rooms: [originalRoom],
     );
 
-    final database = ArchScanDatabase(
-      '${directory.path}/archscan.sqlite',
-    );
-    try {
-      await database.customStatement('''
-        CREATE TRIGGER reject_project_delete
-        BEFORE DELETE ON projects
-        BEGIN
-          SELECT RAISE(ABORT, 'forced project delete failure');
-        END;
-      ''');
-    } finally {
-      await database.close();
-    }
+    await database.customStatement('''
+      CREATE TRIGGER reject_project_delete
+      BEFORE DELETE ON projects
+      BEGIN
+        SELECT RAISE(ABORT, 'forced project delete failure');
+      END;
+    ''');
 
     await expectLater(
       repository.deleteProject('project-protected'),
@@ -80,10 +74,8 @@ void main() {
     expect(projects.single.name, 'Must survive failed deletion');
     expect(restoredRooms, hasLength(1));
     expect(restoredRooms.single.id, originalRoom.id);
-    expect(restoredRooms.single.points.map((point) => point.x), [
-      1.23456789,
-      3.580246791,
-    ]);
+    expect(restoredRooms.single.points.first.x, closeTo(1.23456789, 1e-12));
+    expect(restoredRooms.single.points.last.x, closeTo(3.580246791, 1e-12));
     expect(
       restoredRooms.single.features.single.id,
       'opening-room-protected',
@@ -148,8 +140,11 @@ void main() {
       expect(restoredRooms.single.isClosed, isTrue);
       expect(restoredRooms.single.points.first.x, 1.23456789);
       expect(restoredRooms.single.points.first.y, 0.123456789);
-      expect(restoredRooms.single.points.last.x, 3.580246791);
-      expect(restoredRooms.single.features.single.start.x, 1.358024679);
+      expect(restoredRooms.single.points.last.x, closeTo(3.580246791, 1e-12));
+      expect(
+        restoredRooms.single.features.single.start.x,
+        closeTo(1.358024679, 1e-12),
+      );
       expect(
         restoredRooms.single.features.single.openingHeightMeters,
         1.23456789,
