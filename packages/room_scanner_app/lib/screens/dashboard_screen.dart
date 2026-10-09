@@ -8,6 +8,7 @@ import '../providers/floor_plan_provider.dart';
 import '../providers/scanner_provider.dart';
 import '../services/ar_check_service.dart';
 import '../services/import_export_service.dart';
+import '../services/project_id_generator.dart';
 import '../widgets/archscan_logo.dart';
 import 'floor_plan_viewer_screen.dart';
 import 'privacy_account_screen.dart';
@@ -82,7 +83,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     Navigator.pop(dialogContext);
 
-    final uuid = DateTime.now().millisecondsSinceEpoch.toString();
+    final uuid = generateProjectUuid();
 
     try {
       await context.read<ProjectProvider>().saveCurrentProject(
@@ -283,7 +284,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _importProjectFromHome() async {
     final localizations = AppLocalizations.of(context)!;
     final floorPlanProvider = context.read<FloorPlanProvider>();
-    final uuid = DateTime.now().microsecondsSinceEpoch.toString();
+    final uuid = generateProjectUuid();
 
     JsonImportResult result;
     try {
