@@ -97,6 +97,24 @@ void main() {
     expect(await service.load('deleted-load'), isNull);
   });
 
+  test('orphan cleanup removes only drafts for missing projects', () async {
+    SharedPreferences.setMockInitialValues({
+      'scan_draft_v1_valid-project': jsonEncode({'version': 2}),
+      'scan_draft_v1_orphan-project': '{}',
+      'measurement_system': 'imperial',
+      'theme_mode': 'dark',
+    });
+
+    await const ScanDraftService().clearOrphanedDrafts({'valid-project'});
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString('scan_draft_v1_valid-project'),
+        jsonEncode({'version': 2}));
+    expect(preferences.containsKey('scan_draft_v1_orphan-project'), isFalse);
+    expect(preferences.getString('measurement_system'), 'imperial');
+    expect(preferences.getString('theme_mode'), 'dark');
+  });
+
   test('clearAll removes orphan drafts but preserves unrelated settings', () async {
     SharedPreferences.setMockInitialValues({
       'scan_draft_v1_a': '{}',
