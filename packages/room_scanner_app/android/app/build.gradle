@@ -155,7 +155,48 @@ tasks.register("verifyProductionSigning") {
                     "No existe el keystore indicado: ${releaseStore}")
         }
 
-        println "Configuración de firma de producción verificada."
+        // Comprueba las credenciales reales del almacén y de la clave privada.
+        // No se imprimen contraseñas ni contenido sensible en los logs de CI.
+        def storePassword = keystoreProperties['storePassword'].toCharArray()
+        def keyPassword = keystoreProperties['keyPassword'].toCharArray()
+        def keyAlias = keystoreProperties['keyAlias']
+        java.security.KeyStore loadedStore = null
+
+        ['JKS', 'PKCS12'].each { storeType ->
+            if (loadedStore == null) {
+                try {
+                    def candidate = java.security.KeyStore.getInstance(storeType)
+                    releaseStore.withInputStream { stream ->
+                        candidate.load(stream, storePassword)
+                    }
+                    loadedStore = candidate
+                } catch (Exception ignored) {
+                    // Prueba el siguiente formato sin exponer detalles sensibles.
+                }
+            }
+        }
+
+        if (loadedStore == null) {
+            throw new GradleException(
+                    "No se pudo abrir el keystore con las credenciales configuradas.")
+        }
+
+        try {
+            def privateKey = loadedStore.getKey(keyAlias, keyPassword)
+            def certificateChain = loadedStore.getCertificateChain(keyAlias)
+            if (!(privateKey instanceof java.security.PrivateKey) ||
+                    certificateChain == null || certificateChain.length == 0) {
+                throw new GradleException(
+                        "El alias configurado no contiene una clave privada con certificado.")
+            }
+        } catch (GradleException exception) {
+            throw exception
+        } catch (Exception ignored) {
+            throw new GradleException(
+                    "No se pudo desbloquear la clave privada con las credenciales configuradas.")
+        }
+
+        println "Almacén, alias y clave privada de producción verificados."
     }
 }
 
