@@ -60,8 +60,7 @@ La eliminación física de ramas y la protección de `main` fueron realizadas po
 
 ## Artefactos de publicación
 
-- [x] Keystore Android de producción utilizado por CI; la clave privada permanece fuera de Git.
-- [ ] Actualizar/verificar secretos Android de producción antes de generar el AAB definitivo.
+- [ ] Confirmar que los secretos de firma Android de producción estén configurados y correspondan al keystore privado; la clave privada debe permanecer fuera de Git.
 - [ ] Generar AAB firmado definitivo.
 - [ ] Auditar firma, manifiesto fusionado, permisos, SDK y bibliotecas nativas, incluidas páginas de 16 KB.
 - [ ] Generar archive/IPA firmado definitivo.
