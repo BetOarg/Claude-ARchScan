@@ -298,7 +298,7 @@ class ImportExportService {
   }
 
   static String? _extensionFromPath(String value) {
-    final normalized = value.trim().replaceAll('\\\\', '/');
+    final normalized = value.trim().replaceAll(String.fromCharCode(92), '/');
     final fileName = normalized.substring(normalized.lastIndexOf('/') + 1);
     final dot = fileName.lastIndexOf('.');
     if (dot <= 0 || dot == fileName.length - 1) return null;
