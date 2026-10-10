@@ -239,7 +239,16 @@ class ImportExportService {
       }
 
       final selected = result.files.single;
-      final extension = selected.extension?.toLowerCase();
+      // Some Android document providers omit PlatformFile.extension even
+      // when the selected filename includes a valid extension. Fall back to
+      // the filename, then the returned path, before rejecting the document.
+      final reportedExtension = selected.extension?.trim();
+      final extension = (reportedExtension != null &&
+              reportedExtension.isNotEmpty
+          ? reportedExtension
+          : _extensionFromPath(selected.name) ??
+              _extensionFromPath(selected.path ?? ''))
+          ?.toLowerCase();
       if (extension != 'json' && extension != 'svg') {
         return JsonImportResult.invalid;
       }
@@ -286,6 +295,14 @@ class ImportExportService {
     } catch (_) {
       return JsonImportResult.invalid;
     }
+  }
+
+  static String? _extensionFromPath(String value) {
+    final normalized = value.trim().replaceAll(String.fromCharCode(92), '/');
+    final fileName = normalized.substring(normalized.lastIndexOf('/') + 1);
+    final dot = fileName.lastIndexOf('.');
+    if (dot <= 0 || dot == fileName.length - 1) return null;
+    return fileName.substring(dot + 1);
   }
 
   static Future<String?> _readSelectedText(PlatformFile selectedFile) async {
