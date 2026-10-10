@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:test/test.dart';
 
-import '../lib/src/models/room_model.dart';
-import '../lib/src/persistence/drift_database.dart';
-import '../lib/src/persistence/drift_project_repository.dart';
+import 'package:room_scanner_core/src/models/room_model.dart';
+import 'package:room_scanner_core/src/persistence/drift_database.dart';
+import 'package:room_scanner_core/src/persistence/drift_project_repository.dart';
 
 void main() {
   late ArchScanDatabase database;
