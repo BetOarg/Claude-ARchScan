@@ -247,4 +247,47 @@ void main() {
     expect(find.text('Living · Pared 3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('touch-drag snaps a room to a nearby wall', (tester) async {
+    final provider = await mount(tester);
+    RoomModel square(String id, double x) => RoomModel(
+          id: id,
+          name: id,
+          type: RoomType.other,
+          isClosed: true,
+          points: [
+            ARPoint(x: x, y: 0, z: 0),
+            ARPoint(x: x + 2, y: 0, z: 0),
+            ARPoint(x: x + 2, y: 0, z: 2),
+            ARPoint(x: x, y: 0, z: 2),
+          ],
+        );
+    provider.loadProject(
+      uuid: 'touch-magnet-widget',
+      name: 'Plan',
+      rooms: [square('anchor', 0), square('movable', 4)],
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More options'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Move rooms with gestures'));
+    await tester.pumpAndSettle();
+
+    final start = location(tester, 5, 1);
+    final end = location(tester, 3.1, 1);
+    final gesture = await tester.startGesture(start);
+    await gesture.moveTo(end);
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    final moved = provider.completedRooms.singleWhere(
+      (room) => room.id == 'movable',
+    );
+    expect(moved.points.first.x, closeTo(2, 0.00001));
+    expect(moved.points.last.x, closeTo(2, 0.00001));
+    expect(provider.canUndoTransform, isTrue);
+    expect(tester.takeException(), isNull);
+  });
 }
