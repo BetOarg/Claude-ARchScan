@@ -162,12 +162,10 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     _touchNavigationScale = 1;
     _touchNavigating = false;
     final planePoint = _inverseTransform(details.localFocalPoint);
-    // In touch-transform mode, a tap explicitly selects the room to move.
-    // Keep that selection for the following drag instead of letting a second
-    // hit-test (which can differ at polygon edges/transformed viewports) switch
-    // the gesture to a neighbouring room.
-    final roomId = _selectedRoomId ??
-        _getRoomAtPosition(planePoint, rooms);
+    // Prefer the room actually under the gesture. Selection can be stale
+    // after project/room changes, so it must not override a valid hit-test.
+    // Fall back to the selected room only when the touch is outside all rooms.
+    final roomId = _getRoomAtPosition(planePoint, rooms) ?? _selectedRoomId;
     if (roomId == null ||
         !context.read<FloorPlanProvider>().beginTouchRoomTransform(roomId)) {
       return;
