@@ -276,10 +276,7 @@ void main() {
 
     final start = location(tester, 5, 1);
     final end = location(tester, 3.1, 1);
-    final gesture = await tester.startGesture(start);
-    await gesture.moveTo(end);
-    await tester.pump();
-    await gesture.up();
+    await tester.dragFrom(start, end - start, touchSlopY: 0);
     await tester.pumpAndSettle();
 
     final moved = provider.completedRooms.singleWhere(
