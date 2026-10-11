@@ -276,6 +276,9 @@ void main() {
 
     final start = location(tester, 5, 1);
     final end = location(tester, 3.1, 1);
+    // Select the room first so the drag does not depend on edge hit-testing.
+    await tester.tapAt(start);
+    await tester.pumpAndSettle();
     await tester.dragFrom(start, end - start, touchSlopY: 0);
     await tester.pumpAndSettle();
 
