@@ -104,7 +104,9 @@ void main() {
       rooms: [room],
     );
     final project = provider.projects.single;
-    expect(await provider.selectProject(project), [room]);
+    final selectedRooms = await provider.selectProject(project);
+    expect(selectedRooms, hasLength(1));
+    expect(selectedRooms.single.toJson(), room.toJson());
 
     await database.customStatement('''
       CREATE TRIGGER reject_project_delete
@@ -129,10 +131,10 @@ void main() {
       room.toJson(),
     );
     // A failed delete must not leave the project marked as deleted.
-    expect(
-      await provider.selectProject(provider.projects.single),
-      [room],
-    );
+    final reselectedRooms =
+        await provider.selectProject(provider.projects.single);
+    expect(reselectedRooms, hasLength(1));
+    expect(reselectedRooms.single.toJson(), room.toJson());
   });
 
 }
