@@ -161,13 +161,18 @@ class _FloorPlanViewerScreenState extends State<FloorPlanViewerScreen>
     _touchNavigationFocalPoint = details.focalPoint;
     _touchNavigationScale = 1;
     _touchNavigating = false;
-    final planePoint = _inverseTransform(details.localFocalPoint);
-    final roomId = _getRoomAtPosition(planePoint, rooms) ?? _selectedRoomId;
+    // ScaleGestureRecognizer starts after touch slop, so its focal point may
+    // already have moved. Use the original pointer-down position for both hit
+    // testing and delta calculation to avoid dropping the beginning of a drag.
+    final pointerDown = _wallPointerOrigin ?? details.localFocalPoint;
+    final planePoint = _inverseTransform(pointerDown);
+    final hitRoomId = _getRoomAtPosition(planePoint, rooms);
+    final roomId = hitRoomId ?? _selectedRoomId;
     if (roomId == null ||
         !context.read<FloorPlanProvider>().beginTouchRoomTransform(roomId)) {
       return;
     }
-    _touchStartFocalPoint = details.localFocalPoint;
+    _touchStartFocalPoint = pointerDown;
     _touchTransformRoomId = roomId;
     _touchSnapCount = 0;
     setState(() {
