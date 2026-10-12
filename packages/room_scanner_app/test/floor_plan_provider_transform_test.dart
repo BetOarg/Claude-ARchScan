@@ -877,6 +877,53 @@ void main() {
       expect(provider.canUndoTransform, isTrue);
     });
 
+    test('persiste la geometría final después del ajuste magnético táctil', () async {
+      final provider = FloorPlanProvider()
+        ..loadProject(
+          uuid: 'project-magnet-persistence',
+          name: 'Casa con imán persistido',
+          rooms: [
+            _roomAt('anchor', 0, 0),
+            _roomAt('movable', 4, 0),
+          ],
+        );
+      addTearDown(provider.dispose);
+
+      List<RoomModel>? persistedRooms;
+      provider.persister = ({
+        required String uuid,
+        required String name,
+        required List<RoomModel> rooms,
+      }) async {
+        expect(uuid, 'project-magnet-persistence');
+        expect(name, 'Casa con imán persistido');
+        persistedRooms = List<RoomModel>.from(rooms);
+      };
+
+      expect(provider.beginTouchRoomTransform('movable'), isTrue);
+      expect(
+        provider.updateTouchRoomTransform(
+          roomId: 'movable',
+          offsetX: -1.90,
+          offsetZ: 0,
+          angleDegrees: 0,
+        ),
+        isTrue,
+      );
+      expect(provider.touchTransformSnapCount, 1);
+      expect(
+        await provider.endTouchRoomTransform(roomId: 'movable'),
+        isTrue,
+      );
+
+      final saved = persistedRooms!.singleWhere((room) => room.id == 'movable');
+      expect(saved.points.first.x, closeTo(2, 0.000001));
+      expect(saved.points.last.x, closeTo(2, 0.000001));
+      expect(provider.canUndoTransform, isTrue);
+      expect(await provider.undoTransform(), isTrue);
+      expect(provider.completedRooms.last.points.first.x, closeTo(4, 0.000001));
+    });
+
     test('el imán conserva el encaje hasta una separación deliberada', () async {
       final provider = FloorPlanProvider()
         ..loadProject(
