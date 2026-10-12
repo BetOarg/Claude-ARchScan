@@ -1,59 +1,69 @@
 # Auditoría final del repositorio — ARchScan
 
-**Fecha:** 24/09/2026  
+**Última revisión:** 12/10/2026  
 **Rama auditada:** `main`  
-**Commit funcional auditado:** `ae2e90ea5bb88a0ebf21ba9ab72e259bbaeef66f`  
-**Versión declarada:** `2.7.0+4`
+**Versión candidata documentada:** `2.7.2+6`
 
-## Resultado
+## Resultado ejecutivo
 
-`main` contiene los cambios funcionales integrados hasta PR #50, incluyendo cambio de proyecto, renombrado local y corrección de cotas técnicas alrededor de puertas. El estado del repositorio es apto para continuar con la preparación de beta, pero la auditoría de repositorio no sustituye la validación física en dispositivos ni la auditoría de los artefactos firmados de producción.
+La auditoría automatizada de código y persistencia sigue avanzando con CI. Los PR #63–#67 quedaron fusionados: arrastre táctil/magnetismo, persistencia del ajuste y Undo, rollback de borrado de proyectos, reapertura de SQLite con metadatos de aberturas y rollback de reemplazo de instantáneas. La CI de cada PR pasó antes de fusionar. La CI posterior al merge del PR #67 debe comprobarse por separado antes de declarar verde `main`.
 
-## Integración funcional
+Este informe no certifica pruebas físicas ni artefactos firmados definitivos. No se ha declarado publicada la versión en Google Play o App Store.
 
-- Exportaciones técnicas SVG/PDF/DXF/JPG/PNG.
-- Separación profesional de cotas y conservación del nombre del ambiente como texto visible.
-- Orden de cotas de adentro hacia afuera, cortas → intermedias → totales.
-- Cerrar proyecto y volver a la lista de proyectos sin cerrar la aplicación.
-- Renombrar proyectos conservando UUID, ambientes, geometría y datos locales.
-- Evitar la cota redundante del fragmento de muro ocupado por una puerta.
-- Persistencia del proyecto y geometría almacenada sin cambios por la presentación técnica de las exportaciones.
+## Estado del repositorio
 
-## Seguridad y privacidad
+- Backend de persistencia: Drift/SQLite; no reintroducir Isar.
+- Los proyectos y habitaciones se conservan localmente.
+- Las pruebas recientes cubren rollback de guardado/borrado, reapertura de archivos SQLite, geometría precisa, metadatos de puertas/ventanas y magnetismo táctil con Undo.
+- Importar JSON/SVG ARchScan y exportar formatos están disponibles desde la pantalla de proyectos; la prueba manual en dispositivo sigue siendo necesaria.
+- CI incluye análisis y pruebas, estructura de publicación, Android App Bundle de verificación e inspección de configuración iOS.
+- El checklist de publicación es `docs/RELEASE_READINESS_CHECKLIST.md`.
 
-El workflow incluye verificaciones de estructura de publicación y auditoría de secretos, permisos y almacenamiento local. No se deben incorporar al repositorio keystores, certificados, perfiles ni credenciales de producción.
+## UX y funcionalidad
 
-La política pública contempla JSON/SVG/PDF/DXF/PNG/JPG y copias temporales de caché durante la compartición. Debe comprobarse que la URL pública accesible sin autenticación coincide con esta versión antes de enviar a revisión.
+### Implementado en código
 
-## Ramas
+- Importación desde la pantalla inicial de proyectos y exportación seleccionando un proyecto.
+- Selector de archivos sin filtro MIME restrictivo, validación de extensión JSON/SVG y límite de tamaño.
+- Editor de plano común para Basic, ARCore y ARKit.
+- Selección y arrastre táctil, ajuste a paredes/puntos, vista previa de cierre, edición de aberturas y Undo/Redo por sesión.
+- Continuación de espacios mediante selección de aberturas y esquinas; la integración física sigue pendiente de comprobar.
+- Marca de producto reutilizable `ArchScanLogo` con SVG y nombre accesible.
 
-GitHub muestra actualmente `main` y una rama de trabajo fusionada: `fix/project-switch-rename-dimensions`. Su eliminación es administrativa y no cambia el contenido de `main`.
+### Validación UX todavía necesaria
 
-## Pendientes reales para publicación
+- Confirmar en un dispositivo real que el logotipo completo no queda recortado en la pantalla de inicio, en diferentes tamaños y proporciones.
+- Probar importación desde proveedores Android/iOS, tanto desde memoria como desde ruta, y cancelar/seleccionar archivos inválidos.
+- Probar exportación y compartir JSON, SVG, PDF, DXF, PNG y JPG, incluida la cancelación del menú y iPad.
+- Probar arrastre/magnetismo táctil, Undo/Redo, selección de paredes compartidas, edición de puertas/ventanas y zoom en pantalla pequeña.
+- Completar el recorrido de continuidad de escaneo entre habitaciones: seleccionar una abertura o esquina de otro ambiente, calibrar y cerrar el contorno sin alterar el espacio original.
+- Verificar textos largos, español/inglés, accesibilidad, permisos, suspensión/reanudación y errores de cámara.
 
-### Repositorio
+## Validación física final
 
-- Proteger `main).
-- Eliminar la rama de trabajo fusionada.
-- Mantener el repositorio sin PR abiertos.
-- Mantener el checklist sincronizado con el commit final.
+- [ ] Repetir Basic y ARCore en el candidato final firmado.
+- [ ] Validar ARKit en hardware compatible.
+- [ ] Validar RoomPlan en hardware compatible.
+- [ ] Primera apertura, permisos concedidos/denegados y recuperación.
+- [ ] Escaneo, cierre, continuación desde aberturas/extremos y continuación entre habitaciones.
+- [ ] Persistencia tras cerrar y reabrir; probar proyectos históricos.
+- [ ] Edición 2D, magnetismo, puertas/ventanas, Undo/Redo, borrar pared/ambiente y conexiones.
+- [ ] Importación/exportación de todos los formatos y compartir.
+- [ ] Eliminación de datos locales y revisión de textos largos ES/EN.
 
-### Validación física
+## Artefactos y tiendas
 
-- Basic y ARCore: repetir sobre el candidato final firmado.
-- ARKit y RoomPlan: falta validación física final.
-- Probar persistencia, importación/exportación, borrado local, compartir y textos largos en el candidato final.
+- [ ] Confirmar secretos de firma de producción y keystore privado; nunca guardar claves en Git.
+- [ ] Generar el AAB firmado definitivo y conservar su SHA-256.
+- [ ] Auditar firma, manifiesto fusionado, permisos, SDK y bibliotecas nativas, incluida compatibilidad con páginas de 16 KB.
+- [ ] Generar archive/IPA firmado definitivo y revisar firma/configuración Apple.
+- [ ] Probar exactamente los artefactos que se enviarán, sin reconstruirlos entre validación y promoción.
+- [ ] Confirmar que el build number no se reutiliza.
+- [ ] Completar formularios de privacidad, ficha, capturas, países y condiciones de beta en ambas tiendas.
+- [ ] Comprobar que las URL públicas de soporte y privacidad funcionan sin autenticación y coinciden con el binario.
+- [ ] Mantener la beta gratuita, sin anuncios, compras integradas ni funciones bloqueadas.
+- [ ] No crear tag ni publicar hasta tener evidencia completa y autorización explícita.
 
-### Artefactos y tiendas
+## Criterio de salida
 
-- Crear/custodiar keystore Android de producción y configurar Play App Signing.
-- Configurar los secretos de producción de GitHub sin almacenarlos en Git.
-- Generar AAB firmado definitivo y auditar firma, manifiesto, permisos, SDK y bibliotecas nativas.
-- Generar archive/IPA firmado definitivo y auditar configuración de Apple.
-- Completar formularios de privacidad de Google Play y Apple.
-- Confirmar categoría, precio/estado gratuito y países de distribución.
-- Preparar capturas y material definitivo.
-
-## Criterio de cierre
-
-ARchScan queda listo a nivel de código/documentación cuando el checklist y este informe coincidan con el commit final. La publicación solo queda cerrada después de validar físicamente el candidato final, auditar AAB/IPA firmados y completar la configuración externa de las tiendas.
+La auditoría técnica se considera cerrada cuando la CI de `main` esté verde y las pruebas relevantes estén integradas. La preparación de publicación solo se cierra tras completar las validaciones físicas, verificar AAB/IPA firmados y alinear la ficha y las declaraciones de privacidad con los artefactos reales. La CI verde no sustituye esas comprobaciones.
