@@ -157,4 +157,87 @@ void main() {
       expect(restoredRooms.single.features.single.connectionSide, isNull);
     },
   );
+
+  test(
+    'file-backed reopen preserves door orientation and connected-opening metadata',
+    () async {
+      final roomWithOpenings = RoomModel(
+        id: 'room-openings',
+        name: 'Room with openings',
+        type: RoomType.living,
+        isClosed: true,
+        points: [
+          ARPoint(x: 0.123456789, y: 0, z: 0),
+          ARPoint(x: 4.987654321, y: 0, z: 3.141592653),
+        ],
+        features: [
+          WallFeature(
+            id: 'door-connected',
+            type: FeatureType.door,
+            start: ARPoint(x: 1.123456789, y: 0.1, z: 0.25),
+            end: ARPoint(x: 2.234567891, y: 0.1, z: 0.25),
+            connectedRoomId: 'room-adjacent',
+            connectionSide: OpeningConnectionSide.right,
+            doorHingeSide: DoorHingeSide.end,
+            doorSwingSide: DoorSwingSide.right,
+            doorOpeningDirection: DoorOpeningDirection.exterior,
+            openingHeightMeters: 2.045678901,
+            sillHeightMeters: 0.012345678,
+          ),
+          WallFeature(
+            id: 'window-unconnected',
+            type: FeatureType.window,
+            start: ARPoint(x: 2.5, y: 0.4, z: 1.25),
+            end: ARPoint(x: 3.5, y: 0.4, z: 1.25),
+            connectedRoomId: null,
+            connectionSide: null,
+            openingHeightMeters: 1.456789012,
+            sillHeightMeters: 0.765432109,
+          ),
+        ],
+      );
+
+      await repository.saveProject(
+        uuid: 'project-openings',
+        name: 'Opening metadata',
+        rooms: [roomWithOpenings],
+      );
+      await repository.dispose();
+
+      repository = DriftProjectRepository();
+      await repository.init(directoryPath: directory.path);
+
+      final restoredRooms = await repository.getRoomsForProject(
+        'project-openings',
+      );
+      expect(restoredRooms, hasLength(1));
+      final restored = restoredRooms.single;
+      expect(restored.isClosed, isTrue);
+      expect(restored.points.first.x, 0.123456789);
+      expect(restored.points.last.z, 3.141592653);
+      expect(restored.features, hasLength(2));
+
+      final door = restored.features.first;
+      expect(door.id, 'door-connected');
+      expect(door.type, FeatureType.door);
+      expect(door.start.x, 1.123456789);
+      expect(door.end.x, 2.234567891);
+      expect(door.connectedRoomId, 'room-adjacent');
+      expect(door.connectionSide, OpeningConnectionSide.right);
+      expect(door.doorHingeSide, DoorHingeSide.end);
+      expect(door.doorSwingSide, DoorSwingSide.right);
+      expect(door.doorOpeningDirection, DoorOpeningDirection.exterior);
+      expect(door.openingHeightMeters, 2.045678901);
+      expect(door.sillHeightMeters, 0.012345678);
+
+      final window = restored.features.last;
+      expect(window.id, 'window-unconnected');
+      expect(window.type, FeatureType.window);
+      expect(window.connectedRoomId, isNull);
+      expect(window.connectionSide, isNull);
+      expect(window.openingHeightMeters, 1.456789012);
+      expect(window.sillHeightMeters, 0.765432109);
+    },
+  );
+
 }
