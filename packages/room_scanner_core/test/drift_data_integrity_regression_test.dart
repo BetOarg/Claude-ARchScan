@@ -240,4 +240,42 @@ void main() {
     },
   );
 
+  test('failed project save rolls back replacement of the prior snapshot',
+      () async {
+    final originalRoom = room('room-original', 10);
+    await repository.saveProject(
+      uuid: 'project-atomic-save',
+      name: 'Original snapshot',
+      rooms: [originalRoom],
+    );
+
+    await database.customStatement('''
+      CREATE TRIGGER reject_room_point_insert
+      BEFORE INSERT ON room_points
+      BEGIN
+        SELECT RAISE(ABORT, 'forced room point insert failure');
+      END;
+    ''');
+
+    await expectLater(
+      repository.saveProject(
+        uuid: 'project-atomic-save',
+        name: 'Replacement snapshot',
+        rooms: [room('room-replacement', 30)],
+      ),
+      throwsA(anything),
+    );
+
+    final projects = await repository.getAllProjects();
+    final restoredRooms = await repository.getRoomsForProject(
+      'project-atomic-save',
+    );
+
+    expect(projects, hasLength(1));
+    expect(projects.single.name, 'Original snapshot');
+    expect(restoredRooms, hasLength(1));
+    expect(restoredRooms.single.id, 'room-original');
+    expect(restoredRooms.single.points.first.x, 10);
+    expect(restoredRooms.single.features.single.id, 'opening-room-original');
+  });
 }
