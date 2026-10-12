@@ -81,4 +81,60 @@ void main() {
     expect(await repository.getRoomsForProject('project-2'), isEmpty);
     expect(await repository.getRoomsForProject('project-3'), isEmpty);
   });
+  test('failed Drift deletion keeps project and room data available in provider',
+      () async {
+    final database = ArchScanDatabase.inMemory();
+    final repository = DriftProjectRepository(database: database);
+    final provider = ProjectProvider(repository: repository);
+    addTearDown(provider.dispose);
+
+    final room = RoomModel(
+      id: 'room-rollback',
+      name: 'Sala protegida',
+      type: RoomType.living,
+      isClosed: true,
+      points: [
+        ARPoint(x: 1.23456789, y: 0, z: 0),
+        ARPoint(x: 4.23456789, y: 0, z: 0),
+      ],
+    );
+    await provider.saveCurrentProject(
+      uuid: 'project-rollback',
+      name: 'Proyecto protegido',
+      rooms: [room],
+    );
+    final project = provider.projects.single;
+    final selectedRooms = await provider.selectProject(project);
+    expect(selectedRooms, hasLength(1));
+    expect(selectedRooms.single.toJson(), room.toJson());
+
+    await database.customStatement('''
+      CREATE TRIGGER reject_project_delete
+      BEFORE DELETE ON projects
+      BEGIN
+        SELECT RAISE(ABORT, 'forced project delete failure');
+      END;
+    ''');
+
+    await expectLater(
+      provider.deleteProject('project-rollback'),
+      throwsA(anything),
+    );
+
+    expect(provider.projects, hasLength(1));
+    expect(provider.projects.single.uuid, 'project-rollback');
+    expect(provider.currentProject?.uuid, 'project-rollback');
+    expect(
+      (await repository.getRoomsForProject('project-rollback'))
+          .single
+          .toJson(),
+      room.toJson(),
+    );
+    // A failed delete must not leave the project marked as deleted.
+    final reselectedRooms =
+        await provider.selectProject(provider.projects.single);
+    expect(reselectedRooms, hasLength(1));
+    expect(reselectedRooms.single.toJson(), room.toJson());
+  });
+
 }
