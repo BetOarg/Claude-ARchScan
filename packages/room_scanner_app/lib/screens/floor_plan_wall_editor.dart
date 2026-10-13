@@ -399,11 +399,30 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
         _inverseTransform(Offset.zero),
         _inverseTransform(const Offset(16, 0)),
       );
-      points[hit.index] = PlanEditGeometry.snapPoint(
-        ARPoint(x: old.x + dx, y: old.y, z: old.z + dz),
+      final unsnapped = ARPoint(
+        x: old.x + dx,
+        y: old.y,
+        z: old.z + dz,
+      );
+      final snapped = PlanEditGeometry.snapPoint(
+        unsnapped,
         _plan.completedRooms.where((r) => r.id != room.id),
         radius,
       );
+
+      // Magnetism must never force a corner into another room or create an
+      // invalid contour. Validate the snapped preview first; if the magnetic
+      // target is unsafe, keep the user's actual drag position and let the
+      // normal release validation decide whether that position is acceptable.
+      if (snapped != unsnapped) {
+        final snappedPoints = List<ARPoint>.from(points)
+          ..[hit.index] = snapped;
+        final snappedProposal = _plan.previewGeometry(room, snappedPoints);
+        points[hit.index] =
+            snappedProposal.error == null ? snapped : unsnapped;
+      } else {
+        points[hit.index] = unsnapped;
+      }
     }
     setState(() => _dragPoints = points);
   }
