@@ -719,25 +719,67 @@ class FloorPlanProvider extends ChangeNotifier {
 
     final sourceRoom = _completedRooms[sourceRoomIndex];
 
-    // Corner-to-corner continuation does not use an opening feature. Both
-    // existing rooms remain intact; the new scan becomes a third room aligned
-    // between the selected source and target corners.
+    // Free-direction continuation uses the selected corner and an adjacent
+    // source edge only to calibrate orientation. It creates no shared opening
+    // and does not require a destination point in the existing plan.
+    if (reference.mode == ScanContinuationMode.freeDirection) {
+      var roomToAdd = _alignRoomToContinuation(room, reference);
+      if (roomToAdd.id.trim().isEmpty ||
+          _completedRooms.any((existing) => existing.id == roomToAdd.id)) {
+        roomToAdd = roomToAdd.copyWith(id: _nextUniqueId());
+      }
+      if (!canPlaceScannedRoom(roomToAdd)) return false;
+      final before = List<RoomModel>.from(_completedRooms);
+      _completedRooms.add(roomToAdd);
+      notifyListeners();
+      return _persistRoomChange(before);
+    }
+
+    // Corner- or point-target continuation keeps all existing rooms intact.
     if (reference.targetRoomId != null && reference.targetGlobalPoint != null) {
       final targetRoomIndex = _completedRooms.indexWhere(
         (existing) => existing.id == reference.targetRoomId,
       );
-      if (targetRoomIndex == -1 || targetRoomIndex == sourceRoomIndex) {
+      if (targetRoomIndex == -1 ||
+          (targetRoomIndex == sourceRoomIndex &&
+              reference.mode != ScanContinuationMode.targetPoint)) {
         return false;
       }
 
       final targetPoint = reference.targetGlobalPoint!;
       final targetRoom = _completedRooms[targetRoomIndex];
-      final targetMatches = targetRoom.points.any(
+      bool targetMatches = targetRoom.points.any(
         (point) =>
             (point.x - targetPoint.x).abs() < 0.000001 &&
             (point.y - targetPoint.y).abs() < 0.000001 &&
             (point.z - targetPoint.z).abs() < 0.000001,
       );
+      if (!targetMatches && reference.mode == ScanContinuationMode.targetPoint) {
+        // An arbitrary destination may lie anywhere along an existing wall,
+        // not only at a stored corner. Keep the destination room unchanged.
+        for (var i = 0; i < PlanEditGeometry.wallCount(targetRoom); i++) {
+          final a = targetRoom.points[i];
+          final b = targetRoom.points[(i + 1) % targetRoom.points.length];
+          final dx = b.x - a.x, dz = b.z - a.z;
+          final lengthSquared = dx * dx + dz * dz;
+          if (lengthSquared <= 1e-12) continue;
+          final t = (((targetPoint.x - a.x) * dx +
+                      (targetPoint.z - a.z) * dz) /
+                  lengthSquared)
+              .clamp(0.0, 1.0)
+              .toDouble();
+          final px = a.x + t * dx, pz = a.z + t * dz;
+          final distance = math.sqrt(
+            math.pow(targetPoint.x - px, 2) +
+                math.pow(targetPoint.z - pz, 2),
+          );
+          if (distance <= 0.08 &&
+              (targetPoint.y - (a.y + t * (b.y - a.y))).abs() <= 0.20) {
+            targetMatches = true;
+            break;
+          }
+        }
+      }
       if (!targetMatches) return false;
 
       var roomToAdd = _alignRoomToContinuation(room, reference);
