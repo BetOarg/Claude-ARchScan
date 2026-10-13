@@ -441,9 +441,9 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
     }
 
     final origin = ARPoint(x: 0.0, y: 0.0, z: 0.0);
-    if (continuation.mode == ScanContinuationMode.freeDirection) {
-      // The reference edge calibrates orientation only; this scan must not
-      // fabricate a door/window or a shared wall at the starting corner.
+    if (continuation.mode != ScanContinuationMode.opening) {
+      // Plan-point and free-direction references calibrate placement only;
+      // they must not fabricate a door/window at the starting corner.
       provider.startNewRoom(initialPoints: <ARPoint>[origin]);
     } else {
       final width = continuation.width;
