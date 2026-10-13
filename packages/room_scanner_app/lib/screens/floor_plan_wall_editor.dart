@@ -73,32 +73,44 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(l10n.continuationModeTitle),
-          content: Text(l10n.continuationModeDescription),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.continuationModeDescription),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const Icon(Icons.corner_down_right),
+                  title: Text(l10n.continuationToCorner),
+                  onTap: () => Navigator.pop(
+                    dialogContext,
+                    _ContinuationChoice.targetCorner,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.place_outlined),
+                  title: Text(l10n.continuationToPoint),
+                  onTap: () => Navigator.pop(
+                    dialogContext,
+                    _ContinuationChoice.targetPoint,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.route_outlined),
+                  title: Text(l10n.continuationFreeDirection),
+                  onTap: () => Navigator.pop(
+                    dialogContext,
+                    _ContinuationChoice.freeDirection,
+                  ),
+                ),
+              ],
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, null),
               child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(
-                dialogContext,
-                _ContinuationChoice.targetCorner,
-              ),
-              child: Text(l10n.continuationToCorner),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(
-                dialogContext,
-                _ContinuationChoice.targetPoint,
-              ),
-              child: Text(l10n.continuationToPoint),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(
-                dialogContext,
-                _ContinuationChoice.freeDirection,
-              ),
-              child: Text(l10n.continuationFreeDirection),
             ),
           ],
         ),
