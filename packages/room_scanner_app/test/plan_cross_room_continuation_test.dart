@@ -88,6 +88,9 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('plan-continue-scan')));
       await tester.pumpAndSettle();
 
+      expect(find.text('How do you want to continue the scan?'), findsOneWidget);
+      await tester.tap(find.text('Connect to another corner'));
+      await tester.pumpAndSettle();
       expect(
         find.text('Choose the corner where you want to close'),
         findsOneWidget,
