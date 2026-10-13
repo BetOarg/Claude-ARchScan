@@ -440,26 +440,33 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       return;
     }
 
-    final width = continuation.width;
-    final tangentSign =
-        continuation.side == OpeningConnectionSide.left ? 1.0 : -1.0;
-    final otherX = continuation.startEndpoint == ContinuationStartEndpoint.start
-        ? tangentSign * width
-        : -tangentSign * width;
-
-    final other = ARPoint(x: otherX, y: 0.0, z: 0.0);
     final origin = ARPoint(x: 0.0, y: 0.0, z: 0.0);
-    final sharedFeature = WallFeature(
-      id: continuation.featureId,
-      type: continuation.featureType,
-      start: other,
-      end: origin,
-    );
+    if (continuation.mode != ScanContinuationMode.opening) {
+      // Plan-point and free-direction references calibrate placement only;
+      // they must not fabricate a door/window at the starting corner.
+      provider.startNewRoom(initialPoints: <ARPoint>[origin]);
+    } else {
+      final width = continuation.width;
+      final tangentSign =
+          continuation.side == OpeningConnectionSide.left ? 1.0 : -1.0;
+      final otherX =
+          continuation.startEndpoint == ContinuationStartEndpoint.start
+              ? tangentSign * width
+              : -tangentSign * width;
 
-    provider.startNewRoom(
-      initialPoints: <ARPoint>[origin],
-      initialFeatures: <WallFeature>[sharedFeature],
-    );
+      final other = ARPoint(x: otherX, y: 0.0, z: 0.0);
+      final sharedFeature = WallFeature(
+        id: continuation.featureId,
+        type: continuation.featureType,
+        start: other,
+        end: origin,
+      );
+
+      provider.startNewRoom(
+        initialPoints: <ARPoint>[origin],
+        initialFeatures: <WallFeature>[sharedFeature],
+      );
+    }
 
     _scannerAdapter.seedPath(<ScannerPoint>[
       ScannerPoint(
@@ -817,7 +824,11 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      l10n.continuationFromOpening,
+                      continuation.mode == ScanContinuationMode.freeDirection
+                          ? l10n.continuationFreeDirection
+                          : continuation.mode == ScanContinuationMode.opening
+                              ? l10n.continuationFromOpening
+                              : l10n.continuationFromPlanPoint,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -851,7 +862,9 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
                   child: Text(
                     count == 0
                         ? continuation != null
-                            ? l10n.continuationFirstCornerInstruction
+                            ? continuation.mode == ScanContinuationMode.freeDirection
+                                ? l10n.continuationFreeScanInstruction
+                                : l10n.continuationFirstCornerInstruction
                             : l10n.markRoomStartingPoint
                         : l10n.measureNextCornerInstruction,
                     style: const TextStyle(
@@ -2168,7 +2181,8 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
 
     final floorPlanProvider = context.read<FloorPlanProvider>();
 
-    if (continuation != null) {
+    if (continuation != null &&
+        continuation.mode == ScanContinuationMode.opening) {
       final sourceFeature = floorPlanProvider.findFeature(
         roomId: continuation.sourceRoomId,
         featureId: continuation.featureId,

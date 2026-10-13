@@ -59,6 +59,47 @@ void main() {
         history.map((point) => point.toJson()).toList());
   });
 
+  test('draft round-trip preserves point-target and free-direction modes', () async {
+    SharedPreferences.setMockInitialValues({});
+    const service = ScanDraftService();
+    final source = ARPoint(x: 1, y: 0, z: 2);
+    final target = ARPoint(x: 4, y: 0, z: 5);
+    final pointReference = ScanContinuationReference.fromTargetPoint(
+      sourceRoomId: 'source-room',
+      sourcePoint: source,
+      targetRoomId: 'target-room',
+      targetPoint: target,
+    );
+    await service.save(
+      projectUuid: 'point-mode',
+      room: room('point-draft'),
+      continuationReference: pointReference,
+    );
+    final pointDraft = await service.load('point-mode');
+    expect(pointDraft!.continuationReference!.mode,
+        ScanContinuationMode.targetPoint);
+    expect(pointDraft.continuationReference!.targetGlobalPoint!.toJson(),
+        target.toJson());
+
+    final freeReference = ScanContinuationReference.freeDirection(
+      sourceRoomId: 'source-room',
+      sourcePoint: source,
+      directionPoint: target,
+      side: OpeningConnectionSide.right,
+    );
+    await service.save(
+      projectUuid: 'free-mode',
+      room: room('free-draft'),
+      continuationReference: freeReference,
+    );
+    final freeDraft = await service.load('free-mode');
+    expect(freeDraft!.continuationReference!.mode,
+        ScanContinuationMode.freeDirection);
+    expect(freeDraft.continuationReference!.targetRoomId, isNull);
+    expect(freeDraft.continuationReference!.side,
+        OpeningConnectionSide.right);
+  });
+
   test('does not delete drafts written by a newer format version', () async {
     SharedPreferences.setMockInitialValues({
       'scan_draft_v1_future': jsonEncode({'version': 2}),

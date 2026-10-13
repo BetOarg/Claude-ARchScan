@@ -1,5 +1,7 @@
 part of 'floor_plan_viewer_screen.dart';
 
+enum _ContinuationChoice { targetCorner, targetPoint, freeDirection }
+
 class _PlanHit {
   final String roomId;
   final int index;
@@ -24,6 +26,8 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     final l10n = AppLocalizations.of(context)!;
     var selectedVertexIndex = vertexIndex;
     _PlanHit? closingCorner;
+    ARPoint? closingPoint;
+    _ContinuationChoice? continuationChoice;
 
     // When the action starts from a selected wall, do not silently return to
     // the historical first point. Let the user choose either valid endpoint.
@@ -65,38 +69,140 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     }
 
     if (room.isClosed) {
-      closingCorner = await _chooseContinuationClosingCorner(
-        room,
-        selectedVertexIndex,
+      continuationChoice = await showDialog<_ContinuationChoice>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.continuationModeTitle),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.continuationModeDescription),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const Icon(Icons.turn_right),
+                  title: Text(l10n.continuationToCorner),
+                  onTap: () => Navigator.pop(
+                    dialogContext,
+                    _ContinuationChoice.targetCorner,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.place_outlined),
+                  title: Text(l10n.continuationToPoint),
+                  onTap: () => Navigator.pop(
+                    dialogContext,
+                    _ContinuationChoice.targetPoint,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.route_outlined),
+                  title: Text(l10n.continuationFreeDirection),
+                  onTap: () => Navigator.pop(
+                    dialogContext,
+                    _ContinuationChoice.freeDirection,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, null),
+              child: Text(l10n.cancel),
+            ),
+          ],
+        ),
       );
-      if (!mounted || closingCorner == null) return;
-      final selectedClosingCorner = closingCorner;
-      await WidgetsBinding.instance.endOfFrame;
-      if (!mounted) return;
+      if (!mounted || continuationChoice == null) return;
+
+      if (continuationChoice != _ContinuationChoice.freeDirection) {
+        closingCorner = await _chooseContinuationClosingCorner(
+          room,
+          selectedVertexIndex,
+          choice: continuationChoice!,
+        );
+        if (!mounted || closingCorner == null) return;
+        closingPoint = _continuationClosingPoint;
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+      }
     }
 
     final selectedClosingCorner = closingCorner;
     final isCrossRoomCornerContinuation =
-        selectedClosingCorner != null && selectedClosingCorner.roomId != room.id;
+        continuationChoice == _ContinuationChoice.targetCorner &&
+        selectedClosingCorner != null &&
+        selectedClosingCorner.roomId != room.id;
+    final isPointContinuation =
+        continuationChoice == _ContinuationChoice.targetPoint &&
+        selectedClosingCorner != null &&
+        closingPoint != null;
 
-    final preparedRoom = isCrossRoomCornerContinuation
-        ? null
-        : _plan.prepareOpenRoomContinuation(
-            roomId: room.id,
-            vertexIndex: selectedVertexIndex,
-            closingVertexIndex: closingCorner?.index,
-          );
-    final cornerReference = isCrossRoomCornerContinuation
-        ? ScanContinuationReference.fromCorners(
-            sourceRoomId: room.id,
-            sourcePoint: room.points[selectedVertexIndex],
-            targetRoomId: selectedClosingCorner!.roomId,
-            targetPoint:
-                _plan.completedRooms
-                    .firstWhere((candidate) => candidate.id == selectedClosingCorner.roomId)
-                    .points[selectedClosingCorner.index],
-          )
-        : null;
+    RoomModel? preparedRoom;
+    ScanContinuationReference? cornerReference;
+    if (continuationChoice == _ContinuationChoice.freeDirection) {
+      final adjacentIndex = selectedVertexIndex + 1 < room.points.length
+          ? selectedVertexIndex + 1
+          : selectedVertexIndex - 1;
+      final side = await showDialog<OpeningConnectionSide>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.continuationDirectionTitle),
+          content: Text(l10n.continuationDirectionDescription),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, null),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                OpeningConnectionSide.left,
+              ),
+              child: Text(l10n.continuationDirectionLeft),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                OpeningConnectionSide.right,
+              ),
+              child: Text(l10n.continuationDirectionRight),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || side == null) return;
+      cornerReference = ScanContinuationReference.freeDirection(
+        sourceRoomId: room.id,
+        sourcePoint: room.points[selectedVertexIndex],
+        directionPoint: room.points[adjacentIndex],
+        side: side,
+      );
+    } else if (isPointContinuation) {
+      cornerReference = ScanContinuationReference.fromTargetPoint(
+        sourceRoomId: room.id,
+        sourcePoint: room.points[selectedVertexIndex],
+        targetRoomId: selectedClosingCorner!.roomId,
+        targetPoint: closingPoint!,
+      );
+    } else if (isCrossRoomCornerContinuation) {
+      cornerReference = ScanContinuationReference.fromCorners(
+        sourceRoomId: room.id,
+        sourcePoint: room.points[selectedVertexIndex],
+        targetRoomId: selectedClosingCorner!.roomId,
+        targetPoint: _plan.completedRooms
+            .firstWhere((candidate) => candidate.id == selectedClosingCorner.roomId)
+            .points[selectedClosingCorner.index],
+      );
+    } else {
+      preparedRoom = _plan.prepareOpenRoomContinuation(
+        roomId: room.id,
+        vertexIndex: selectedVertexIndex,
+        closingVertexIndex: selectedClosingCorner?.index,
+      );
+    }
     if (preparedRoom == null && cornerReference == null) return;
 
     final confirmed = await showDialog<bool>(
@@ -151,6 +257,8 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
   Completer<_PlanHit?>? _closingCornerCompleter;
   _PlanHit? _continuationStartHit;
   _PlanHit? _continuationClosingHit;
+  ARPoint? _continuationClosingPoint;
+  _ContinuationChoice? _continuationChoice;
   bool get _choosingContinuationClosing =>
       _closingCornerCompleter != null;
   FloorPlanProvider get _plan => context.read<FloorPlanProvider>();
@@ -174,14 +282,17 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
 
   Future<_PlanHit?> _chooseContinuationClosingCorner(
     RoomModel room,
-    int startVertexIndex,
-  ) async {
+    int startVertexIndex, {
+    required _ContinuationChoice choice,
+  }) async {
     final completer = Completer<_PlanHit?>();
     setState(() {
       _closingCornerCompleter = completer;
       _continuationStartHit =
           _PlanHit(room.id, startVertexIndex, true);
       _continuationClosingHit = null;
+      _continuationClosingPoint = null;
+      _continuationChoice = choice;
       _wallEditMode = false;
     });
     return completer.future;
@@ -191,6 +302,8 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     _closingCornerCompleter = null;
     _continuationStartHit = null;
     _continuationClosingHit = null;
+    _continuationClosingPoint = null;
+    _continuationChoice = null;
   }
 
   void _cancelContinuationCornerSelection() {
@@ -274,23 +387,62 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     final closingCompleter = _closingCornerCompleter;
     final startHit = _continuationStartHit;
     if (closingCompleter != null && startHit != null) {
-      // The closing corner can belong to any room in the
-      // project. Do not restrict hit-testing to the source room.
-      final cornerHits = _planHits(
+      final choice = _continuationChoice;
+      final candidates = _planHits(
         position,
         rooms,
+        corners: true,
         deduplicateRooms: false,
-      ).where((hit) => hit.corner).toList();
-      if (cornerHits.isEmpty) {
-        _showMessage(AppLocalizations.of(context)!.chooseClosingCorner);
+      );
+      final hits = choice == _ContinuationChoice.targetCorner
+          ? candidates.where((hit) => hit.corner).toList()
+          : candidates;
+      if (hits.isEmpty) {
+        _showMessage(
+          choice == _ContinuationChoice.targetCorner
+              ? AppLocalizations.of(context)!.chooseClosingCorner
+              : AppLocalizations.of(context)!.chooseClosingPoint,
+        );
         return true;
       }
-      final hit = cornerHits.first;
-      if (hit.roomId == startHit.roomId && hit.index == startHit.index) {
+      final hit = hits.first;
+      if (hit.roomId == startHit.roomId &&
+          hit.corner &&
+          hit.index == startHit.index) {
         _showMessage(AppLocalizations.of(context)!.chooseDifferentCorner);
         return true;
       }
-      setState(() => _continuationClosingHit = hit);
+
+      ARPoint? selectedPoint;
+      final targetRoom = rooms.firstWhere((room) => room.id == hit.roomId);
+      if (hit.corner) {
+        selectedPoint = targetRoom.points[hit.index];
+      } else if (choice == _ContinuationChoice.targetPoint) {
+        final tapped = _inverseTransform(position);
+        final a = targetRoom.points[hit.index];
+        final b = targetRoom.points[(hit.index + 1) % targetRoom.points.length];
+        final dx = b.x - a.x, dz = b.z - a.z;
+        final lengthSquared = dx * dx + dz * dz;
+        if (lengthSquared > 1e-12) {
+          final t = (((tapped.x - a.x) * dx + (tapped.z - a.z) * dz) /
+                  lengthSquared)
+              .clamp(0.0, 1.0)
+              .toDouble();
+          selectedPoint = ARPoint(
+            x: a.x + t * dx,
+            y: a.y + t * (b.y - a.y),
+            z: a.z + t * dz,
+          );
+        }
+      }
+      if (choice == _ContinuationChoice.targetPoint && selectedPoint == null) {
+        _showMessage(AppLocalizations.of(context)!.chooseClosingPoint);
+        return true;
+      }
+      setState(() {
+        _continuationClosingHit = hit;
+        _continuationClosingPoint = selectedPoint;
+      });
       if (!closingCompleter.isCompleted) {
         closingCompleter.complete(hit);
       }

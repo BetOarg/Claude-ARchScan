@@ -60,6 +60,7 @@ class ScanDraft {
     ScanContinuationReference reference,
   ) =>
       <String, dynamic>{
+        'mode': reference.mode.name,
         'sourceRoomId': reference.sourceRoomId,
         'featureId': reference.featureId,
         'featureType': reference.featureType.name,
@@ -80,6 +81,10 @@ class ScanDraft {
 
     final json = Map<String, dynamic>.from(value);
     return ScanContinuationReference(
+      mode: ScanContinuationMode.values.firstWhere(
+        (mode) => mode.name == json['mode'],
+        orElse: () => ScanContinuationMode.opening,
+      ),
       sourceRoomId: json['sourceRoomId'] as String,
       featureId: json['featureId'] as String,
       featureType: FeatureType.values.firstWhere(

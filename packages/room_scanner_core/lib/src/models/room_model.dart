@@ -244,14 +244,17 @@ class WallFeature {
   }
 }
 
-/// Referencia global utilizada para continuar un escaneo desde una abertura.
-///
-/// Esta clase es independiente del tipo de scanner. El plano 2D la crea y
-/// [ArCheckService] la entrega al Basic Scanner o al scanner AR disponible.
-/// En Basic Scanner sus extremos globales permiten iniciar el ambiente ya
-/// alineado. En ARCore/ARKit se conservan como destino global mientras el
-/// usuario vuelve a marcar ambos extremos en la nueva sesión AR.
+/// Defines how a new scan relates to the existing plan.
+enum ScanContinuationMode {
+  opening,
+  targetCorner,
+  targetPoint,
+  freeDirection,
+}
+
+/// Referencia global utilizada para continuar un escaneo desde el plano.
 class ScanContinuationReference {
+  final ScanContinuationMode mode;
   final String sourceRoomId;
   final String featureId;
   final FeatureType featureType;
@@ -263,6 +266,7 @@ class ScanContinuationReference {
   final ARPoint? targetGlobalPoint;
 
   const ScanContinuationReference({
+    this.mode = ScanContinuationMode.opening,
     required this.sourceRoomId,
     required this.featureId,
     required this.featureType,
@@ -298,6 +302,7 @@ class ScanContinuationReference {
     required ARPoint targetPoint,
   }) {
     return ScanContinuationReference(
+      mode: ScanContinuationMode.targetCorner,
       sourceRoomId: sourceRoomId,
       featureId: '__corner_continuation__',
       featureType: FeatureType.door,
@@ -307,6 +312,44 @@ class ScanContinuationReference {
       startEndpoint: ContinuationStartEndpoint.start,
       targetRoomId: targetRoomId,
       targetGlobalPoint: targetPoint,
+    );
+  }
+
+  factory ScanContinuationReference.fromTargetPoint({
+    required String sourceRoomId,
+    required ARPoint sourcePoint,
+    required String targetRoomId,
+    required ARPoint targetPoint,
+  }) {
+    return ScanContinuationReference(
+      mode: ScanContinuationMode.targetPoint,
+      sourceRoomId: sourceRoomId,
+      featureId: '__point_continuation__',
+      featureType: FeatureType.door,
+      globalStart: sourcePoint,
+      globalEnd: targetPoint,
+      side: OpeningConnectionSide.left,
+      startEndpoint: ContinuationStartEndpoint.start,
+      targetRoomId: targetRoomId,
+      targetGlobalPoint: targetPoint,
+    );
+  }
+
+  factory ScanContinuationReference.freeDirection({
+    required String sourceRoomId,
+    required ARPoint sourcePoint,
+    required ARPoint directionPoint,
+    required OpeningConnectionSide side,
+  }) {
+    return ScanContinuationReference(
+      mode: ScanContinuationMode.freeDirection,
+      sourceRoomId: sourceRoomId,
+      featureId: '__free_direction__',
+      featureType: FeatureType.door,
+      globalStart: sourcePoint,
+      globalEnd: directionPoint,
+      side: side,
+      startEndpoint: ContinuationStartEndpoint.start,
     );
   }
 

@@ -1065,22 +1065,28 @@ class _ARScannerScreenState extends State<ARScannerScreen>
   String _continuationInstruction() {
     final l10n = AppLocalizations.of(context)!;
     final resumesRoom = _activeResumeRoom != null;
+    final reference = _activeContinuationReference;
+    final isFreeDirection =
+        reference?.mode == ScanContinuationMode.freeDirection;
+    final isPlanPointContinuation = reference != null &&
+        reference.mode != ScanContinuationMode.opening;
 
     if (_continuationSessionStart == null) {
-      return resumesRoom
-          ? l10n.pointPreviousVertexInstruction
-          : l10n.pointOpeningEndpointAInstruction;
+      if (resumesRoom) return l10n.pointPreviousVertexInstruction;
+      if (isPlanPointContinuation) return l10n.pointContinuationOriginInstruction;
+      return l10n.pointOpeningEndpointAInstruction;
     }
 
     if (_continuationSessionEnd == null) {
-      return resumesRoom
-          ? l10n.pointStartVertexInstruction
-          : l10n.pointOpeningEndpointBInstruction;
+      if (resumesRoom) return l10n.pointStartVertexInstruction;
+      if (isFreeDirection) return l10n.pointFreeDirectionReferenceInstruction;
+      if (isPlanPointContinuation) return l10n.pointContinuationTargetInstruction;
+      return l10n.pointOpeningEndpointBInstruction;
     }
 
-    return resumesRoom
-        ? l10n.vertexReferenceAligned
-        : l10n.openingReferenceAlignedInstruction;
+    if (resumesRoom) return l10n.vertexReferenceAligned;
+    if (isPlanPointContinuation) return l10n.continuationReferenceAligned;
+    return l10n.openingReferenceAlignedInstruction;
   }
 
   String _continuationCaptureLabel(AppLocalizations l10n) {
@@ -1088,6 +1094,13 @@ class _ARScannerScreenState extends State<ARScannerScreen>
       return _continuationSessionStart == null
           ? l10n.markPreviousVertex
           : l10n.markStartVertex;
+    }
+    final reference = _activeContinuationReference;
+    if (reference != null && reference.mode != ScanContinuationMode.opening) {
+      if (_continuationSessionStart == null) return l10n.markContinuationOrigin;
+      return reference.mode == ScanContinuationMode.freeDirection
+          ? l10n.markFreeDirectionReference
+          : l10n.markContinuationTarget;
     }
     return _continuationSessionStart == null
         ? l10n.markOpeningEndpointA
@@ -1542,7 +1555,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
     final floorPlanProvider = context.read<FloorPlanProvider>();
 
-    if (continuation != null) {
+    if (continuation != null &&
+        continuation.mode == ScanContinuationMode.opening) {
       final sourceFeature = floorPlanProvider.findFeature(
         roomId: continuation.sourceRoomId,
         featureId: continuation.featureId,
