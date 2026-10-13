@@ -824,7 +824,11 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      l10n.continuationFromOpening,
+                      continuation.mode == ScanContinuationMode.freeDirection
+                          ? l10n.continuationFreeDirection
+                          : continuation.mode == ScanContinuationMode.opening
+                              ? l10n.continuationFromOpening
+                              : l10n.continuationFromPlanPoint,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -858,7 +862,9 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
                   child: Text(
                     count == 0
                         ? continuation != null
-                            ? l10n.continuationFirstCornerInstruction
+                            ? continuation.mode == ScanContinuationMode.freeDirection
+                                ? l10n.continuationFreeScanInstruction
+                                : l10n.continuationFirstCornerInstruction
                             : l10n.markRoomStartingPoint
                         : l10n.measureNextCornerInstruction,
                     style: const TextStyle(
