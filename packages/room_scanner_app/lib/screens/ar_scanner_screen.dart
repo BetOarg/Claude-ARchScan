@@ -1555,7 +1555,8 @@ class _ARScannerScreenState extends State<ARScannerScreen>
 
     final floorPlanProvider = context.read<FloorPlanProvider>();
 
-    if (continuation != null) {
+    if (continuation != null &&
+        continuation.mode == ScanContinuationMode.opening) {
       final sourceFeature = floorPlanProvider.findFeature(
         roomId: continuation.sourceRoomId,
         featureId: continuation.featureId,
