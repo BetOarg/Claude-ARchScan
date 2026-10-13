@@ -81,7 +81,7 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
                 Text(l10n.continuationModeDescription),
                 const SizedBox(height: 12),
                 ListTile(
-                  leading: const Icon(Icons.corner_down_right),
+                  leading: const Icon(Icons.turn_right),
                   title: Text(l10n.continuationToCorner),
                   onTap: () => Navigator.pop(
                     dialogContext,
