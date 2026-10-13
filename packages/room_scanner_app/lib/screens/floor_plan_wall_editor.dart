@@ -375,23 +375,62 @@ mixin _PlanWallEditing on State<FloorPlanViewerScreen> {
     final closingCompleter = _closingCornerCompleter;
     final startHit = _continuationStartHit;
     if (closingCompleter != null && startHit != null) {
-      // The closing corner can belong to any room in the
-      // project. Do not restrict hit-testing to the source room.
-      final cornerHits = _planHits(
+      final choice = _continuationChoice;
+      final candidates = _planHits(
         position,
         rooms,
+        corners: true,
         deduplicateRooms: false,
-      ).where((hit) => hit.corner).toList();
-      if (cornerHits.isEmpty) {
-        _showMessage(AppLocalizations.of(context)!.chooseClosingCorner);
+      );
+      final hits = choice == _ContinuationChoice.targetCorner
+          ? candidates.where((hit) => hit.corner).toList()
+          : candidates;
+      if (hits.isEmpty) {
+        _showMessage(
+          choice == _ContinuationChoice.targetCorner
+              ? AppLocalizations.of(context)!.chooseClosingCorner
+              : AppLocalizations.of(context)!.chooseClosingPoint,
+        );
         return true;
       }
-      final hit = cornerHits.first;
-      if (hit.roomId == startHit.roomId && hit.index == startHit.index) {
+      final hit = hits.first;
+      if (hit.roomId == startHit.roomId &&
+          hit.corner &&
+          hit.index == startHit.index) {
         _showMessage(AppLocalizations.of(context)!.chooseDifferentCorner);
         return true;
       }
-      setState(() => _continuationClosingHit = hit);
+
+      ARPoint? selectedPoint;
+      final targetRoom = rooms.firstWhere((room) => room.id == hit.roomId);
+      if (hit.corner) {
+        selectedPoint = targetRoom.points[hit.index];
+      } else if (choice == _ContinuationChoice.targetPoint) {
+        final tapped = _inverseTransform(position);
+        final a = targetRoom.points[hit.index];
+        final b = targetRoom.points[(hit.index + 1) % targetRoom.points.length];
+        final dx = b.x - a.x, dz = b.z - a.z;
+        final lengthSquared = dx * dx + dz * dz;
+        if (lengthSquared > 1e-12) {
+          final t = (((tapped.x - a.x) * dx + (tapped.z - a.z) * dz) /
+                  lengthSquared)
+              .clamp(0.0, 1.0)
+              .toDouble();
+          selectedPoint = ARPoint(
+            x: a.x + t * dx,
+            y: a.y + t * (b.y - a.y),
+            z: a.z + t * dz,
+          );
+        }
+      }
+      if (choice == _ContinuationChoice.targetPoint && selectedPoint == null) {
+        _showMessage(AppLocalizations.of(context)!.chooseClosingPoint);
+        return true;
+      }
+      setState(() {
+        _continuationClosingHit = hit;
+        _continuationClosingPoint = selectedPoint;
+      });
       if (!closingCompleter.isCompleted) {
         closingCompleter.complete(hit);
       }
