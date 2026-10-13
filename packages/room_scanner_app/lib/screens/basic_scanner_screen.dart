@@ -440,26 +440,33 @@ class _BasicScannerScreenState extends State<BasicScannerScreen>
       return;
     }
 
-    final width = continuation.width;
-    final tangentSign =
-        continuation.side == OpeningConnectionSide.left ? 1.0 : -1.0;
-    final otherX = continuation.startEndpoint == ContinuationStartEndpoint.start
-        ? tangentSign * width
-        : -tangentSign * width;
-
-    final other = ARPoint(x: otherX, y: 0.0, z: 0.0);
     final origin = ARPoint(x: 0.0, y: 0.0, z: 0.0);
-    final sharedFeature = WallFeature(
-      id: continuation.featureId,
-      type: continuation.featureType,
-      start: other,
-      end: origin,
-    );
+    if (continuation.mode == ScanContinuationMode.freeDirection) {
+      // The reference edge calibrates orientation only; this scan must not
+      // fabricate a door/window or a shared wall at the starting corner.
+      provider.startNewRoom(initialPoints: <ARPoint>[origin]);
+    } else {
+      final width = continuation.width;
+      final tangentSign =
+          continuation.side == OpeningConnectionSide.left ? 1.0 : -1.0;
+      final otherX =
+          continuation.startEndpoint == ContinuationStartEndpoint.start
+              ? tangentSign * width
+              : -tangentSign * width;
 
-    provider.startNewRoom(
-      initialPoints: <ARPoint>[origin],
-      initialFeatures: <WallFeature>[sharedFeature],
-    );
+      final other = ARPoint(x: otherX, y: 0.0, z: 0.0);
+      final sharedFeature = WallFeature(
+        id: continuation.featureId,
+        type: continuation.featureType,
+        start: other,
+        end: origin,
+      );
+
+      provider.startNewRoom(
+        initialPoints: <ARPoint>[origin],
+        initialFeatures: <WallFeature>[sharedFeature],
+      );
+    }
 
     _scannerAdapter.seedPath(<ScannerPoint>[
       ScannerPoint(
