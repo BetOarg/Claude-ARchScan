@@ -337,7 +337,7 @@ void main() {
     expect(plan.completedRooms, [source]);
     expect(plan.canUndoTransform, isFalse);
   });
-  test('point-target continuation places the terminal vertex on the tapped wall point', () async {
+  test('point-target continuation preserves the source anchor, target contact, and dimensions', () async {
     final source = room(
       'source',
       [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
@@ -346,13 +346,32 @@ void main() {
       'target',
       [p(10, 0), p(14, 0), p(14, 3), p(10, 3)],
     );
+    // The first-to-terminal distance is exactly the 10 m anchor separation.
     final scanned = room(
       'scanned',
-      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+      [p(0, 0), p(10, 0), p(10, 2), p(0, 10)],
     );
     final plan = provider([source, target]);
     addTearDown(plan.dispose);
+    final sourceBefore = source.toJson();
     final targetBefore = target.toJson();
+    double areaOf(RoomModel value) {
+      var twiceArea = 0.0;
+      for (var i = 0; i < value.points.length; i++) {
+        final a = value.points[i];
+        final b = value.points[(i + 1) % value.points.length];
+        twiceArea += a.x * b.z - b.x * a.z;
+      }
+      return twiceArea.abs() / 2;
+    }
+    final scannedEdgeLengths = [
+      for (var i = 0; i < scanned.points.length; i++)
+        GeometryService.calculateDistance(
+          scanned.points[i],
+          scanned.points[(i + 1) % scanned.points.length],
+        ),
+    ];
+    final scannedArea = areaOf(scanned);
     final reference = ScanContinuationReference.fromTargetPoint(
       sourceRoomId: source.id,
       sourcePoint: p(2, 0),
@@ -370,11 +389,63 @@ void main() {
 
     final added = plan.completedRooms.singleWhere((candidate) =>
         candidate.id != source.id && candidate.id != target.id);
+    expect(added.points.first.x, closeTo(2, 0.000001));
+    expect(added.points.first.z, closeTo(0, 0.000001));
     expect(added.points.last.x, closeTo(12, 0.000001));
     expect(added.points.last.z, closeTo(0, 0.000001));
     expect(added.features, isEmpty);
+    expect(areaOf(added), closeTo(scannedArea, 0.0001));
+    for (var i = 0; i < added.points.length; i++) {
+      expect(
+        GeometryService.calculateDistance(
+          added.points[i],
+          added.points[(i + 1) % added.points.length],
+        ),
+        closeTo(scannedEdgeLengths[i], 0.0001),
+      );
+    }
+    expect(source.toJson(), sourceBefore);
     expect(target.toJson(), targetBefore);
-    expect(plan.completedRooms.firstWhere((candidate) => candidate.id == source.id).toJson(), source.toJson());
+    expect(
+      plan.completedRooms.firstWhere((candidate) => candidate.id == source.id).toJson(),
+      sourceBefore,
+    );
+  });
+
+  test('point-target continuation rejects incompatible anchors without changing rooms', () async {
+    final source = room(
+      'source',
+      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+    );
+    final target = room(
+      'target',
+      [p(10, 0), p(14, 0), p(14, 3), p(10, 3)],
+    );
+    final scanned = room(
+      'scanned-short',
+      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+    );
+    final plan = provider([source, target]);
+    addTearDown(plan.dispose);
+    final before = plan.completedRooms.map((candidate) => candidate.toJson()).toList();
+    final reference = ScanContinuationReference.fromTargetPoint(
+      sourceRoomId: source.id,
+      sourcePoint: p(2, 0),
+      targetRoomId: target.id,
+      targetPoint: p(12, 0),
+    );
+
+    expect(
+      await plan.addCompletedRoomFromContinuation(
+        room: scanned,
+        reference: reference,
+      ),
+      isFalse,
+    );
+    expect(
+      plan.completedRooms.map((candidate) => candidate.toJson()).toList(),
+      before,
+    );
   });
 
   test('removing an unknown room is a no-op and does not create undo history', () async {
