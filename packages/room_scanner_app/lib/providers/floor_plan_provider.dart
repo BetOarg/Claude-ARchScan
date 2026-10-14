@@ -724,13 +724,6 @@ class FloorPlanProvider extends ChangeNotifier {
     // and does not require a destination point in the existing plan.
     if (reference.mode == ScanContinuationMode.freeDirection) {
       var roomToAdd = _alignRoomToContinuation(room, reference);
-      if (reference.mode == ScanContinuationMode.targetPoint &&
-          roomToAdd.points.isNotEmpty) {
-        roomToAdd = _alignRoomTerminalToTarget(
-          roomToAdd,
-          reference.targetGlobalPoint!,
-        );
-      }
       if (roomToAdd.id.trim().isEmpty ||
           _completedRooms.any((existing) => existing.id == roomToAdd.id)) {
         roomToAdd = roomToAdd.copyWith(id: _nextUniqueId());
@@ -790,6 +783,13 @@ class FloorPlanProvider extends ChangeNotifier {
       if (!targetMatches) return false;
 
       var roomToAdd = _alignRoomToContinuation(room, reference);
+      if (reference.mode == ScanContinuationMode.targetPoint &&
+          roomToAdd.points.isNotEmpty) {
+        roomToAdd = _alignRoomTerminalToTarget(
+          roomToAdd,
+          reference.targetGlobalPoint!,
+        );
+      }
       if (roomToAdd.id.trim().isEmpty ||
           _completedRooms.any((existing) => existing.id == roomToAdd.id)) {
         roomToAdd = roomToAdd.copyWith(id: _nextUniqueId());
