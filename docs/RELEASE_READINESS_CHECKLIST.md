@@ -1,7 +1,16 @@
 # Lista de preparación para publicación — ARchScan
 
-**Última revisión:** 06/10/2026  
-**Versión candidata actual:** `2.7.2+6`
+**Última revisión:** 14/10/2026  
+**Versión candidata actual:** `2.7.2+7`
+
+## Actualización de auditoría — 14/10/2026
+
+- [x] PR #75 fusionado en `main`: la continuación por punto conserva el anclaje inicial y el contacto final mediante transformación rígida; rechaza anclajes incompatibles sin alterar ambientes existentes.
+- [x] CI del PR #75 verde: análisis y pruebas de core y app, verificación de configuración iOS, App Bundle Android y controles de publicación; Housekeeping Audit verde.
+- [x] Build number incrementado a `+7` para evitar reutilizar el identificador del artefacto anterior.
+- [ ] Generar y auditar un nuevo AAB firmado para `2.7.2+7`.
+- [ ] No usar el artefacto `2.7.2+6` de la ejecución Android #14 (commit `88186e0`, 07/10/2026) como candidato final: precede a la corrección geométrica fusionada en PR #75.
+- [ ] Ejecutar la matriz física de pruebas sobre el nuevo candidato firmado y promover exactamente ese mismo artefacto.
 
 ## Estado verificable en repositorio
 
