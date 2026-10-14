@@ -337,6 +337,46 @@ void main() {
     expect(plan.completedRooms, [source]);
     expect(plan.canUndoTransform, isFalse);
   });
+  test('point-target continuation places the terminal vertex on the tapped wall point', () async {
+    final source = room(
+      'source',
+      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+    );
+    final target = room(
+      'target',
+      [p(10, 0), p(14, 0), p(14, 3), p(10, 3)],
+    );
+    final scanned = room(
+      'scanned',
+      [p(0, 0), p(2, 0), p(2, 2), p(0, 2)],
+    );
+    final plan = provider([source, target]);
+    addTearDown(plan.dispose);
+    final targetBefore = target.toJson();
+    final reference = ScanContinuationReference.fromTargetPoint(
+      sourceRoomId: source.id,
+      sourcePoint: p(2, 0),
+      targetRoomId: target.id,
+      targetPoint: p(12, 0),
+    );
+
+    expect(
+      await plan.addCompletedRoomFromContinuation(
+        room: scanned,
+        reference: reference,
+      ),
+      isTrue,
+    );
+
+    final added = plan.completedRooms.singleWhere((candidate) =>
+        candidate.id != source.id && candidate.id != target.id);
+    expect(added.points.last.x, closeTo(12, 0.000001));
+    expect(added.points.last.z, closeTo(0, 0.000001));
+    expect(added.features, isEmpty);
+    expect(target.toJson(), targetBefore);
+    expect(plan.completedRooms.firstWhere((candidate) => candidate.id == source.id).toJson(), source.toJson());
+  });
+
   test('removing an unknown room is a no-op and does not create undo history', () async {
     final opening = WallFeature(
       id: 'shared',

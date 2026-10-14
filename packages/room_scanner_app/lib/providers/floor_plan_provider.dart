@@ -783,6 +783,13 @@ class FloorPlanProvider extends ChangeNotifier {
       if (!targetMatches) return false;
 
       var roomToAdd = _alignRoomToContinuation(room, reference);
+      if (reference.mode == ScanContinuationMode.targetPoint &&
+          roomToAdd.points.isNotEmpty) {
+        roomToAdd = _alignRoomTerminalToTarget(
+          roomToAdd,
+          reference.targetGlobalPoint!,
+        );
+      }
       if (roomToAdd.id.trim().isEmpty ||
           _completedRooms.any((existing) => existing.id == roomToAdd.id)) {
         roomToAdd = roomToAdd.copyWith(id: _nextUniqueId());
@@ -891,6 +898,33 @@ class FloorPlanProvider extends ChangeNotifier {
 
     notifyListeners();
     return _persistRoomChange(before);
+  }
+
+  /// For point-target continuation, the final scanned vertex is the
+  /// contact point with the destination wall. Translate the whole room so
+  /// that this vertex lands exactly on the selected point; do not alter the
+  /// destination room or manufacture an opening there.
+  RoomModel _alignRoomTerminalToTarget(RoomModel room, ARPoint target) {
+    final terminal = room.points.last;
+    final dx = target.x - terminal.x;
+    final dy = target.y - terminal.y;
+    final dz = target.z - terminal.z;
+
+    ARPoint translate(ARPoint point) => ARPoint(
+          x: point.x + dx,
+          y: point.y + dy,
+          z: point.z + dz,
+        );
+
+    return room.copyWith(
+      points: room.points.map(translate).toList(),
+      features: room.features
+          .map((feature) => feature.copyWith(
+                start: translate(feature.start),
+                end: translate(feature.end),
+              ))
+          .toList(),
+    );
   }
 
   RoomModel _alignRoomToContinuation(
