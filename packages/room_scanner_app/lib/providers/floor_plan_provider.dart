@@ -785,10 +785,16 @@ class FloorPlanProvider extends ChangeNotifier {
       var roomToAdd = _alignRoomToContinuation(room, reference);
       if (reference.mode == ScanContinuationMode.targetPoint &&
           roomToAdd.points.isNotEmpty) {
-        roomToAdd = _alignRoomTerminalToTarget(
+        final anchored = _alignRoomToPointTarget(
           roomToAdd,
+          reference.origin,
           reference.targetGlobalPoint!,
         );
+        // A rigid transform cannot satisfy two anchors if their distances
+        // disagree with the scanned contour. Reject rather than distort the
+        // room or silently move the selected source corner.
+        if (anchored == null) return false;
+        roomToAdd = anchored;
       }
       if (roomToAdd.id.trim().isEmpty ||
           _completedRooms.any((existing) => existing.id == roomToAdd.id)) {
@@ -900,28 +906,82 @@ class FloorPlanProvider extends ChangeNotifier {
     return _persistRoomChange(before);
   }
 
-  /// For point-target continuation, the final scanned vertex is the
-  /// contact point with the destination wall. Translate the whole room so
-  /// that this vertex lands exactly on the selected point; do not alter the
-  /// destination room or manufacture an opening there.
-  RoomModel _alignRoomTerminalToTarget(RoomModel room, ARPoint target) {
-    final terminal = room.points.last;
-    final dx = target.x - terminal.x;
-    final dy = target.y - terminal.y;
-    final dz = target.z - terminal.z;
+  /// Aligns a point-target continuation with both selected anchors using
+  /// only translation and rotation. The scanned dimensions are preserved.
+  ///
+  /// If the scanned start-to-terminal distance cannot reach the selected
+  /// target without scaling or stretching the room, reject the continuation.
+  /// Never translate the source anchor to satisfy the terminal contact.
+  RoomModel? _alignRoomToPointTarget(
+    RoomModel room,
+    ARPoint source,
+    ARPoint target,
+  ) {
+    if (room.points.length < 2) return null;
 
-    ARPoint translate(ARPoint point) => ARPoint(
-          x: point.x + dx,
-          y: point.y + dy,
-          z: point.z + dz,
+    final first = room.points.first;
+    final translateX = source.x - first.x;
+    final translateY = source.y - first.y;
+    final translateZ = source.z - first.z;
+    ARPoint translated(ARPoint point) => ARPoint(
+          x: point.x + translateX,
+          y: point.y + translateY,
+          z: point.z + translateZ,
         );
 
+    final anchoredPoints = room.points.map(translated).toList();
+    final terminal = anchoredPoints.last;
+    final scannedDx = terminal.x - source.x;
+    final scannedDz = terminal.z - source.z;
+    final targetDx = target.x - source.x;
+    final targetDz = target.z - source.z;
+    final scannedLength = math.sqrt(
+      scannedDx * scannedDx + scannedDz * scannedDz,
+    );
+    final targetLength = math.sqrt(
+      targetDx * targetDx + targetDz * targetDz,
+    );
+
+    const tolerance = 0.0001;
+    if (scannedLength <= tolerance ||
+        targetLength <= tolerance ||
+        (scannedLength - targetLength).abs() > tolerance) {
+      return null;
+    }
+
+    final angle = math.atan2(targetDz, targetDx) -
+        math.atan2(scannedDz, scannedDx);
+    final cosine = math.cos(angle);
+    final sine = math.sin(angle);
+
+    ARPoint rotateAroundSource(ARPoint point) {
+      final dx = point.x - source.x;
+      final dz = point.z - source.z;
+      return ARPoint(
+        x: source.x + dx * cosine - dz * sine,
+        y: point.y,
+        z: source.z + dx * sine + dz * cosine,
+      );
+    }
+
+    ARPoint transformFeaturePoint(ARPoint point) =>
+        rotateAroundSource(translated(point));
+
+    final points = anchoredPoints.map(rotateAroundSource).toList();
+    // Remove floating-point residue at the two explicitly selected anchors.
+    points[0] = source;
+    points[points.length - 1] = ARPoint(
+      x: target.x,
+      y: points.last.y,
+      z: target.z,
+    );
+
     return room.copyWith(
-      points: room.points.map(translate).toList(),
+      points: points,
       features: room.features
           .map((feature) => feature.copyWith(
-                start: translate(feature.start),
-                end: translate(feature.end),
+                start: transformFeaturePoint(feature.start),
+                end: transformFeaturePoint(feature.end),
               ))
           .toList(),
     );
