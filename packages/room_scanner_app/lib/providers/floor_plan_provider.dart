@@ -112,28 +112,35 @@ class FloorPlanProvider extends ChangeNotifier {
         return const PlanEditProposal.failed(PlanEditError.connection);
       }
       final neighbour = proposed[neighbourId];
-      if (neighbour == null) {
+      final originalNeighbour = _completedRooms
+          .where((candidate) => candidate.id == neighbourId)
+          .firstOrNull;
+      if (neighbour == null || originalNeighbour == null) {
         return const PlanEditProposal.failed(PlanEditError.connection);
       }
-      final counterpart = neighbour.features
+      final originalCounterpart = originalNeighbour.features
           .where((candidate) =>
               candidate.id == feature.id &&
               candidate.connectedRoomId == original.id)
           .firstOrNull;
-      if (counterpart == null) {
+      final counterpart = neighbour.features
+          .where((candidate) => candidate.id == feature.id)
+          .firstOrNull;
+      if (originalCounterpart == null || counterpart == null) {
         return const PlanEditProposal.failed(PlanEditError.connection);
       }
 
       final oldWall = PlanEditGeometry.featureWall(original, feature);
-      final neighbourWall = PlanEditGeometry.featureWall(neighbour, counterpart);
+      final neighbourWall =
+          PlanEditGeometry.featureWall(originalNeighbour, originalCounterpart);
       if (oldWall < 0 || neighbourWall < 0) {
         return const PlanEditProposal.failed(PlanEditError.connection);
       }
       final oldNext = (oldWall + 1) % original.points.length;
-      final neighbourNext = (neighbourWall + 1) % neighbour.points.length;
+      final neighbourNext = (neighbourWall + 1) % originalNeighbour.points.length;
       final oldA = original.points[oldWall], oldB = original.points[oldNext];
-      final neighbourA = neighbour.points[neighbourWall];
-      final neighbourB = neighbour.points[neighbourNext];
+      final neighbourA = originalNeighbour.points[neighbourWall];
+      final neighbourB = originalNeighbour.points[neighbourNext];
       const sharedBoundaryTolerance = 0.05;
       final sameDirection =
           PlanEditGeometry.distance(oldA, neighbourA) <= sharedBoundaryTolerance &&
@@ -145,6 +152,9 @@ class FloorPlanProvider extends ChangeNotifier {
         return const PlanEditProposal.failed(PlanEditError.connection);
       }
 
+      // Start from the latest proposed neighbour geometry so that multiple
+      // connected openings on the same room do not undo each other's boundary
+      // updates. Use the original snapshot only to identify the shared edge.
       final movedNeighbourPoints = List<ARPoint>.from(neighbour.points);
       if (sameDirection) {
         movedNeighbourPoints[neighbourWall] = next.points[oldWall];
@@ -161,12 +171,22 @@ class FloorPlanProvider extends ChangeNotifier {
       final movedCounterpart = movedNeighbour.features
           .where((candidate) => candidate.id == counterpart.id)
           .firstOrNull;
+      final counterpartAligned = movedCounterpart != null &&
+          ((PlanEditGeometry.distance(
+                    movedCounterpart.start, updated.start) <=
+                sharedBoundaryTolerance &&
+            PlanEditGeometry.distance(
+                    movedCounterpart.end, updated.end) <=
+                sharedBoundaryTolerance) ||
+           (PlanEditGeometry.distance(
+                    movedCounterpart.start, updated.end) <=
+                sharedBoundaryTolerance &&
+            PlanEditGeometry.distance(
+                    movedCounterpart.end, updated.start) <=
+                sharedBoundaryTolerance));
       if (movedCounterpart == null ||
           PlanEditGeometry.featureWall(movedNeighbour, movedCounterpart) < 0 ||
-          PlanEditGeometry.distance(movedCounterpart.start, updated.start) > sharedBoundaryTolerance &&
-              PlanEditGeometry.distance(movedCounterpart.start, updated.end) > sharedBoundaryTolerance ||
-          PlanEditGeometry.distance(movedCounterpart.end, updated.start) > sharedBoundaryTolerance &&
-              PlanEditGeometry.distance(movedCounterpart.end, updated.end) > sharedBoundaryTolerance) {
+          !counterpartAligned) {
         return const PlanEditProposal.failed(PlanEditError.connection);
       }
       proposed[neighbour.id] = movedNeighbour;
