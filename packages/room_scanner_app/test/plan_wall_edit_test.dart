@@ -631,6 +631,53 @@ void main() {
         PlanEditError.connection);
     expect(plan.canUndoTransform, isFalse);
   });
+  test('moving a shared wall also moves the connected room boundary', () {
+    final sharedA = WallFeature(
+      id: 'shared-opening',
+      type: FeatureType.door,
+      start: p(1, 0),
+      end: p(2, 0),
+      connectedRoomId: 'neighbour',
+      connectionSide: OpeningConnectionSide.right,
+    );
+    final sharedB = sharedA.copyWith(
+      connectedRoomId: 'kitchen',
+      start: p(2, 0),
+      end: p(1, 0),
+    );
+    final kitchen = room(
+      'kitchen',
+      [p(0, 0), p(4, 0), p(4, 3), p(0, 3)],
+      features: [sharedA],
+    );
+    final neighbour = room(
+      'neighbour',
+      [p(0, 0), p(0, -3), p(4, -3), p(4, 0)],
+      features: [sharedB],
+    );
+    final plan = provider([kitchen, neighbour]);
+    addTearDown(plan.dispose);
+
+    final proposal = plan.previewGeometry(
+      kitchen,
+      PlanEditGeometry.moveWall(kitchen, 0, 0, -0.5),
+    );
+
+    expect(proposal.error, isNull);
+    expect(proposal.after, hasLength(2));
+    final movedKitchen = proposal.after.firstWhere((r) => r.id == 'kitchen');
+    final movedNeighbour =
+        proposal.after.firstWhere((r) => r.id == 'neighbour');
+    expect(movedKitchen.points[0].z, closeTo(-0.5, 1e-6));
+    expect(movedKitchen.points[1].z, closeTo(-0.5, 1e-6));
+    expect(movedNeighbour.points[0].z, closeTo(-0.5, 1e-6));
+    expect(movedNeighbour.points[3].z, closeTo(-0.5, 1e-6));
+    expect(movedKitchen.features.single.start.z, closeTo(-0.5, 1e-6));
+    expect(movedNeighbour.features.single.start.z, closeTo(-0.5, 1e-6));
+    expect(movedKitchen.features.single.isConnected, isTrue);
+    expect(movedNeighbour.features.single.isConnected, isTrue);
+  });
+
   test(
       'closure preview is reversible and a phantom closing wall cannot hold an opening',
       () async {
