@@ -162,4 +162,40 @@ void main() {
       isNull,
     );
   });
+  test('corner magnetism projects onto an inclined wall segment', () {
+    final inclined = room(
+      'inclined',
+      [p(0, 0), p(4, 4), p(5, 2), p(1, -2)],
+    );
+    final dragged = p(2, 2.08);
+    final snapped = PlanEditGeometry.snapPoint(dragged, [inclined], 0.1);
+
+    // Orthogonal projection onto the 45-degree wall is (2.04, 2.04).
+    expect(snapped.x, closeTo(2.04, 1e-6));
+    expect(snapped.z, closeTo(2.04, 1e-6));
+    expect(
+      PlanEditGeometry.distance(dragged, snapped),
+      lessThan(0.1),
+    );
+  });
+
+  test('moving an inclined wall keeps it parallel and shifts by its normal', () {
+    final original = room(
+      'inclined',
+      [p(0, 0), p(4, 4), p(7, 1), p(3, -3)],
+    );
+    const dx = 0.2;
+    const dz = -0.1;
+    final movedPoints = PlanEditGeometry.moveWall(original, 0, dx, dz);
+    final a = movedPoints[0];
+    final b = movedPoints[1];
+
+    // Original wall vector is (4, 4); its normal is (-1/sqrt(2), 1/sqrt(2)).
+    expect(b.x - a.x, closeTo(4, 1e-6));
+    expect(b.z - a.z, closeTo(4, 1e-6));
+    final normalOffset = dx * (-1 / 2.sqrt()) + dz * (1 / 2.sqrt());
+    expect(a.x, closeTo(-normalOffset / 2.sqrt(), 1e-6));
+    expect(a.z, closeTo(normalOffset / 2.sqrt(), 1e-6));
+  });
+
 }
