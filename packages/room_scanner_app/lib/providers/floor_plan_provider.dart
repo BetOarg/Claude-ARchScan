@@ -73,26 +73,117 @@ enum AutomaticRoomMoveResult {
 
 class FloorPlanProvider extends ChangeNotifier {
   /// All plan edits share the same snapshot history, including connected rooms.
+  ///
+  /// Moving a wall that carries a connected opening also moves the matching
+  /// shared boundary in the neighbouring room. This preserves the connection
+  /// instead of rejecting every edit that changes the opening's coordinates.
+  /// A connection that does not actually share the same boundary is still
+  /// rejected; we never silently detach or distort a connected opening.
   PlanEditProposal previewGeometry(RoomModel original, List<ARPoint> points) {
     if (!_completedRooms.any((r) => identical(r, original))) {
       return const PlanEditProposal.failed(PlanEditError.stale);
     }
     final next = PlanEditGeometry.reshape(original, points);
     if (next == null) return const PlanEditProposal.failed(PlanEditError.invalid);
-    for (final f in original.features.where((f) => f.isConnected)) {
-      final updated = next.features.firstWhere((e) => e.id == f.id);
-      if (PlanEditGeometry.distance(f.start, updated.start) > 1e-5 ||
-          PlanEditGeometry.distance(f.end, updated.end) > 1e-5 ||
-          PlanEditGeometry.featureWall(next, updated) < 0) {
+
+    final proposed = <String, RoomModel>{
+      for (final room in _completedRooms) room.id: room,
+    };
+    proposed[original.id] = next;
+    final changedRoomIds = <String>{original.id};
+
+    for (final feature in original.features.where((f) => f.isConnected)) {
+      final updated = next.features.where((e) => e.id == feature.id).firstOrNull;
+      if (updated == null) {
         return const PlanEditProposal.failed(PlanEditError.connection);
       }
+      final openingMoved =
+          PlanEditGeometry.distance(feature.start, updated.start) > 1e-5 ||
+          PlanEditGeometry.distance(feature.end, updated.end) > 1e-5;
+      if (!openingMoved) {
+        if (PlanEditGeometry.featureWall(next, updated) < 0) {
+          return const PlanEditProposal.failed(PlanEditError.connection);
+        }
+        continue;
+      }
+
+      final neighbourId = feature.connectedRoomId;
+      if (neighbourId == null || neighbourId == original.id) {
+        return const PlanEditProposal.failed(PlanEditError.connection);
+      }
+      final neighbour = proposed[neighbourId];
+      if (neighbour == null) {
+        return const PlanEditProposal.failed(PlanEditError.connection);
+      }
+      final counterpart = neighbour.features
+          .where((candidate) =>
+              candidate.id == feature.id &&
+              candidate.connectedRoomId == original.id)
+          .firstOrNull;
+      if (counterpart == null) {
+        return const PlanEditProposal.failed(PlanEditError.connection);
+      }
+
+      final oldWall = PlanEditGeometry.featureWall(original, feature);
+      final neighbourWall = PlanEditGeometry.featureWall(neighbour, counterpart);
+      if (oldWall < 0 || neighbourWall < 0) {
+        return const PlanEditProposal.failed(PlanEditError.connection);
+      }
+      final oldNext = (oldWall + 1) % original.points.length;
+      final neighbourNext = (neighbourWall + 1) % neighbour.points.length;
+      final oldA = original.points[oldWall], oldB = original.points[oldNext];
+      final neighbourA = neighbour.points[neighbourWall];
+      final neighbourB = neighbour.points[neighbourNext];
+      const sharedBoundaryTolerance = 0.05;
+      final sameDirection =
+          PlanEditGeometry.distance(oldA, neighbourA) <= sharedBoundaryTolerance &&
+          PlanEditGeometry.distance(oldB, neighbourB) <= sharedBoundaryTolerance;
+      final reverseDirection =
+          PlanEditGeometry.distance(oldA, neighbourB) <= sharedBoundaryTolerance &&
+          PlanEditGeometry.distance(oldB, neighbourA) <= sharedBoundaryTolerance;
+      if (!sameDirection && !reverseDirection) {
+        return const PlanEditProposal.failed(PlanEditError.connection);
+      }
+
+      final movedNeighbourPoints = List<ARPoint>.from(neighbour.points);
+      if (sameDirection) {
+        movedNeighbourPoints[neighbourWall] = next.points[oldWall];
+        movedNeighbourPoints[neighbourNext] = next.points[oldNext];
+      } else {
+        movedNeighbourPoints[neighbourWall] = next.points[oldNext];
+        movedNeighbourPoints[neighbourNext] = next.points[oldWall];
+      }
+      final movedNeighbour =
+          PlanEditGeometry.reshape(neighbour, movedNeighbourPoints);
+      if (movedNeighbour == null) {
+        return const PlanEditProposal.failed(PlanEditError.invalid);
+      }
+      final movedCounterpart = movedNeighbour.features
+          .where((candidate) => candidate.id == counterpart.id)
+          .firstOrNull;
+      if (movedCounterpart == null ||
+          PlanEditGeometry.featureWall(movedNeighbour, movedCounterpart) < 0 ||
+          PlanEditGeometry.distance(movedCounterpart.start, updated.start) > sharedBoundaryTolerance &&
+              PlanEditGeometry.distance(movedCounterpart.start, updated.end) > sharedBoundaryTolerance ||
+          PlanEditGeometry.distance(movedCounterpart.end, updated.start) > sharedBoundaryTolerance &&
+              PlanEditGeometry.distance(movedCounterpart.end, updated.end) > sharedBoundaryTolerance) {
+        return const PlanEditProposal.failed(PlanEditError.connection);
+      }
+      proposed[neighbour.id] = movedNeighbour;
+      changedRoomIds.add(neighbour.id);
     }
-    if (_completedRooms.any((r) => r.id != original.id && PlanEditGeometry.overlaps(next, r))) {
-      return const PlanEditProposal.failed(PlanEditError.overlap);
+
+    final result = _completedRooms
+        .map((room) => proposed[room.id] ?? room)
+        .toList(growable: false);
+    for (final changedId in changedRoomIds) {
+      final changed = proposed[changedId]!;
+      if (result.any((other) =>
+          other.id != changed.id && PlanEditGeometry.overlaps(changed, other))) {
+        return const PlanEditProposal.failed(PlanEditError.overlap);
+      }
     }
-    return PlanEditProposal(_completedRooms, [
-      for (final r in _completedRooms) r.id == original.id ? next : r,
-    ]);
+    return PlanEditProposal(_completedRooms, result);
   }
 
   PlanEditProposal previewDeleteWall(RoomModel original, int index) {
