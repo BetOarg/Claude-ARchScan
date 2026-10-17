@@ -154,7 +154,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Connect directly to another wall'));
       await tester.pumpAndSettle();
-      expect(find.text('Choose a corner or a point on a wall different from the start'),
+      // The canvas instruction uses the generic closing-corner prompt while
+      // the point mode accepts both corners and wall segments.
+      expect(find.text('Choose the corner where you want to close'),
         findsOneWidget);
       // Midpoint of the target's top wall: not a corner.
       await tester.tapAt(location(12, 0));
@@ -212,8 +214,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('plan-continue-scan')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Continue in another direction'));
+      await tester.tap(find.text('Continue without connecting'));
       await tester.pumpAndSettle();
+      expect(find.text('Choose a direction'), findsOneWidget);
       expect(find.text('To the left'), findsOneWidget);
       expect(find.text('To the right'), findsOneWidget);
       await tester.tap(find.text('To the left'));
