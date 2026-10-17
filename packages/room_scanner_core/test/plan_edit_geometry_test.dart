@@ -193,9 +193,10 @@ void main() {
     // Original wall vector is (4, 4); its normal is (-1/sqrt(2), 1/sqrt(2)).
     expect(b.x - a.x, closeTo(4, 1e-6));
     expect(b.z - a.z, closeTo(4, 1e-6));
-    final normalOffset = dx * (-1 / 2.sqrt()) + dz * (1 / 2.sqrt());
-    expect(a.x, closeTo(-normalOffset / 2.sqrt(), 1e-6));
-    expect(a.z, closeTo(normalOffset / 2.sqrt(), 1e-6));
+    // The normal projection of (0.2, -0.1) is -0.3/sqrt(2),
+    // so the wall moves by (+0.15, -0.15).
+    expect(a.x, closeTo(0.15, 1e-6));
+    expect(a.z, closeTo(-0.15, 1e-6));
   });
 
 }
