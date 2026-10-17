@@ -1178,26 +1178,6 @@ void main() {
       expect(provider.canUndoTransform, isFalse);
     });
 
-  });
-}
-
-RoomModel _roomAt(
-  String id,
-  double minX,
-  double minZ,
-) {
-  return RoomModel(
-    id: id,
-    name: id,
-    type: RoomType.other,
-    points: [
-      ARPoint(x: minX, y: 0, z: minZ),
-      ARPoint(x: minX + 2, y: 0, z: minZ),
-      ARPoint(x: minX + 2, y: 0, z: minZ + 2),
-      ARPoint(x: minX, y: 0, z: minZ + 2),
-    ],
-    isClosed: true,
-  );
   test('wall alignment magnetism supports two nearby inclined walls', () {
     final source = RoomModel(
       id: 'inclined-source',
@@ -1251,6 +1231,28 @@ RoomModel _roomAt(
     // Preview-only alignment does not mutate the persisted plan.
     expect(provider.completedRooms.first.toJson(), source.toJson());
   });
+
+
+  });
+}
+
+RoomModel _roomAt(
+  String id,
+  double minX,
+  double minZ,
+) {
+  return RoomModel(
+    id: id,
+    name: id,
+    type: RoomType.other,
+    points: [
+      ARPoint(x: minX, y: 0, z: minZ),
+      ARPoint(x: minX + 2, y: 0, z: minZ),
+      ARPoint(x: minX + 2, y: 0, z: minZ + 2),
+      ARPoint(x: minX, y: 0, z: minZ + 2),
+    ],
+    isClosed: true,
+  );
 
 }
 
