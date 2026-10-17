@@ -1198,6 +1198,60 @@ RoomModel _roomAt(
     ],
     isClosed: true,
   );
+  test('wall alignment magnetism supports two nearby inclined walls', () {
+    final source = RoomModel(
+      id: 'inclined-source',
+      name: 'Inclined source',
+      type: RoomType.living,
+      points: [
+        ARPoint(x: 0, y: 0, z: 0),
+        ARPoint(x: 4, y: 0, z: 4),
+        ARPoint(x: 2, y: 0, z: 6),
+        ARPoint(x: -2, y: 0, z: 2),
+      ],
+      isClosed: true,
+    );
+    // The first edge is parallel and 10 cm away along its normal.
+    final target = RoomModel(
+      id: 'inclined-target',
+      name: 'Inclined target',
+      type: RoomType.other,
+      points: [
+        ARPoint(x: -0.070710678, y: 0, z: 0.070710678),
+        ARPoint(x: 3.929289322, y: 0, z: 4.070710678),
+        ARPoint(x: 5.929289322, y: 0, z: 2.070710678),
+        ARPoint(x: 1.929289322, y: 0, z: -1.929289322),
+      ],
+      isClosed: true,
+    );
+    final provider = FloorPlanProvider()
+      ..loadProject(
+        uuid: 'inclined-wall-magnetism',
+        name: 'Inclined walls',
+        rooms: [source, target],
+      );
+    addTearDown(provider.dispose);
+
+    final result = provider.createWallAlignmentPreview(
+      roomId: source.id,
+      maximumDistanceMeters: 0.15,
+      maximumAngleDegrees: 4,
+      minimumOverlapMeters: 0.2,
+    );
+    expect(result.status, WallAlignmentPreviewStatus.available);
+    final preview = result.preview!;
+    final moved = preview.proposedRooms.firstWhere((r) => r.id == source.id);
+    final targetUnchanged =
+        preview.proposedRooms.firstWhere((r) => r.id == target.id);
+    expect(targetUnchanged.toJson(), target.toJson());
+    expect(moved.points[0].x, closeTo(target.points[0].x, 1e-5));
+    expect(moved.points[0].z, closeTo(target.points[0].z, 1e-5));
+    expect(moved.points[1].x, closeTo(target.points[1].x, 1e-5));
+    expect(moved.points[1].z, closeTo(target.points[1].z, 1e-5));
+    // Preview-only alignment does not mutate the persisted plan.
+    expect(provider.completedRooms.first.toJson(), source.toJson());
+  });
+
 }
 
 RoomModel _rotationObstacle() {
