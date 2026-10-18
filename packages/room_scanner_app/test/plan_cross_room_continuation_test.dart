@@ -216,7 +216,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Continue without connecting'));
       await tester.pumpAndSettle();
-      expect(find.text('Choose a direction'), findsOneWidget);
+      expect(find.text('Which way does the floor plan continue?'), findsOneWidget);
       expect(find.text('To the left'), findsOneWidget);
       expect(find.text('To the right'), findsOneWidget);
       await tester.tap(find.text('To the left'));
