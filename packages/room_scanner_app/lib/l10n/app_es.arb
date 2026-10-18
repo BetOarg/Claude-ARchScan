@@ -93,7 +93,6 @@
   "continuationToCorner": "Conectar con otra esquina",
   "continuationToPoint": "Conectar directamente con otra pared",
   "continuationFreeDirection": "Continuar sin conectar",
-  "continuationDirectionTitle": "Elegí la dirección",
   "continuationDirectionDescription": "La dirección se calcula desde la pared junto a la esquina inicial.",
   "continuationDirectionLeft": "Hacia la izquierda",
   "continuationDirectionRight": "Hacia la derecha",
